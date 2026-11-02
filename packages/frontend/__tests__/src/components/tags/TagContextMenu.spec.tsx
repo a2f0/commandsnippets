@@ -1,5 +1,10 @@
 import {ThemeProvider} from '@mui/material/styles';
-import {fireEvent, render, screen} from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitForElementToBeRemoved,
+} from '@testing-library/react';
 import {useState} from 'react';
 import {I18nextProvider} from 'react-i18next';
 import {vi} from 'vitest';
@@ -51,5 +56,18 @@ describe('TagContextMenu', () => {
 
     expect(latest).toHaveBeenCalledOnce();
     expect(first).not.toHaveBeenCalled();
+  });
+
+  it('closes the delete dialog on Escape without deleting', async () => {
+    const deleteTag = vi.fn();
+    render(<Row deleteTag={deleteTag} />);
+
+    fireEvent.click(screen.getByRole('button', {name: 'open'}));
+    fireEvent.click(await screen.findByRole('menuitem', {name: 'Delete Tag'}));
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.keyDown(dialog, {key: 'Escape'});
+
+    await waitForElementToBeRemoved(() => screen.queryByRole('dialog'));
+    expect(deleteTag).not.toHaveBeenCalled();
   });
 });

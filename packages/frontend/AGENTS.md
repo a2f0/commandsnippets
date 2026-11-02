@@ -475,7 +475,8 @@ writing its type by hand.
   types, and the rows' and lists' shared drag and drop: `useSortableRow`,
   `useDraggedRows`) and `errorBoundary/`. Components shared by several
   features (`AppHeader`, `ContextMenu`, `DetailPage`, `LanguageSwitcher`,
-  `UserProfileCircle`) sit at the root of `src/components/`.
+  `SimpleDialog`, `UserProfileCircle`) sit at the root of `src/components/`.
+  `admin/useAdminList` loads a page of an admin list (users, audit log).
 - **Menu bar**: `src/menu/MenuBar.tsx`; each menu is in `src/menu/<name>/`
   (most with their items in `menuItems/`). The Tags and Entries menus list
   their sorts as data rendered by `src/menu/SortMenuItem.tsx`.
@@ -487,7 +488,9 @@ writing its type by hand.
   which the HUD's Logs tab lists; `recordError` is the boundary's `onError`)
 - **Shared styling**: `src/styled/` holds small styled components used across
   features; `src/theme/` the MUI themes, the theme provider, the global
-  styles and the shared `sx` objects (`sx.ts`). The app is grayscale: the
+  styles and the shared `sx` objects (`sx.ts`). Outlined buttons take their
+  grays from the themes (`MuiButton`'s `outlined` override), whatever their
+  `color`: give them no `sx` for it. The app is grayscale: the
   themes make every palette color gray (primary, secondary and the status
   colors), and `__tests__/src/theme/themes.spec.ts` fails on a color with a
   hue in the themes or hard-coded in `src/`, `public/`, `index.html`, the

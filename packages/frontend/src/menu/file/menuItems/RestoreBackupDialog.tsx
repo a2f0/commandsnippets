@@ -16,7 +16,6 @@ import React from 'react';
 import {useTypedTranslation} from '../../../i18n/hooks';
 import type {RestoreTarget} from '../../../lib/data/backup';
 import {formatTimestamp} from '../../../lib/formatTimestamp';
-import {commonButtonSx} from '../../../theme/sx';
 
 /** Where a restore is: what the dialog shows. */
 export type RestoreStep =
@@ -72,7 +71,6 @@ const RestoreBackupDialog = ({state, onConfirm, onClose}: IProps) => {
       variant="outlined"
       onClick={onClose}
       autoFocus
-      sx={commonButtonSx}
     >
       {tCommon('dismiss')}
     </Button>
@@ -122,16 +120,13 @@ const RestoreBackupDialog = ({state, onConfirm, onClose}: IProps) => {
                 variant="outlined"
                 onClick={onClose}
                 autoFocus
-                sx={commonButtonSx}
               >
                 {tCommon('cancel')}
               </Button>
               <Button
                 id="restoreBackupConfirm"
                 variant="outlined"
-                color="error"
                 onClick={() => onConfirm(username, target, backup)}
-                sx={commonButtonSx}
               >
                 {t('restoreConfirm')}
               </Button>

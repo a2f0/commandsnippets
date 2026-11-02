@@ -18,12 +18,6 @@ import {useAppState} from '../lib/state/appState';
 import {isLocalId} from '../lib/sync/outbox';
 import type {SyncSession} from '../lib/sync/session';
 
-const buttonSx = {
-  color: 'text.primary',
-  borderColor: 'text.secondary',
-  '&:hover': {borderColor: 'text.primary'},
-} as const;
-
 /** How long a copy shows as done. */
 const COPIED_MS = 2000;
 
@@ -155,7 +149,6 @@ const EntryDetail = ({
               id="entryCopy"
               variant="outlined"
               size="small"
-              sx={buttonSx}
               startIcon={copied ? <Check /> : <FileCopySharp />}
               onClick={() => {
                 copyEntry(session, id, body);

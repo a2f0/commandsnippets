@@ -1,106 +1,50 @@
-import MoreVert from '@mui/icons-material/MoreVert';
-import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  IconButton,
-  LinearProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TablePagination,
-  TableRow,
-  TableSortLabel,
-  TextField,
-  ToggleButton,
-  ToggleButtonGroup,
-  Tooltip,
-} from '@mui/material';
+import {Alert, Box, LinearProgress, TablePagination} from '@mui/material';
 import React, {useCallback, useEffect, useState} from 'react';
 
 import {useContextMenu} from '../../hooks/useContextMenu';
-import type {AdminKeys} from '../../i18n/hooks';
 import {useTypedTranslation} from '../../i18n/hooks';
 import {
   AdminApiError,
   AdminForbiddenError,
-  type AdminPage,
   type AdminUser,
   type AdminUserSortField,
-  type AdminUserStatus,
   type AdminUsersQuery,
   listUsers,
   setUserActive,
   setUserMarkedForDeletion,
 } from '../../lib/api/adminApi';
 import {UserMismatchError} from '../../lib/api/errors';
-import {formatTimestamp} from '../../lib/formatTimestamp';
 import {navigate} from '../../lib/router/navigation';
+import type {IMouse} from '../../lib/shared';
 import {leaveForeignSession} from '../../lib/state/appState';
-import {commonButtonSx} from '../../theme/sx';
+import {AdminConfirmDialog, type PendingChange} from './AdminConfirmDialog';
+import {AdminLoadError} from './AdminLoadError';
 import {
   type AdminUserAction,
   type AdminUserChange,
   AdminUserContextMenu,
 } from './AdminUserContextMenu';
+import {AdminUsersTable} from './AdminUsersTable';
+import {AdminUsersToolbar} from './AdminUsersToolbar';
+import {useAdminList} from './useAdminList';
 
 const PAGE_SIZES = [25, 50, 100];
 const SEARCH_DELAY_MS = 300;
 
-interface Column {
-  label: AdminKeys;
-  sort: AdminUserSortField | null;
-  numeric: boolean;
-}
-
-const COLUMNS: Column[] = [
-  {label: 'columnUsername', sort: 'username', numeric: false},
-  {label: 'columnEmail', sort: 'email', numeric: false},
-  {label: 'columnJoined', sort: 'date_joined', numeric: false},
-  {label: 'columnLastLogin', sort: 'last_login', numeric: false},
-  {label: 'columnLastActive', sort: 'last_active', numeric: false},
-  {label: 'columnLogins', sort: 'login_count', numeric: true},
-  {label: 'columnEntries', sort: 'entry_count', numeric: true},
-  {label: 'columnTags', sort: 'tag_count', numeric: true},
-  {label: 'columnStatus', sort: null, numeric: false},
-];
-
-interface ActionDialog {
-  title: AdminKeys;
-  body: AdminKeys;
-  destructive: boolean;
-}
-
-const ACTION_DIALOGS: Record<AdminUserChange, ActionDialog> = {
-  deactivate: {
-    title: 'deactivateTitle',
-    body: 'deactivateBody',
-    destructive: true,
-  },
-  reactivate: {
-    title: 'reactivateTitle',
-    body: 'reactivateBody',
-    destructive: false,
-  },
-  markForDeletion: {
-    title: 'markForDeletionTitle',
-    body: 'markForDeletionBody',
-    destructive: true,
-  },
-  unmarkForDeletion: {
-    title: 'unmarkForDeletionTitle',
-    body: 'unmarkForDeletionBody',
-    destructive: false,
-  },
+const INITIAL_QUERY: AdminUsersQuery = {
+  search: '',
+  status: 'all',
+  sort: 'date_joined',
+  descending: true,
+  page: 1,
+  pageSize: PAGE_SIZES[0] ?? 25,
 };
+
+/** The page before, when a change emptied the last one. */
+const pageGone = (error: unknown, query: AdminUsersQuery) =>
+  error instanceof AdminApiError && error.status === 404 && query.page > 1
+    ? {...query, page: query.page - 1}
+    : null;
 
 /** Deactivating and marking for deletion both end the user's sessions. */
 function applyAction(user: AdminUser, action: AdminUserChange) {
@@ -116,108 +60,26 @@ function applyAction(user: AdminUser, action: AdminUserChange) {
   }
 }
 
-interface IProps {
-  currentUsername: string | null;
-  /** The API said the viewer is not staff (revoked since the page loaded). */
-  onForbidden: () => void;
-}
+/** A new column starts with the most useful end first. */
+const sortedBy = (
+  query: AdminUsersQuery,
+  field: AdminUserSortField
+): AdminUsersQuery => ({
+  ...query,
+  sort: field,
+  descending:
+    field === query.sort
+      ? !query.descending
+      : field !== 'username' && field !== 'email',
+  page: 1,
+});
 
-const AdminUsers = ({currentUsername, onForbidden}: IProps) => {
-  const {t, i18n} = useTypedTranslation('admin');
-  const {t: tCommon} = useTypedTranslation('common');
-  const [searchInput, setSearchInput] = useState('');
-  const [query, setQuery] = useState<AdminUsersQuery>({
-    search: '',
-    status: 'all',
-    sort: 'date_joined',
-    descending: true,
-    page: 1,
-    pageSize: PAGE_SIZES[0] ?? 25,
-  });
-  const [users, setUsers] = useState<AdminPage<AdminUser> | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadFailed, setLoadFailed] = useState(false);
-  const [pending, setPending] = useState<{
-    user: AdminUser;
-    action: AdminUserChange;
-  } | null>(null);
-  // The menu keeps its user while it closes; the position opens and closes it.
-  const [menuUser, setMenuUser] = useState<AdminUser | null>(null);
-  const menu = useContextMenu();
+/** Makes a confirmed change; the list reloads when it is made. */
+function useUserChange(onForbidden: () => void, onChanged: () => void) {
+  const {t} = useTypedTranslation('admin');
+  const [pending, setPending] = useState<PendingChange | null>(null);
   const [updating, setUpdating] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
-
-  // Search as the admin types, once they pause.
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setQuery(current =>
-        current.search === searchInput
-          ? current
-          : {...current, search: searchInput, page: 1}
-      );
-    }, SEARCH_DELAY_MS);
-    return () => clearTimeout(timer);
-  }, [searchInput]);
-
-  // A new query object (including a copy, to retry) loads that page.
-  useEffect(() => {
-    const controller = new AbortController();
-    setLoading(true);
-    setLoadFailed(false);
-    listUsers(query, controller.signal)
-      .then(result => setUsers(result))
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) {
-          return;
-        }
-        if (error instanceof AdminForbiddenError) {
-          onForbidden();
-          return;
-        }
-        // The page no longer exists (a change emptied the last one).
-        if (
-          error instanceof AdminApiError &&
-          error.status === 404 &&
-          query.page > 1
-        ) {
-          setQuery(current => ({...current, page: current.page - 1}));
-          return;
-        }
-        console.error('Loading users failed:', error);
-        setLoadFailed(true);
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
-      });
-    return () => controller.abort();
-  }, [query, onForbidden]);
-
-  const sortBy = (field: AdminUserSortField) => {
-    setQuery(current => ({
-      ...current,
-      sort: field,
-      // A new column starts with the most useful end first.
-      descending:
-        field === current.sort
-          ? !current.descending
-          : field !== 'username' && field !== 'email',
-      page: 1,
-    }));
-  };
-
-  // Their data opens on their page, read-only; a change is confirmed first.
-  const chooseAction = useCallback(
-    (user: AdminUser, action: AdminUserAction) => {
-      if (action === 'viewData') {
-        navigate(`/${encodeURIComponent(user.username)}`);
-      } else {
-        setPending({user, action});
-      }
-    },
-    [navigate]
-  );
 
   const confirmChange = async () => {
     if (pending === null) {
@@ -229,309 +91,197 @@ const AdminUsers = ({currentUsername, onForbidden}: IProps) => {
     try {
       await applyAction(target, action);
       setPending(null);
-      // Reload the page: the change can move the user out of the status
-      // filter and changes the counts.
-      setQuery(current => ({...current}));
+      // The change can move the user out of the status filter and changes
+      // the counts.
+      onChanged();
     } catch (error: unknown) {
       if (error instanceof AdminForbiddenError) {
         onForbidden();
         return;
       }
+      setPending(null);
       if (error instanceof UserMismatchError) {
         // Another tab has signed in as someone else: this one leaves.
-        setPending(null);
         void leaveForeignSession(error.username);
         return;
       }
       const message = error instanceof Error ? error.message : String(error);
       setUpdateError(t('updateError', {username: target.username, message}));
-      setPending(null);
     } finally {
       setUpdating(false);
     }
   };
 
-  const formatDate = (value: string | null) =>
-    value === null ? t('never') : formatTimestamp(value, i18n.language);
+  return {
+    pending,
+    setPending,
+    updating,
+    updateError,
+    setUpdateError,
+    confirmChange,
+  };
+}
+
+/** The search field's text, searched once the admin pauses typing. */
+function useDebouncedSearch(onSearch: (search: string) => void) {
+  const [searchInput, setSearchInput] = useState('');
+  useEffect(() => {
+    const timer = setTimeout(() => onSearch(searchInput), SEARCH_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [searchInput, onSearch]);
+  return [searchInput, setSearchInput] as const;
+}
+
+/**
+ * A user's actions menu, from their row's button or a right click. It keeps
+ * its user while it closes; the position opens and closes it. Their data
+ * opens on their page, read-only; a change is confirmed first.
+ */
+function useUserMenu(confirm: (change: PendingChange) => void) {
+  const [user, setUser] = useState<AdminUser | null>(null);
+  const {mouse, close, openAt, onContextMenu} = useContextMenu();
+  const onAction = useCallback(
+    (target: AdminUser, action: AdminUserAction) => {
+      if (action === 'viewData') {
+        navigate(`/${encodeURIComponent(target.username)}`);
+      } else {
+        confirm({user: target, action});
+      }
+    },
+    [confirm]
+  );
+  return {
+    openAt: useCallback(
+      (target: AdminUser, at: IMouse) => {
+        setUser(target);
+        openAt(at);
+      },
+      [openAt]
+    ),
+    onContextMenu: useCallback(
+      (target: AdminUser, event: React.MouseEvent) => {
+        setUser(target);
+        onContextMenu(event);
+      },
+      [onContextMenu]
+    ),
+    menuProps: {user, mouse, onClose: close, onAction},
+  };
+}
+
+const AdminUsersPagination = ({
+  count,
+  query,
+  setQuery,
+}: {
+  count: number;
+  query: AdminUsersQuery;
+  setQuery: React.Dispatch<React.SetStateAction<AdminUsersQuery>>;
+}) => {
+  const {t} = useTypedTranslation('admin');
+  return (
+    <TablePagination
+      component="div"
+      count={count}
+      page={query.page - 1}
+      rowsPerPage={query.pageSize}
+      rowsPerPageOptions={PAGE_SIZES}
+      onPageChange={(_event, next) =>
+        setQuery(current => ({...current, page: next + 1}))
+      }
+      onRowsPerPageChange={event =>
+        setQuery(current => ({
+          ...current,
+          pageSize: Number(event.target.value),
+          page: 1,
+        }))
+      }
+      labelRowsPerPage={t('rowsPerPage')}
+      labelDisplayedRows={({from, to, count: total}) =>
+        t('displayedRows', {from, to, count: total})
+      }
+    />
+  );
+};
+
+interface IProps {
+  currentUsername: string | null;
+  /** The API said the viewer is not staff (revoked since the page loaded). */
+  onForbidden: () => void;
+}
+
+const AdminUsers = ({currentUsername, onForbidden}: IProps) => {
+  const {t: tCommon} = useTypedTranslation('common');
+  const list = useAdminList(INITIAL_QUERY, {
+    load: listUsers,
+    onForbidden,
+    failure: 'Loading users',
+    fallback: pageGone,
+  });
+  const {request: query, setRequest: setQuery, page: users} = list;
+  const search = useCallback(
+    (text: string) =>
+      setQuery(current =>
+        current.search === text ? current : {...current, search: text, page: 1}
+      ),
+    [setQuery]
+  );
+  const [searchInput, setSearchInput] = useDebouncedSearch(search);
+  const change = useUserChange(onForbidden, list.reload);
+  const userMenu = useUserMenu(change.setPending);
 
   return (
     <Box id="adminUsers">
-      <Box
-        sx={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 2,
-          alignItems: 'center',
-          mb: 2,
-        }}
-      >
-        <TextField
-          id="adminUserSearch"
-          label={t('searchLabel')}
-          type="search"
-          size="small"
-          value={searchInput}
-          onChange={event => setSearchInput(event.target.value)}
-          sx={{minWidth: 280}}
-        />
-        <ToggleButtonGroup
-          id="adminStatusFilter"
-          aria-label={t('statusLabel')}
-          size="small"
-          exclusive
-          value={query.status}
-          onChange={(_event, value: AdminUserStatus | null) => {
-            if (value !== null) {
-              setQuery(current => ({...current, status: value, page: 1}));
-            }
-          }}
-        >
-          <ToggleButton value="all">{t('statusAll')}</ToggleButton>
-          <ToggleButton value="active">{t('statusActive')}</ToggleButton>
-          <ToggleButton value="inactive">{t('statusInactive')}</ToggleButton>
-        </ToggleButtonGroup>
-      </Box>
-
-      {updateError !== null && (
+      <AdminUsersToolbar
+        search={searchInput}
+        onSearchChange={setSearchInput}
+        status={query.status}
+        onStatusChange={status =>
+          setQuery(current => ({...current, status, page: 1}))
+        }
+      />
+      {change.updateError !== null && (
         <Alert
           id="adminUpdateError"
           severity="error"
-          onClose={() => setUpdateError(null)}
+          onClose={() => change.setUpdateError(null)}
           sx={{mb: 2}}
         >
-          {updateError}
+          {change.updateError}
         </Alert>
       )}
-      {loadFailed && (
-        <Alert
+      {list.loadFailed && (
+        <AdminLoadError
           id="adminUsersError"
-          severity="error"
-          action={
-            <Button
-              id="adminUsersRetry"
-              color="inherit"
-              onClick={() => setQuery(current => ({...current}))}
-            >
-              {t('retry')}
-            </Button>
-          }
-          sx={{mb: 2}}
-        >
-          {t('loadError')}
-        </Alert>
-      )}
-
-      <Box sx={{height: 4}}>
-        {loading && <LinearProgress aria-label={tCommon('loading')} />}
-      </Box>
-      <TableContainer>
-        <Table size="small" aria-label={t('usersTab')}>
-          <TableHead>
-            <TableRow>
-              {COLUMNS.map(column => (
-                <TableCell
-                  key={column.label}
-                  align={column.numeric ? 'right' : 'left'}
-                  sortDirection={
-                    column.sort === query.sort
-                      ? query.descending
-                        ? 'desc'
-                        : 'asc'
-                      : false
-                  }
-                >
-                  {column.sort === null ? (
-                    t(column.label)
-                  ) : (
-                    <TableSortLabel
-                      active={column.sort === query.sort}
-                      direction={
-                        column.sort === query.sort && query.descending
-                          ? 'desc'
-                          : 'asc'
-                      }
-                      onClick={() => {
-                        if (column.sort !== null) {
-                          sortBy(column.sort);
-                        }
-                      }}
-                    >
-                      {t(column.label)}
-                    </TableSortLabel>
-                  )}
-                </TableCell>
-              ))}
-              <TableCell />
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {users?.items.map(user => {
-              const isSelf = user.username === currentUsername;
-              return (
-                <TableRow
-                  key={user.id}
-                  id={`adminUserRow${user.id}`}
-                  onContextMenu={
-                    isSelf
-                      ? undefined
-                      : event => {
-                          setMenuUser(user);
-                          menu.onContextMenu(event);
-                        }
-                  }
-                >
-                  <TableCell>
-                    {user.username}
-                    {user.isStaff && (
-                      <Chip
-                        label={t('staff')}
-                        size="small"
-                        variant="outlined"
-                        sx={{ml: 1}}
-                      />
-                    )}
-                  </TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{formatDate(user.dateJoined)}</TableCell>
-                  <TableCell>{formatDate(user.lastLogin)}</TableCell>
-                  <TableCell>{formatDate(user.lastActive)}</TableCell>
-                  <TableCell align="right">{user.loginCount}</TableCell>
-                  <TableCell align="right">{user.entryCount}</TableCell>
-                  <TableCell align="right">{user.tagCount}</TableCell>
-                  <TableCell>
-                    {user.dateMarkedForDeletion === null ? (
-                      <Chip
-                        size="small"
-                        color={user.isActive ? 'success' : 'default'}
-                        label={user.isActive ? t('active') : t('inactive')}
-                      />
-                    ) : (
-                      <Chip
-                        size="small"
-                        color="error"
-                        label={t('markedForDeletion')}
-                      />
-                    )}
-                  </TableCell>
-                  <TableCell align="right">
-                    <Tooltip title={isSelf ? t('cannotChangeSelf') : ''}>
-                      <span>
-                        <IconButton
-                          id={`adminUserMenuButton${user.id}`}
-                          size="small"
-                          aria-label={t('userActions', {
-                            username: user.username,
-                          })}
-                          aria-haspopup="menu"
-                          disabled={isSelf}
-                          onClick={event => {
-                            const rect =
-                              event.currentTarget.getBoundingClientRect();
-                            setMenuUser(user);
-                            menu.openAt({
-                              mouseX: rect.left,
-                              mouseY: rect.bottom,
-                            });
-                          }}
-                        >
-                          <MoreVert fontSize="small" />
-                        </IconButton>
-                      </span>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-            {users !== null && users.items.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={COLUMNS.length + 1} id="adminNoUsers">
-                  {t('noUsers')}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-      {users !== null && (
-        <TablePagination
-          component="div"
-          count={users.count}
-          page={query.page - 1}
-          rowsPerPage={query.pageSize}
-          rowsPerPageOptions={PAGE_SIZES}
-          onPageChange={(_event, next) =>
-            setQuery(current => ({...current, page: next + 1}))
-          }
-          onRowsPerPageChange={event =>
-            setQuery(current => ({
-              ...current,
-              pageSize: Number(event.target.value),
-              page: 1,
-            }))
-          }
-          labelRowsPerPage={t('rowsPerPage')}
-          labelDisplayedRows={({from, to, count}) =>
-            t('displayedRows', {from, to, count})
-          }
+          retryId="adminUsersRetry"
+          onRetry={list.reload}
         />
       )}
-
-      <AdminUserContextMenu
-        user={menuUser}
-        mouse={menu.mouse}
-        onClose={menu.close}
-        onAction={chooseAction}
+      <Box sx={{height: 4}}>
+        {list.loading && <LinearProgress aria-label={tCommon('loading')} />}
+      </Box>
+      <AdminUsersTable
+        users={users?.items ?? null}
+        query={query}
+        currentUsername={currentUsername}
+        onSort={field => setQuery(current => sortedBy(current, field))}
+        onOpenMenu={userMenu.openAt}
+        onContextMenu={userMenu.onContextMenu}
       />
-
-      <Dialog
-        open={pending !== null}
-        onClose={() => {
-          if (!updating) {
-            setPending(null);
-          }
-        }}
-        aria-labelledby="adminConfirmTitle"
-      >
-        {pending !== null && (
-          <>
-            <DialogTitle id="adminConfirmTitle">
-              {t(ACTION_DIALOGS[pending.action].title, {
-                username: pending.user.username,
-              })}
-            </DialogTitle>
-            <DialogContent>
-              <DialogContentText>
-                {t(ACTION_DIALOGS[pending.action].body)}
-              </DialogContentText>
-            </DialogContent>
-            <DialogActions>
-              <Button
-                id="adminConfirmCancel"
-                variant="outlined"
-                sx={commonButtonSx}
-                disabled={updating}
-                onClick={() => setPending(null)}
-              >
-                {tCommon('cancel')}
-              </Button>
-              <Button
-                id="adminConfirmButton"
-                variant="outlined"
-                color={
-                  ACTION_DIALOGS[pending.action].destructive
-                    ? 'error'
-                    : 'primary'
-                }
-                sx={commonButtonSx}
-                disabled={updating}
-                onClick={() => void confirmChange()}
-              >
-                {t(pending.action)}
-              </Button>
-            </DialogActions>
-          </>
-        )}
-      </Dialog>
+      {users !== null && (
+        <AdminUsersPagination
+          count={users.count}
+          query={query}
+          setQuery={setQuery}
+        />
+      )}
+      <AdminUserContextMenu {...userMenu.menuProps} />
+      <AdminConfirmDialog
+        pending={change.pending}
+        updating={change.updating}
+        onCancel={() => change.setPending(null)}
+        onConfirm={() => void change.confirmChange()}
+      />
     </Box>
   );
 };

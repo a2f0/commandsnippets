@@ -10,7 +10,6 @@ import {useTypedTranslation} from '../../i18n/hooks';
 import {needsScrollingIntoView} from '../../lib/scroll';
 import {activeEntryEditField, appMode} from '../../lib/shared';
 import {useAppConfig} from '../../lib/state/appState';
-import {commonButtonSx} from '../../theme/sx';
 import {InputEntryBody} from './InputEntryBody';
 import {InputEntrySubject} from './InputEntrySubject';
 
@@ -84,9 +83,8 @@ export const EntryForm = ({
           // focused.
           scrollMarginBottom: `${theme.footer.height + 10}px`,
           marginBottom: '10px',
-          ...commonButtonSx,
         }
-      : commonButtonSx;
+      : {};
   const color = kind === 'edit' ? 'primary' : 'secondary';
 
   return (

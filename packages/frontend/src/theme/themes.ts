@@ -91,8 +91,22 @@ const grayscalePalette = (strong: string, muted: string): PaletteOptions => ({
   success: {main: muted},
 });
 
-/** The dialogs and the right drawer look the same in every theme. */
+/**
+ * The dialogs, the right drawer and outlined buttons look the same in every
+ * theme. Outlined buttons draw in the text's grays, whatever their `color`.
+ */
 const sharedComponents: ThemeOptions['components'] = {
+  MuiButton: {
+    styleOverrides: {
+      outlined: ({theme}) => ({
+        color: theme.palette.text.primary,
+        borderColor: theme.palette.text.secondary,
+        '&:hover': {
+          borderColor: theme.palette.text.primary,
+        },
+      }),
+    },
+  },
   MuiDialog: {
     styleOverrides: {
       paper: {

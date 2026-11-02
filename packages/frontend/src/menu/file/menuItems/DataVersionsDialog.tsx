@@ -23,7 +23,6 @@ import {
   listVersions,
 } from '../../../lib/data/backup';
 import {formatTimestamp} from '../../../lib/formatTimestamp';
-import {commonButtonSx} from '../../../theme/sx';
 
 /** What the dialog shows: the list, a confirmation, or work under way. */
 type Step =
@@ -91,21 +90,8 @@ const DataVersionsDialog = ({open, username, onClose}: IProps) => {
     });
   }, [open, load]);
 
-  const button = (
-    id: string,
-    label: string,
-    onClick: () => void,
-    color?: 'error'
-  ) => (
-    <Button
-      id={id}
-      key={id}
-      size="small"
-      variant="outlined"
-      onClick={onClick}
-      sx={commonButtonSx}
-      {...(color === undefined ? {} : {color})}
-    >
+  const button = (id: string, label: string, onClick: () => void) => (
+    <Button id={id} key={id} size="small" variant="outlined" onClick={onClick}>
       {label}
     </Button>
   );
@@ -181,8 +167,7 @@ const DataVersionsDialog = ({open, username, onClose}: IProps) => {
                     button(
                       `dataVersionDelete-${n}`,
                       t('dataVersionDelete'),
-                      () => setStep({step: 'confirmDelete', version: n}),
-                      'error'
+                      () => setStep({step: 'confirmDelete', version: n})
                     )}
                 </Stack>
               </ListItem>
@@ -235,8 +220,7 @@ const DataVersionsDialog = ({open, username, onClose}: IProps) => {
               {button(
                 'dataVersionDeleteConfirm',
                 t('dataVersionDeleteConfirm'),
-                () => run(() => deleteVersion(username, step.version)),
-                'error'
+                () => run(() => deleteVersion(username, step.version))
               )}
             </>
           ),
