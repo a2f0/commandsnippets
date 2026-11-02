@@ -159,6 +159,8 @@ API; everything else the app keeps is a zustand store.
   (`EntryTags`): all of them in the all-entries list, all but the tag
   shown in a tag's. `useEntryTagNames` reads them for the whole list in one
   query of the owner's junctions, which a tag switch does not run again.
+  The reads the hooks share with the writes (a tag's junctions and
+  entries, a row by its id or local id) are `src/lib/data/queries.ts`.
   `src/lib/data/sort.ts` sorts and
   searches them (case-insensitively in any script, as the API's search).
   Deleted tags and entries are left out; untagged entries are those in no

@@ -17,11 +17,7 @@
  * finds the new tag in it at once, and reads the database only for the
  * tag's entries.
  */
-import type {
-  Tag,
-  TagTextEntry,
-  TextEntry,
-} from '@commandsnippets/api-shared/responses';
+import type {Tag, TextEntry} from '@commandsnippets/api-shared/responses';
 import {liveQuery} from 'dexie';
 import {useLiveQuery} from 'dexie-react-hooks';
 import {useLayoutEffect, useMemo, useRef, useSyncExternalStore} from 'react';
@@ -29,7 +25,6 @@ import type {RowKey, Stored} from '../db/database';
 import {timed} from '../metrics/timings';
 import {useRouteParam} from '../router/navigation';
 import {useAppState} from '../state/appState';
-import {isLocalId} from '../sync/localIds';
 import {
   publicSyncSession,
   type SyncSession,
@@ -38,12 +33,10 @@ import {
   syncSession,
 } from '../sync/session';
 import {tagNamesByEntry} from './entryTags';
+import {entriesOfTag, type OwnedData, rowNamed} from './queries';
 import type {TaggedEntry} from './sort';
 
-/** Whose data a query reads: a session's database and owner. */
-export type OwnedData = Pick<SyncSession, 'db' | 'owner'>;
-
-export interface Owner {
+interface Owner {
   /** The username whose data the page shows. */
   owner: string;
   /** Another user's data, which the page only shows. */
@@ -240,36 +233,6 @@ export function useTagNamed(name: string | undefined): TagNamed | undefined {
   return answer;
 }
 
-/** Tag `tagId`'s junctions not deleted. */
-export const tagJunctions = ({db, owner}: OwnedData, tagId: string) =>
-  db.junctions
-    .where('[owner+relationships.tag.data.id]')
-    .equals([owner, tagId])
-    .filter(junction => !junction.attributes.is_deleted)
-    .toArray();
-
-/** Tag `tagId`'s entries (not deleted), each with its junction. */
-export async function entriesOfTag(
-  data: OwnedData,
-  tagId: string
-): Promise<TaggedEntry[]> {
-  const junctions = await tagJunctions(data, tagId);
-  const entries = await data.db.entries.bulkGet(
-    junctions.map(
-      (junction): RowKey => [
-        data.owner,
-        junction.relationships.text_entry.data.id,
-      ]
-    )
-  );
-  return junctions.flatMap((junction, index) => {
-    const entry = entries[index];
-    return entry === undefined || entry.attributes.is_deleted
-      ? []
-      : [{entry, junction}];
-  });
-}
-
 /** Tag `tagId`'s entries, each with its junction, and the tag they are of. */
 export function useTagEntries(
   tagId: string | undefined
@@ -349,7 +312,7 @@ export function useEntries(
 }
 
 /** An entry read for its page, and whether its owner's entries are read. */
-export interface EntryShown {
+interface EntryShown {
   /**
    * The id asked for: a query asked for another keeps answering with its
    * last result until it reads the next.
@@ -376,15 +339,7 @@ export function useEntry(entryId: string): EntryShown | undefined {
       return {entryId, entry: null, loaded: true};
     }
     const {db, owner} = session;
-    const row =
-      (await db.entries.get([owner, entryId])) ??
-      (isLocalId(entryId)
-        ? await db.entries
-            .where('owner')
-            .equals(owner)
-            .filter(candidate => candidate.localId === entryId)
-            .first()
-        : undefined);
+    const row = await rowNamed(db.entries, owner, entryId);
     const cursor = await db.cursors.get([owner, 'entries']);
     return {
       entryId,
@@ -482,15 +437,4 @@ export function useEntryTagNames(
     shown.current = names;
   });
   return names;
-}
-
-/** The junction putting entry `entryId` in tag `tagId`, when there is one. */
-export async function junctionOf(
-  data: OwnedData,
-  tagId: string,
-  entryId: string
-): Promise<(TagTextEntry & {owner: string}) | undefined> {
-  return (await tagJunctions(data, tagId)).find(
-    junction => junction.relationships.text_entry.data.id === entryId
-  );
 }

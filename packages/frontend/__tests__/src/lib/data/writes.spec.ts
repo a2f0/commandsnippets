@@ -23,7 +23,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {apiClient} from '../../../../src/lib/api/apiClient';
 import {UserMismatchError} from '../../../../src/lib/api/errors';
 import {setSignedInUser} from '../../../../src/lib/auth/authUtils';
-import {entriesOfTag} from '../../../../src/lib/data/hooks';
+import {entriesOfTag} from '../../../../src/lib/data/queries';
 import {
   createEntry,
   createTag,
