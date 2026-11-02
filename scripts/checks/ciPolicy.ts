@@ -8,11 +8,12 @@
  * contract) also runs the lanes of the packages that consume it, and the brand
  * sources and their image settings (`agent-tool.json`) run the lanes of the web
  * packages that render icons from them. The frontend's spec launchers
- * (`packages/frontend/scripts/`) are shell-linted and tested with the tooling.
+ * (`packages/frontend/scripts/`) are shell-linted and tested with the tooling,
+ * and the root typecheck covers Terraform's TypeScript (`terraform/scripts/`).
  */
 export const CI_SCOPES = {
   tooling:
-    /^(scripts\/|packages\/frontend\/scripts\/|\.agents\/|\.claude\/|\.codex\/|agent-tool\.json$|\.agent-tool-(skills|permissions)\.json$|commitlint\.config\.mts$|tsconfig[^/]*\.json$)/,
+    /^(scripts\/|packages\/frontend\/scripts\/|terraform\/scripts\/[^/]+\.ts$|\.agents\/|\.claude\/|\.codex\/|agent-tool\.json$|\.agent-tool-(skills|permissions)\.json$|commitlint\.config\.mts$|tsconfig[^/]*\.json$)/,
   frontend:
     /^(packages\/(frontend|api-shared)\/|scripts\/testing\/(runUnitTests|runWebdriverTests)\.sh$|assets\/brand\/|agent-tool\.json$)/,
   backendV2: /^packages\/(backend-v2|api-shared)\//,
@@ -38,19 +39,28 @@ export function ciDiffRange(
   return `${base}...${head}`;
 }
 
+/** Each scope, applicable or not by `applies`. */
+function scopesWhere(
+  applies: (scope: CiScope) => boolean,
+): Record<CiScope, boolean> {
+  return {
+    tooling: applies("tooling"),
+    frontend: applies("frontend"),
+    backendV2: applies("backendV2"),
+    apiShared: applies("apiShared"),
+    website: applies("website"),
+    terraform: applies("terraform"),
+  };
+}
+
 export function ciScopes(paths: readonly string[]): Record<CiScope, boolean> {
   const common = paths.some((path) => COMMON.test(path));
-  return Object.fromEntries(
-    Object.entries(CI_SCOPES).map(([scope, pattern]) => [
-      scope,
-      common || paths.some((path) => pattern.test(path)),
-    ]),
-  ) as Record<CiScope, boolean>;
+  return scopesWhere(
+    (scope) => common || paths.some((path) => CI_SCOPES[scope].test(path)),
+  );
 }
 
 /** Every lane runs when there is no usable diff (e.g. a new branch push). */
 export function allScopes(): Record<CiScope, boolean> {
-  return Object.fromEntries(
-    Object.keys(CI_SCOPES).map((scope) => [scope, true]),
-  ) as Record<CiScope, boolean>;
+  return scopesWhere(() => true);
 }

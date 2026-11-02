@@ -131,6 +131,11 @@ describe("pre-push", () => {
         recursive: true,
       });
     }
+    // The hook classifies the push with CI's policy.
+    mkdirSync(path.join(repo, "scripts/checks"));
+    for (const file of ["scripts/checks/ciChanges.ts", "scripts/checks/ciPolicy.ts"]) {
+      cpSync(path.join(REPO_ROOT, file), path.join(repo, file));
+    }
     cpSync(path.join(REPO_ROOT, "agent-tool.json"), path.join(repo, "agent-tool.json"));
     cpSync(path.join(REPO_ROOT, "commitlint.config.mts"), path.join(repo, "commitlint.config.mts"));
     writeFileSync(path.join(repo, ".gitignore"), "node_modules/\n");
@@ -298,56 +303,69 @@ describe("pre-push", () => {
 
   /**
    * A `terraform` stub on PATH that reports its arguments and exits with
-   * `exitCode`, plus a terraform/ tree whose `bun test` passes or fails.
+   * `fmtExit`, plus (on main) a terraform/ tree whose `bun test` passes or
+   * fails.
    */
-  function terraformArea(repo: string, fmtExit: number, testPasses: boolean) {
+  function terraformArea(fmtExit: number, testPasses: boolean) {
     const bin = tempDir();
     writeFileSync(
       path.join(bin, "terraform"),
       `#!/bin/sh\necho "LANE:terraform $*"\nexit ${fmtExit}\n`,
     );
     chmodSync(path.join(bin, "terraform"), 0o755);
-    mkdirSync(path.join(repo, "terraform/scripts"), { recursive: true });
-    writeFileSync(path.join(repo, "terraform/main.tf"), "locals {}\n");
-    writeFileSync(
-      path.join(repo, "terraform/scripts/tf.test.ts"),
-      `import {expect, test} from "bun:test";\n` +
-        `test("wrapper", () => {\n` +
-        `  console.log("LANE:terraform-wrapper");\n` +
-        `  expect(${testPasses}).toBe(true);\n` +
-        `});\n`,
-    );
-    commitAll(repo, "chore: add terraform");
-    return { PATH: `${bin}:${process.env["PATH"]}` };
+    const setup = (repo: string) => {
+      mkdirSync(path.join(repo, "terraform/scripts"), { recursive: true });
+      writeFileSync(path.join(repo, "terraform/main.tf"), "locals {}\n");
+      writeFileSync(
+        path.join(repo, "terraform/scripts/tf.test.ts"),
+        `import {expect, test} from "bun:test";\n` +
+          `test("wrapper", () => {\n` +
+          `  console.log("LANE:terraform-wrapper");\n` +
+          `  expect(${testPasses}).toBe(true);\n` +
+          `});\n`,
+      );
+      commitAll(repo, "chore: add terraform");
+    };
+    return { setup, env: { PATH: `${bin}:${process.env["PATH"]}` } };
+  }
+
+  /** A terraform repo whose branch edits `file`. */
+  function terraformPush(file: string, fmtExit = 0, testPasses = true) {
+    const { setup, env } = terraformArea(fmtExit, testPasses);
+    const repo = hookRepo(setup);
+    appendFileSync(path.join(repo, file), "\n");
+    commitAll(repo, "chore: edit terraform");
+    const result = prePush(repo, undefined, env);
+    return { ...result, output: result.stdout + result.stderr };
   }
 
   test("terraform-only changes run the terraform checks, not tooling", () => {
-    const repo = hookRepo();
-    const env = terraformArea(repo, 0, true);
-    const result = prePush(repo, undefined, env);
-    const output = result.stdout + result.stderr;
+    const result = terraformPush("terraform/main.tf");
     expect(result.exitCode).toBe(0);
-    expect(output).toContain("LANE:terraform fmt -check -recursive terraform");
-    expect(output).toContain("LANE:terraform-wrapper");
-    expect(output).not.toContain("LANE:tooling");
+    expect(result.output).toContain("LANE:terraform fmt -check -recursive terraform");
+    expect(result.output).toContain("LANE:terraform-wrapper");
+    expect(result.output).not.toContain("LANE:tooling");
+  });
+
+  // The root typecheck covers the wrapper's TypeScript.
+  test("terraform script changes also run the tooling checks", () => {
+    const result = terraformPush("terraform/scripts/tf.test.ts");
+    expect(result.exitCode).toBe(0);
+    expect(result.output).toContain("LANE:terraform-wrapper");
+    expect(result.output).toContain("LANE:tooling");
   });
 
   test("a terraform formatting failure blocks the push", () => {
-    const repo = hookRepo();
-    const env = terraformArea(repo, 3, true);
-    const result = prePush(repo, undefined, env);
+    const result = terraformPush("terraform/main.tf", 3);
     expect(result.exitCode).not.toBe(0);
-    expect(result.stdout + result.stderr).not.toContain("All checks passed.");
+    expect(result.output).not.toContain("All checks passed.");
   });
 
   test("a failing wrapper test blocks the push", () => {
-    const repo = hookRepo();
-    const env = terraformArea(repo, 0, false);
-    const result = prePush(repo, undefined, env);
-    const output = result.stdout + result.stderr;
+    const result = terraformPush("terraform/main.tf", 0, false);
     expect(result.exitCode).not.toBe(0);
-    expect(output).toContain("LANE:terraform-wrapper");
-    expect(output).not.toContain("All checks passed.");
+    expect(result.output).toContain("LANE:terraform-wrapper");
+    expect(result.output).not.toContain("All checks passed.");
   });
 
   /**
@@ -443,6 +461,20 @@ describe("pre-push", () => {
     const output = result.stdout + result.stderr;
     expect(result.exitCode).toBe(0);
     expectInOrder(output, ["LANE:tooling", ...PACKAGE_CHECKS]);
+  });
+
+  // CI runs every lane for these, so the hook runs every local one.
+  test("toolchain and workflow changes check the tooling and every package", () => {
+    for (const file of [".mise.toml", ".github/workflows/ci.yml"]) {
+      const repo = hookRepo(packageAreas());
+      mkdirSync(path.dirname(path.join(repo, file)), { recursive: true });
+      writeFileSync(path.join(repo, file), "# edit\n");
+      commitAll(repo, `ci: edit ${file}`);
+      const result = prePush(repo);
+      const output = result.stdout + result.stderr;
+      expect(result.exitCode).toBe(0);
+      expectInOrder(output, ["LANE:tooling", ...PACKAGE_CHECKS]);
+    }
   });
 
   test("a failing api-shared check blocks the push", () => {
