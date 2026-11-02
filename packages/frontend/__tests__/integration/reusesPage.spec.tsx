@@ -7,14 +7,10 @@ import {apiClientMethods} from '../util/apiClientMethods';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {mockIntersectionObserver} from '../util/intersectionObserver';
 import {API, serveMockApi, server} from '../util/msw';
-import {signIn, store} from '../util/signIn';
+import {signIn, store, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
 serveMockApi();
-afterEach(() => {
-  vi.restoreAllMocks();
-  vi.unstubAllGlobals();
-});
 beforeEach(() => {
   vi.spyOn(console, 'log').mockImplementation(() => {});
   vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -67,7 +63,7 @@ describe('infinite scrolling', () => {
     const observer = mockIntersectionObserver();
     signInHere();
     await seedReuses(101);
-    const engine = syncSession('test').sync;
+    const engine = syncSession(TEST_USER).sync;
     await engine.syncAll();
     const original = engine.entryReuses.bind(engine);
     const gate = Promise.withResolvers<void>();
@@ -139,7 +135,7 @@ describe('infinite scrolling', () => {
     const observer = mockIntersectionObserver();
     signInHere();
     await seedReuses(51);
-    const engine = syncSession('test').sync;
+    const engine = syncSession(TEST_USER).sync;
     await engine.syncAll();
     const original = engine.entryReuses.bind(engine);
     const gate = Promise.withResolvers<void>();
@@ -171,7 +167,7 @@ describe('infinite scrolling', () => {
     const observer = mockIntersectionObserver();
     signInHere();
     await seedReuses(101);
-    const engine = syncSession('test').sync;
+    const engine = syncSession(TEST_USER).sync;
     await engine.syncAll();
     const original = engine.entryReuses.bind(engine);
     const gate = Promise.withResolvers<void>();
@@ -211,7 +207,7 @@ describe('infinite scrolling', () => {
     await waitFor(() => expect(observer.observers).toHaveLength(1));
     const first = observer.latest();
     server.use(http.get(`${API}/entry_reuses`, () => HttpResponse.error()));
-    await act(() => syncSession('test').sync.adopt(2));
+    await act(() => syncSession(TEST_USER).sync.adopt(2));
     await waitFor(() =>
       expect(screen.queryByRole('list', {name: 'Reuses'})).toBeNull()
     );
@@ -356,7 +352,7 @@ it('retries the next page without dropping loaded rows or duplicating a shifted 
 
 it('coalesces reconnects during a read and refreshes only the newest page', async () => {
   signInHere();
-  const engine = syncSession('test').sync;
+  const engine = syncSession(TEST_USER).sync;
   await engine.syncAll();
   const original = engine.entryReuses.bind(engine);
   const gate = Promise.withResolvers<void>();
@@ -419,7 +415,7 @@ it('clears displayed history when a different data version is adopted', async ()
   renderAppAt('/test/activity/reuses');
   await list();
   server.use(http.get(`${API}/entry_reuses`, () => HttpResponse.error()));
-  await act(() => syncSession('test').sync.adopt(2));
+  await act(() => syncSession(TEST_USER).sync.adopt(2));
   await waitFor(() =>
     expect(screen.queryByRole('list', {name: 'Reuses'})).toBeNull()
   );

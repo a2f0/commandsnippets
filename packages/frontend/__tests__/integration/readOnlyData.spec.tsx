@@ -9,12 +9,11 @@ import invariant from 'invariant';
 import {vi} from 'vitest';
 import {syncSession} from '../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {serveMockApi, server} from '../util/msw';
+import {recordRequests, serveMockApi} from '../util/msw';
 import {signIn, store, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
 serveMockApi();
-afterEach(() => vi.restoreAllMocks());
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
@@ -30,15 +29,10 @@ function byId(id: string): HTMLElement {
 }
 
 /** Every write the page sends from now on. */
-function writesSent(): string[] {
-  const writes: string[] = [];
-  server.events.on('request:start', ({request}) => {
-    if (request.method !== 'GET') {
-      writes.push(`${request.method} ${request.url}`);
-    }
-  });
-  return writes;
-}
+const writesSent = () =>
+  recordRequests(({method, url}) =>
+    method === 'GET' ? undefined : `${method} ${url}`
+  );
 
 describe("Another user's page", () => {
   it("shows staff that user's data, marked read-only", async () => {

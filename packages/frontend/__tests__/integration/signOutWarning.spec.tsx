@@ -18,12 +18,18 @@ import {
 } from '../../src/lib/state/signOutWarning';
 import {hasQueuedWrites, syncSession} from '../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {API, HOST, offlineForWrites, serveMockApi, server} from '../util/msw';
+import {
+  API,
+  HOST,
+  offlineForWrites,
+  recordRequests,
+  serveMockApi,
+  server,
+} from '../util/msw';
 import {signIn, store, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
 serveMockApi();
-afterEach(() => vi.restoreAllMocks());
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
@@ -138,15 +144,11 @@ it("never acts on a warning left from another account's sign-out", async () => {
   await waitFor(() =>
     expect(screen.queryByText('Changes not saved yet')).toBeNull()
   );
-  const signOuts: string[] = [];
-  server.events.on('request:start', ({request}) => {
-    if (new URL(request.url).pathname === '/api-token-deauth/') {
-      signOuts.push(request.url);
-    }
-  });
+  const signOuts = recordRequests(({url}, path) =>
+    path === '/api-token-deauth/' ? url : undefined
+  );
   await confirmSignOut({discardQueued: true});
   expect(signOuts).toEqual([]);
-  server.events.removeAllListeners();
 });
 
 it('discards the unsent writes though the session ended as the user signed out', async () => {
@@ -217,8 +219,9 @@ describe('a queue that takes longer to send than sign-out waits', () => {
     await logOut();
     await queueHanging();
     const first = requestSignOut();
-    await new Promise(resolve => setTimeout(resolve, 25));
+    // Asked again while the first is deciding: it joins the first.
     const second = requestSignOut();
+    expect(second).toBe(first);
     expect(
       await screen.findByText('Changes not saved yet')
     ).toBeInTheDocument();
@@ -226,9 +229,7 @@ describe('a queue that takes longer to send than sign-out waits', () => {
     await waitFor(() =>
       expect(screen.queryByText('Changes not saved yet')).toBeNull()
     );
-    await Promise.all([first, second]);
-    // Past the second request's wait too: it never comes back.
-    await new Promise(resolve => setTimeout(resolve, 150));
+    await first;
 
     expect(screen.queryByText('Changes not saved yet')).toBeNull();
     expect(store.loggedInUser).toBe(TEST_USER);

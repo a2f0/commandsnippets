@@ -24,10 +24,6 @@ describe('TagsEntries Behavior', () => {
     await expect(secondEntry).toBeExisting();
     await expect(secondEntry).toBeDisplayed();
 
-    console.log(
-      'OK: Entry list test completed: entries are properly displayed for the tag'
-    );
-
     expect(browser.currentTestErrors).toHaveLength(0);
   });
 });

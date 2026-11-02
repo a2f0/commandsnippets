@@ -21,7 +21,6 @@ import {
   emptyObjectSchema,
   errorDocumentSchema,
   restoreResultSchema,
-  type TagTextEntryCreateDocument,
   type TagUpdateDocument,
   type TextEntryCreateDocument,
   type TextEntryReusedCreateDocument,
@@ -39,8 +38,7 @@ import {
   textEntryReusedListDocumentSchema,
   userDocumentSchema,
 } from '@commandsnippets/api-shared';
-import {setupServer} from 'msw/node';
-import {afterAll, beforeAll, beforeEach, describe, expect, it} from 'vitest';
+import {beforeEach, describe, expect, it} from 'vitest';
 import type * as z from 'zod/mini';
 
 import {
@@ -51,7 +49,8 @@ import {
 import {entriesResponse} from '../../../test/mocks/entries/entriesResponse';
 import {manyEntriesResponse} from '../../../test/mocks/entries/manyEntriesResponse';
 import {tagsResponse} from '../../../test/mocks/tags/tagsResponse';
-import {API, HOST, server as unitServer} from '../../util/msw';
+import {reorderDocument, tagEntryDocument} from '../../util/documents';
+import {API, HOST, serveMockApi} from '../../util/msw';
 
 /** `body` parses with `schema`, and parsing drops nothing from it. */
 function expectContract(schema: z.ZodMiniType, body: unknown) {
@@ -110,26 +109,6 @@ async function check({
     expectContract(schema, JSON.parse(text));
   }
 }
-
-/** A `POST /tags_entries` document: tag `entryId` with `tagId`. */
-const reorderDocument = (
-  type: 'Tag' | 'TagTextEntryThroughModel',
-  top: string,
-  bottom: string
-) => ({data: {type, attributes: {top, bottom}}});
-
-const tagEntryDocument = (
-  tagId: string,
-  entryId: string
-): TagTextEntryCreateDocument => ({
-  data: {
-    type: 'TagTextEntryThroughModel',
-    relationships: {
-      tag: {data: {type: 'Tag', id: tagId}},
-      text_entry: {data: {type: 'TextEntry', id: entryId}},
-    },
-  },
-});
 
 // In the order they run: the handlers keep state (resetMSWState).
 const exchanges: Exchange[] = [
@@ -799,13 +778,12 @@ const exchanges: Exchange[] = [
 /** Handlers that are not the API's (the test harness's readiness probe). */
 const notTheApi = new Set([`GET ${API}/health`]);
 
-describe('the E2E handlers (src/msw/handlers.ts)', () => {
-  const server = setupServer(...handlers);
+serveMockApi({onUnhandledFrame: 'error'});
 
-  beforeAll(() => server.listen({onUnhandledFrame: 'error'}));
-  afterAll(() => server.close());
+describe('the E2E handlers (src/msw/handlers.ts)', () => {
   beforeEach(() => {
-    resetMSWState();
+    // The mock API's own entries, not the unit tests' (`resetMockApi`).
+    setRuntimeEntriesOverride(null);
   });
 
   it('answer every request as the API would', async () => {
@@ -857,9 +835,6 @@ describe('the E2E handlers (src/msw/handlers.ts)', () => {
 });
 
 describe("the unit tests' server (__tests__/util/msw.ts)", () => {
-  beforeAll(() => unitServer.listen({onUnhandledFrame: 'error'}));
-  afterAll(() => unitServer.close());
-
   it('answers every request as the API would', async () => {
     await check({
       handler: '',

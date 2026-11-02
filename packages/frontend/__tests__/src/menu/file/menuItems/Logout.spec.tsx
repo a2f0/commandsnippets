@@ -1,4 +1,4 @@
-import {screen, waitFor} from '@testing-library/react';
+import {screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {assignLoggedInCookie} from '../../../../util/assignLoggedInCookie';
@@ -23,8 +23,8 @@ describe('File Menu', () => {
     expect(screen.queryByText('Login with Google')).toBeNull();
     expect(screen.queryByText('Login with GitHub')).toBeNull();
     await user.pointer({target: logoutButton, keys: '[MouseLeft]'});
-    await waitFor(() => screen.getByText(/Login with Google/i));
-    await waitFor(() => screen.getByText(/Login with GitHub/i));
+    await screen.findByText(/Login with Google/i);
+    await screen.findByText(/Login with GitHub/i);
     expect(history.location.pathname).toBe('/');
     expect(document.getElementById('signInPage')).toBeInTheDocument();
   });

@@ -4,7 +4,7 @@ import {appMode} from '../../src/lib/shared';
 import {syncSession} from '../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {serveMockApi} from '../util/msw';
-import {signIn, store} from '../util/signIn';
+import {signIn, store, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
 serveMockApi();
@@ -57,7 +57,7 @@ describe('Context menus', () => {
   it("offer to make a tag private once it is public, from the tag's own state", async () => {
     renderAppAt('/test/test-tag-1');
     const tag = await screen.findByText('test-tag-1');
-    const own = syncSession('test');
+    const own = syncSession(TEST_USER);
 
     fireEvent.contextMenu(tag);
     fireEvent.click(await screen.findByRole('menuitem', {name: 'Make public'}));

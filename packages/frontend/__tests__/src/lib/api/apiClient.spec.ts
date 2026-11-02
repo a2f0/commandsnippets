@@ -285,7 +285,6 @@ beforeEach(() => {
 
 afterEach(() => {
   signOut.mockReset();
-  vi.restoreAllMocks();
 });
 
 // Every API route is owner-only (reads included), so every request must send

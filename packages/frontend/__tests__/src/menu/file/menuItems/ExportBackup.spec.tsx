@@ -21,6 +21,7 @@ import {assignLoggedInCookie} from '../../../../util/assignLoggedInCookie';
 import {
   API,
   offlineForWrites,
+  recordRequests,
   serveMockApi,
   server,
 } from '../../../../util/msw';
@@ -66,7 +67,6 @@ let downloads: Download[];
 
 serveMockApi();
 afterEach(() => {
-  vi.restoreAllMocks();
   Reflect.deleteProperty(URL, 'createObjectURL');
   Reflect.deleteProperty(URL, 'revokeObjectURL');
 });
@@ -92,18 +92,15 @@ async function exportBackup() {
 }
 
 /** Who each backup request named: the user, and the account. */
-function backupRequests(): [string | null, string | null][] {
-  const requests: [string | null, string | null][] = [];
-  server.events.on('request:start', ({request}) => {
-    if (new URL(request.url).pathname === '/api/v1/user/backup') {
-      requests.push([
-        request.headers.get(EXPECTED_USER_HEADER),
-        request.headers.get(EXPECTED_USER_ID_HEADER),
-      ]);
-    }
-  });
-  return requests;
-}
+const backupRequests = () =>
+  recordRequests(({headers}, path) =>
+    path === '/api/v1/user/backup'
+      ? [
+          headers.get(EXPECTED_USER_HEADER),
+          headers.get(EXPECTED_USER_ID_HEADER),
+        ]
+      : undefined
+  );
 
 async function savedBackup() {
   await waitFor(() => expect(downloads).toHaveLength(1));

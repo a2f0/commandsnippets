@@ -81,8 +81,6 @@ afterEach(() => {
   localStorage.removeItem('ct:opt-out');
   document.documentElement.removeAttribute('data-ct-disabled');
   document.body.innerHTML = '';
-  vi.restoreAllMocks();
-  vi.unstubAllGlobals();
   vi.unstubAllEnvs();
 });
 

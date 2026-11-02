@@ -7,17 +7,7 @@
 import {DATA_VERSION_HEADER} from '@commandsnippets/api-shared';
 import invariant from 'invariant';
 import {http} from 'msw/http';
-import {setupServer} from 'msw/node';
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {apiClient} from '../../../../src/lib/api/apiClient';
 import {
   CommandsnippetsDatabase,
@@ -28,58 +18,45 @@ import {adoptVersion, heldVersion} from '../../../../src/lib/sync/dataVersion';
 import {enqueue} from '../../../../src/lib/sync/outbox';
 import {ownSyncApi} from '../../../../src/lib/sync/session';
 import {createSyncEngine} from '../../../../src/lib/sync/sync';
-import {handlers, resetMSWState} from '../../../../src/msw/handlers';
-import {API} from '../../../util/msw';
+import {setRuntimeEntriesOverride} from '../../../../src/msw/handlers';
+import {API, recordRequests, serveMockApi, server} from '../../../util/msw';
 import {restoreElsewhere} from '../../../util/restoreElsewhere';
+import {TEST_USER} from '../../../util/signIn';
 import {entry, tag} from '../../../util/storeFixtures';
 
-const OWNER = 'test';
-
-const server = setupServer(...handlers);
-
-beforeAll(() => server.listen({onUnhandledFrame: 'error'}));
-afterAll(() => server.close());
+serveMockApi({onUnhandledFrame: 'error'});
 
 let db: CommandsnippetsDatabase;
 let databases = 0;
 beforeEach(() => {
-  resetMSWState();
+  // The mock API's own entries, not the unit tests' (`resetMockApi`).
+  setRuntimeEntriesOverride(null);
   // The handlers announce each request.
   vi.spyOn(console, 'log').mockImplementation(() => {});
   databases += 1;
   db = new CommandsnippetsDatabase(`data-version-spec-${databases}`);
 });
-afterEach(async () => {
-  vi.restoreAllMocks();
-  server.resetHandlers();
-  server.events.removeAllListeners();
-  await db.delete();
-});
+afterEach(() => db.delete());
 
 const engine = () =>
   createSyncEngine(
     db,
     ownSyncApi,
     `data-version-spec-${databases}`,
-    OWNER,
-    apiClient.writesAs(OWNER)
+    TEST_USER,
+    apiClient.writesAs(TEST_USER)
   );
 
 const entryIds = async () =>
-  (await db.entries.where('owner').equals(OWNER).toArray())
+  (await db.entries.where('owner').equals(TEST_USER).toArray())
     .map(row => row.id)
     .sort();
 
 /** The data version each request to the API named. */
-function versionsNamed(): (string | null)[] {
-  const named: (string | null)[] = [];
-  server.events.on('request:start', ({request}) => {
-    if (!new URL(request.url).pathname.endsWith('/user/')) {
-      named.push(request.headers.get(DATA_VERSION_HEADER));
-    }
-  });
-  return named;
-}
+const versionsNamed = () =>
+  recordRequests(({headers}, path) =>
+    path.endsWith('/user/') ? undefined : headers.get(DATA_VERSION_HEADER)
+  );
 
 /**
  * Hold the first `method` request to `path` until released; the handlers
@@ -113,79 +90,79 @@ const queuedVersions = async () =>
 
 describe('adoptVersion', () => {
   it('holds the first version read of data never read: what was made here stays', async () => {
-    await db.cursors.put({owner: OWNER, key: OWNER_ID_KEY, after: '1'});
-    await db.entries.put({...entry('local-1', {}), owner: OWNER});
+    await db.cursors.put({owner: TEST_USER, key: OWNER_ID_KEY, after: '1'});
+    await db.entries.put({...entry('local-1', {}), owner: TEST_USER});
     await enqueue(
       db,
-      OWNER,
+      TEST_USER,
       {kind: 'deleteEntry', entryId: 'local-1'},
       '2026-01-01T00:00:00.000000'
     );
     expect(await queuedVersions()).toEqual([undefined]);
 
-    expect(await adoptVersion(db, OWNER, 1)).toBe(false);
+    expect(await adoptVersion(db, TEST_USER, 1)).toBe(false);
 
-    expect(await heldVersion(db, OWNER)).toBe(1);
+    expect(await heldVersion(db, TEST_USER)).toBe(1);
     expect(await entryIds()).toEqual(['local-1']);
     // Queued before any version was held: of the one first read.
     expect(await queuedVersions()).toEqual([1]);
     // The same version again changes nothing.
-    expect(await adoptVersion(db, OWNER, 1)).toBe(false);
+    expect(await adoptVersion(db, TEST_USER, 1)).toBe(false);
     expect(await entryIds()).toEqual(['local-1']);
   });
 
   it('clears data read with no version held, of none known', async () => {
-    await db.entries.put({...entry('1', {}), owner: OWNER});
+    await db.entries.put({...entry('1', {}), owner: TEST_USER});
     await db.cursors.bulkPut([
-      {owner: OWNER, key: OWNER_ID_KEY, after: '1'},
-      {owner: OWNER, key: 'entries', after: '2026-01-01T00:00:00,1'},
+      {owner: TEST_USER, key: OWNER_ID_KEY, after: '1'},
+      {owner: TEST_USER, key: 'entries', after: '2026-01-01T00:00:00,1'},
     ]);
     await enqueue(
       db,
-      OWNER,
+      TEST_USER,
       {kind: 'deleteEntry', entryId: '1'},
       '2026-01-01T00:00:00.000000'
     );
 
-    expect(await adoptVersion(db, OWNER, 1)).toBe(true);
+    expect(await adoptVersion(db, TEST_USER, 1)).toBe(true);
 
     expect(await entryIds()).toEqual([]);
     expect(await db.outbox.count()).toBe(0);
     expect(
-      (await db.cursors.where('owner').equals(OWNER).toArray())
+      (await db.cursors.where('owner').equals(TEST_USER).toArray())
         .map(({key}) => key)
         .sort()
     ).toEqual([VERSION_KEY, OWNER_ID_KEY].sort());
-    expect(await heldVersion(db, OWNER)).toBe(1);
+    expect(await heldVersion(db, TEST_USER)).toBe(1);
   });
 
   it("clears an owner's rows of another version, but the account's binding", async () => {
-    await adoptVersion(db, OWNER, 1);
-    await db.entries.put({...entry('1', {}), owner: OWNER});
-    await db.tags.put({...tag('2', {}), owner: OWNER});
+    await adoptVersion(db, TEST_USER, 1);
+    await db.entries.put({...entry('1', {}), owner: TEST_USER});
+    await db.tags.put({...tag('2', {}), owner: TEST_USER});
     await db.entries.put({...entry('9', {}), owner: 'alice'});
     await db.cursors.bulkPut([
-      {owner: OWNER, key: OWNER_ID_KEY, after: '1'},
-      {owner: OWNER, key: 'entries', after: '2026-01-01T00:00:00,1'},
+      {owner: TEST_USER, key: OWNER_ID_KEY, after: '1'},
+      {owner: TEST_USER, key: 'entries', after: '2026-01-01T00:00:00,1'},
     ]);
     await enqueue(
       db,
-      OWNER,
+      TEST_USER,
       {kind: 'deleteEntry', entryId: '1'},
       '2026-01-01T00:00:00.000000'
     );
 
-    expect(await adoptVersion(db, OWNER, 2)).toBe(true);
+    expect(await adoptVersion(db, TEST_USER, 2)).toBe(true);
 
     expect(await entryIds()).toEqual([]);
-    expect(await db.tags.where('owner').equals(OWNER).count()).toBe(0);
+    expect(await db.tags.where('owner').equals(TEST_USER).count()).toBe(0);
     expect(await db.outbox.count()).toBe(0);
     expect(
-      (await db.cursors.where('owner').equals(OWNER).toArray())
+      (await db.cursors.where('owner').equals(TEST_USER).toArray())
         .map(({key}) => key)
         .sort()
     ).toEqual([VERSION_KEY, OWNER_ID_KEY].sort());
-    expect(await heldVersion(db, OWNER)).toBe(2);
+    expect(await heldVersion(db, TEST_USER)).toBe(2);
     // Another owner's rows (staff read them) are theirs to keep.
     expect(await db.entries.where('owner').equals('alice').count()).toBe(1);
   });
@@ -195,7 +172,7 @@ describe('the sync', () => {
   it('names the version its rows are of in every read', async () => {
     const named = versionsNamed();
     await engine().syncAll();
-    expect(await heldVersion(db, OWNER)).toBe(1);
+    expect(await heldVersion(db, TEST_USER)).toBe(1);
     expect(named.length).toBeGreaterThan(0);
     expect(new Set(named)).toEqual(new Set(['1']));
   });
@@ -209,7 +186,7 @@ describe('the sync', () => {
     await restoreElsewhere();
     await sync.syncAll();
 
-    expect(await heldVersion(db, OWNER)).toBe(2);
+    expect(await heldVersion(db, TEST_USER)).toBe(2);
     const after = await entryIds();
     expect(after).toHaveLength(before.length);
     expect(after.some(id => before.includes(id))).toBe(false);
@@ -238,7 +215,7 @@ describe('the sync', () => {
     expect(restored).toBe(true);
     expect(named).toContain('1');
     expect(named).toContain('2');
-    expect(await heldVersion(db, OWNER)).toBe(2);
+    expect(await heldVersion(db, TEST_USER)).toBe(2);
     const after = await entryIds();
     expect(after).toHaveLength(before.length);
     expect(after.some(id => before.includes(id))).toBe(false);
@@ -249,21 +226,18 @@ describe('the sync', () => {
     const tags = gate('get', '/tags');
     const syncing = sync.syncAll();
     await tags.reached;
-    let adopted = false;
-    const adopting = sync.adopt(2).then(() => {
-      adopted = true;
-    });
-    await new Promise(resolve => setTimeout(resolve, 20));
-    // Its turn is after the sync's.
-    expect(adopted).toBe(false);
+    const done: string[] = [];
+    const adopting = sync.adopt(2).then(() => done.push('adopt'));
 
     tags.release();
-    await syncing;
+    await syncing.then(() => done.push('sync'));
     await adopting;
+    // Its turn is after the sync's.
+    expect(done).toEqual(['sync', 'adopt']);
 
-    expect(await heldVersion(db, OWNER)).toBe(2);
+    expect(await heldVersion(db, TEST_USER)).toBe(2);
     expect(await entryIds()).toEqual([]);
-    expect(await db.tags.where('owner').equals(OWNER).count()).toBe(0);
+    expect(await db.tags.where('owner').equals(TEST_USER).count()).toBe(0);
   });
 
   it('stores no page of a version this copy no longer holds', async () => {
@@ -272,14 +246,14 @@ describe('the sync', () => {
     const syncing = sync.syncAll();
     await tags.reached;
     // Held at another version out of turn (a tab the lock did not reach).
-    await adoptVersion(db, OWNER, 2);
+    await adoptVersion(db, TEST_USER, 2);
     tags.release();
 
     await syncing;
 
     // Not stored at version 2: the sync took the active one up again, and
     // read it from the start.
-    expect(await heldVersion(db, OWNER)).toBe(1);
+    expect(await heldVersion(db, TEST_USER)).toBe(1);
     expect((await entryIds()).length).toBeGreaterThan(0);
   });
 
@@ -290,21 +264,21 @@ describe('the sync', () => {
     invariant(first, 'the mock has entries');
     await enqueue(
       db,
-      OWNER,
+      TEST_USER,
       {kind: 'deleteEntry', entryId: first},
       '2026-01-01T00:00:00.000000'
     );
     const deleting = gate('delete', `/entries/${first}`);
     const flushing = sync.flush();
     await deleting.reached;
-    await adoptVersion(db, OWNER, 2);
+    await adoptVersion(db, TEST_USER, 2);
     deleting.release();
 
     await flushing;
 
     // Not stored at version 2: the copy holds the active version again.
-    expect(await heldVersion(db, OWNER)).toBe(1);
-    expect(await db.entries.get([OWNER, first])).toBeUndefined();
+    expect(await heldVersion(db, TEST_USER)).toBe(1);
+    expect(await db.entries.get([TEST_USER, first])).toBeUndefined();
   });
 
   it('drops the writes queued against a version no longer active', async () => {
@@ -313,7 +287,7 @@ describe('the sync', () => {
     const [first] = await entryIds();
     await enqueue(
       db,
-      OWNER,
+      TEST_USER,
       {kind: 'deleteEntry', entryId: first ?? ''},
       '2026-01-01T00:00:00.000000'
     );
@@ -324,6 +298,6 @@ describe('the sync', () => {
     await sync.flush();
 
     expect(await db.outbox.count()).toBe(0);
-    expect(await heldVersion(db, OWNER)).toBe(2);
+    expect(await heldVersion(db, TEST_USER)).toBe(2);
   });
 });

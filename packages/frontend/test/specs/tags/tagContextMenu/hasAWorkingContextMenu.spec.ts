@@ -5,14 +5,6 @@ describe('Tag Context Menu', () => {
     await BasePage.open('');
     await expect(BasePage.signInPage).toBeDisplayed();
 
-    // Verify MSW is providing expected data
-    const apiCheck = await BasePage.checkTagsAndEntries();
-
-    console.log('MSW API check:', apiCheck);
-    expect(apiCheck.tagsOk).toBe(true);
-    expect(apiCheck.entriesOk).toBe(true);
-    expect(apiCheck.tagsCount).toBe(4); // MSW provides 4 tags
-
     await browser.login();
     await BasePage.open('');
     // Verify tag list and individual tags are present

@@ -254,6 +254,9 @@ export default defineConfig(({command, mode}) => {
       environment: 'jsdom',
       setupFiles: ['fake-indexeddb/auto', '__tests__/setup.ts'],
       include: ['__tests__/**/*.{test,spec}.{ts,tsx}'],
+      // Spies (vi.spyOn) and stubbed globals are undone before each test.
+      restoreMocks: true,
+      unstubGlobals: true,
     },
     plugins,
   };

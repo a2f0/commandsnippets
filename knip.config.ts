@@ -8,11 +8,6 @@ const config: KnipConfig = {
   treatConfigHintsAsErrors: true,
   // A type an exported signature uses stays exported, so it can be named.
   ignoreExportsUsedInFile: {interface: true, type: true},
-  ignoreIssues: {
-    // Exports the page-object class its one instance is built from; the
-    // frontend test refactor owns the file.
-    'packages/frontend/test/pageobjects/base.ts': ['exports'],
-  },
   workspaces: {
     '.': {
       entry: ['scripts/**/*.ts', 'terraform/scripts/**/*.ts'],

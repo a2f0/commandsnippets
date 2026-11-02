@@ -5,13 +5,6 @@ describe('Tag Main Menu', () => {
     await BasePage.open('');
     await expect(BasePage.signInPage).toBeDisplayed();
 
-    // Verify MSW is providing the expected tag data
-    const apiCheck = await BasePage.checkTags();
-
-    console.log('API check result:', apiCheck);
-    expect(apiCheck.ok).toBe(true);
-    expect(apiCheck.dataLength).toBe(4); // MSW provides 4 tags
-
     // Reset before authenticated navigation to assert counts for that load
     await browser.resetMSWRequestCounts();
 

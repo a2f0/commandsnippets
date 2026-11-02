@@ -3,8 +3,6 @@ import {vi} from 'vitest';
 import {useInfiniteScroll} from '../../../src/hooks/useInfiniteScroll';
 import {mockIntersectionObserver} from '../../util/intersectionObserver';
 
-afterEach(() => vi.unstubAllGlobals());
-
 interface Props {
   loadMore: () => void;
   enabled?: boolean;

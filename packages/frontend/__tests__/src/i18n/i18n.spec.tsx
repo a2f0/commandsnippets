@@ -114,8 +114,6 @@ describe('i18n', () => {
     await waitFor(() => {
       expect(localStorageSpy).toHaveBeenCalledWith('i18nextLng', 'es');
     });
-
-    localStorageSpy.mockRestore();
   });
 
   it.each([
@@ -297,7 +295,6 @@ describe('i18n as the page loads', () => {
 
   afterEach(() => {
     localStorage.removeItem('i18nextLng');
-    vi.restoreAllMocks();
   });
 
   it('uses the language saved on this device', async () => {

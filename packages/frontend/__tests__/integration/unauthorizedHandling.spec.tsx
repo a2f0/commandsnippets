@@ -1,13 +1,12 @@
 import {CURSOR_START, type TagDocument} from '@commandsnippets/api-shared';
 import {act} from '@testing-library/react';
 import {HttpResponse, http} from 'msw/http';
-import {setupServer} from 'msw/node';
 import {vi} from 'vitest';
 
 import {listUsers} from '../../src/lib/api/adminApi';
 import {apiClient} from '../../src/lib/api/apiClient';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {API} from '../util/msw';
+import {API, serveMockApi, server} from '../util/msw';
 import {signIn, store} from '../util/signIn';
 
 /** A backend-v2 error document (JSON:API) with one error. */
@@ -39,14 +38,7 @@ const tag: TagDocument = {
   },
 };
 
-const server = setupServer();
-
-beforeAll(() => server.listen({onUnhandledFrame: 'error'}));
-afterEach(() => {
-  server.resetHandlers();
-  vi.restoreAllMocks();
-});
-afterAll(() => server.close());
+serveMockApi({onUnhandledFrame: 'error'});
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();

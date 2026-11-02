@@ -28,5 +28,11 @@ if (typeof window !== 'undefined') {
   // 5 second test timeout, so a wait in vain fails with what it waited for.
   configure({asyncUtilTimeout: 3000});
   beforeEach(() => resetMockApi());
-  afterEach(() => resetApp());
+  // The cleanup runs the app's own modules: a test's spies and stubbed
+  // globals go first (the config undoes them only before the next test).
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    return resetApp();
+  });
 }

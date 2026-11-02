@@ -14,7 +14,6 @@ import {signIn, store} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
 serveMockApi();
-afterEach(() => vi.restoreAllMocks());
 beforeEach(() => {
   vi.spyOn(console, 'log').mockImplementation(() => {});
   Object.defineProperty(navigator, 'clipboard', {

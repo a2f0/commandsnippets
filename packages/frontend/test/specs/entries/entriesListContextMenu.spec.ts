@@ -34,10 +34,6 @@ describe('Entry Main Menu Behavior', () => {
     await browser.keys('Test Body Content');
     await expect(BasePage.entryNewBottomBody).toHaveValue('Test Body Content');
 
-    console.log(
-      'OK: Entry context menu test completed: all basic MSW-integrated functionality verified'
-    );
-
     // Initial loading reads the tags once and the entries count plus one page.
     await browser.toBeRequestedTimes(
       'GET',

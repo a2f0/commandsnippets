@@ -17,7 +17,6 @@ import {renderAppAt} from '../util/TestAppRouter';
 const ROW_HEIGHT = 72;
 
 serveMockApi();
-afterEach(() => vi.restoreAllMocks());
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();

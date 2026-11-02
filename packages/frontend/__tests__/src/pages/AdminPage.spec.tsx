@@ -1,51 +1,45 @@
-import {
-  adminUserUpdateDocumentSchema,
-  CODES,
-} from '@commandsnippets/api-shared';
+import {type AdminUser, CODES} from '@commandsnippets/api-shared';
 import {act, fireEvent, screen, waitFor, within} from '@testing-library/react';
+import invariant from 'invariant';
 import {HttpResponse, http} from 'msw/http';
-import {setupServer} from 'msw/node';
 
-import {errorDocument, onePage, pagination} from '../../../src/msw/documents';
+import {
+  errorDocument,
+  listDocument,
+  pagination,
+} from '../../../src/msw/documents';
+import type {MockAdminUser} from '../../../src/msw/fixtures';
+import {adminAuditLog, adminUsers} from '../../../src/msw/state';
 import {assignLoggedInCookie} from '../../util/assignLoggedInCookie';
-import {API} from '../../util/msw';
+import {API, recordRequests, serveMockApi, server} from '../../util/msw';
 import {signIn, store} from '../../util/signIn';
 import {renderAppAt} from '../../util/TestAppRouter';
 
-interface MockUser {
-  id: string;
-  username: string;
-  email: string;
-  is_staff: boolean;
-  is_active: boolean;
-  date_marked_for_deletion?: string | null;
-}
+// The mock API's admin routes (src/msw/routes/admin.ts), over its users
+// (`adminUsers`): test, who is staff and signs in, and alice.
+serveMockApi();
 
-let viewerIsStaff = true;
-let adminForbidden = false;
-let users: MockUser[] = [];
-let listRequests: URLSearchParams[] = [];
-let patches: unknown[] = [];
+beforeAll(async () => {
+  // The route loads the page's module when first shown (React.lazy): load
+  // it here, so the first test waits for the page, not for its import.
+  await import('../../../src/pages/AdminPage');
+});
 
-const resource = (user: MockUser) => ({
-  type: 'AdminUser',
-  id: user.id,
-  attributes: {
-    username: user.username,
-    email: user.email,
-    is_staff: user.is_staff,
-    is_active: user.is_active,
-    date_joined: '2026-01-02T03:04:05.000000',
-    last_login: user.is_active ? '2026-09-01T00:00:00.000000' : null,
-    last_active: user.is_active ? '2026-09-02T00:00:00.000000' : null,
-    login_count: 4,
-    date_updated: '2026-09-01T00:00:00.000000',
-    date_marked_for_deletion: user.date_marked_for_deletion ?? null,
-    is_public: false,
-    entry_count: 12,
-    tag_count: 3,
-    data_version: 1,
-  },
+/** The query of each `GET /admin/users`, and each `PATCH`'s document. */
+let listRequests: URLSearchParams[];
+let patches: unknown[];
+
+beforeEach(() => {
+  signIn();
+  assignLoggedInCookie();
+  listRequests = recordRequests(({method, url}, path) =>
+    method === 'GET' && path === '/api/v1/admin/users'
+      ? new URL(url).searchParams
+      : undefined
+  );
+  patches = recordRequests(request =>
+    request.method === 'PATCH' ? request.clone().json() : undefined
+  );
 });
 
 const forbidden = () =>
@@ -58,192 +52,98 @@ const forbidden = () =>
     {status: 403}
   );
 
-const server = setupServer(
-  http.get(`${API}/user/`, () =>
-    HttpResponse.json({
-      data: {
-        type: 'User',
-        id: '1',
-        attributes: {
-          username: 'test',
-          is_staff: viewerIsStaff,
-          date_updated: '2026-09-01T00:00:00.000000',
-          data_version: 1,
+/** The signed-in user is not staff (the mock API's is). */
+const notStaff = () =>
+  server.use(
+    http.get(`${API}/user/`, () =>
+      HttpResponse.json({
+        data: {
+          type: 'User',
+          id: '1',
+          attributes: {
+            username: 'test',
+            is_staff: false,
+            date_updated: '2026-09-01T00:00:00.000000',
+            data_version: 1,
+          },
         },
-      },
-    })
-  ),
-  http.get(`${API}/admin/users`, ({request}) => {
-    if (adminForbidden) {
-      return forbidden();
-    }
-    const params = new URL(request.url).searchParams;
-    listRequests.push(params);
-    const search = params.get('filter[search]')?.toLowerCase();
-    const active = params.get('filter[is_active]');
-    const username = params.get('filter[username]');
-    const matching = users.filter(
-      user =>
-        (search === undefined ||
-          user.username.includes(search) ||
-          user.email.includes(search)) &&
-        (active === null || String(user.is_active) === active) &&
-        (username === null || user.username === username)
-    );
-    const size = Number(params.get('page[size]') ?? '25');
-    const number = Number(params.get('page[number]') ?? '1');
-    const pages = Math.max(1, Math.ceil(matching.length / size));
-    if (number > pages) {
-      return HttpResponse.json(
-        errorDocument(404, CODES.notFound, 'Invalid page.'),
-        {status: 404}
+      })
+    )
+  );
+
+const resource = (user: MockAdminUser): AdminUser => ({
+  type: 'AdminUser',
+  id: user.id,
+  attributes: {
+    username: user.username,
+    email: user.email,
+    is_staff: user.is_staff,
+    is_active: user.is_active,
+    date_joined: '2026-01-02T03:04:05.000000',
+    last_login: user.is_active ? '2026-09-01T00:00:00.000000' : null,
+    last_active: user.is_active ? '2026-09-02T00:00:00.000000' : null,
+    login_count: 4,
+    date_updated: '2026-09-01T00:00:00.000000',
+    date_marked_for_deletion: user.date_marked_for_deletion,
+    entry_count: 12,
+    tag_count: 3,
+    data_version: 1,
+  },
+});
+
+/**
+ * `GET /admin/users` in pages, as the API answers it (the mock API lists
+ * every user on one page), filtered by status, with the activity only of
+ * active users (the mock API gives every user's).
+ */
+const pagedUsers = () =>
+  server.use(
+    http.get(`${API}/admin/users`, ({request}) => {
+      const params = new URL(request.url).searchParams;
+      const active = params.get('filter[is_active]');
+      const matching = adminUsers.filter(
+        user => active === null || String(user.is_active) === active
       );
-    }
-    return HttpResponse.json({
-      ...pagination(request.url, number, pages, matching.length),
-      data: matching.slice((number - 1) * size, number * size).map(resource),
-    });
-  }),
-  http.patch(`${API}/admin/users/:id`, async ({params, request}) => {
-    const body = await request.json();
-    patches.push(body);
-    const user = users.find(candidate => candidate.id === params['id']);
-    if (user === undefined) {
-      return HttpResponse.json(
-        errorDocument(
-          404,
-          CODES.notFound,
-          'No AdminUser matches the given query.'
-        ),
-        {status: 404}
-      );
-    }
-    const {attributes = {}} = adminUserUpdateDocumentSchema.parse(body).data;
-    if (attributes.marked_for_deletion !== undefined) {
-      user.date_marked_for_deletion = attributes.marked_for_deletion
-        ? '2026-09-28T12:00:00.000000'
-        : null;
-      if (attributes.marked_for_deletion) {
-        user.is_active = false;
+      const size = Number(params.get('page[size]') ?? '25');
+      const number = Number(params.get('page[number]') ?? '1');
+      const pages = Math.max(1, Math.ceil(matching.length / size));
+      if (number > pages) {
+        return HttpResponse.json(
+          errorDocument(404, CODES.notFound, 'Invalid page.'),
+          {status: 404}
+        );
       }
-    }
-    if (attributes.is_active !== undefined) {
-      user.is_active = attributes.is_active;
-    }
-    return HttpResponse.json({data: resource(user)});
-  }),
-  // A user's data, read-only (alice has none here).
-  http.get(`${API}/admin/users/:id/:collection`, ({request}) => {
-    const url = new URL(request.url);
-    return HttpResponse.json(
-      url.searchParams.has('page[after]')
-        ? {links: {next: null}, data: []}
-        : {...onePage(request.url, 0), data: []}
-    );
-  }),
-  http.get(`${API}/admin/audit_log`, ({request}) =>
-    HttpResponse.json({
-      ...onePage(request.url, 1),
-      data: [
-        {
-          type: 'AdminAuditLogEntry',
-          id: '9',
-          attributes: {
-            created: '2026-09-28T12:00:00.000000',
-            action: 'deactivate_user',
-            actor_id: '1',
-            actor_username: 'test',
-            target_user_id: '7',
-            target_username: 'alice',
-          },
-        },
-        {
-          type: 'AdminAuditLogEntry',
-          id: '10',
-          attributes: {
-            created: '2026-09-28T13:00:00.000000',
-            action: 'mark_user_for_deletion',
-            actor_id: '1',
-            actor_username: 'test',
-            target_user_id: '9',
-            target_username: 'bob',
-          },
-        },
-        {
-          // An action this app does not know yet shows by its name.
-          type: 'AdminAuditLogEntry',
-          id: '11',
-          attributes: {
-            created: '2026-09-28T14:00:00.000000',
-            action: 'delete_user',
-            actor_id: '1',
-            actor_username: 'test',
-            target_user_id: null,
-            target_username: 'carol',
-          },
-        },
-      ],
+      return HttpResponse.json({
+        ...pagination(request.url, number, pages, matching.length),
+        data: matching.slice((number - 1) * size, number * size).map(resource),
+      });
     })
-  )
-);
+  );
 
-beforeAll(async () => {
-  server.listen();
-  // The route loads the page's module when first shown (React.lazy): load
-  // it here, so the first test waits for the page, not for its import.
-  await import('../../../src/pages/AdminPage');
-});
-afterAll(() => server.close());
-
-beforeEach(() => {
-  signIn();
-  assignLoggedInCookie();
-  viewerIsStaff = true;
-  adminForbidden = false;
-  listRequests = [];
-  patches = [];
-  users = [
-    {
-      id: '1',
-      username: 'test',
-      email: 'test@example.com',
-      is_staff: true,
-      is_active: true,
-    },
-    {
-      id: '7',
-      username: 'alice',
-      email: 'alice@example.com',
-      is_staff: false,
-      is_active: true,
-    },
-  ];
-});
-
-afterEach(() => {
-  server.resetHandlers();
-});
+/** A user who is not staff, added to the mock API's. */
+const addUser = (id: string, username: string, is_active = true) =>
+  adminUsers.push({
+    id,
+    username,
+    email: `${username}@example.com`,
+    is_staff: false,
+    is_active,
+    date_marked_for_deletion: null,
+  });
 
 const usersTable = () => screen.findByRole('table', {name: 'Users'});
 
-function present<T>(value: T | null | undefined, what: string): T {
-  if (value === null || value === undefined) {
-    throw new Error(`missing ${what}`);
-  }
-  return value;
+function row(id: string): HTMLElement {
+  const element = document.getElementById(`adminUserRow${id}`);
+  invariant(element, `row ${id} is shown`);
+  return element;
 }
-
-const row = (id: string) =>
-  present(document.getElementById(`adminUserRow${id}`), `row ${id}`);
 
 /** The items of user `id`'s menu, opened with its ⋮ button. */
 async function openMenu(id: string): Promise<string[]> {
-  fireEvent.click(
-    present(
-      document.getElementById(`adminUserMenuButton${id}`),
-      `menu button ${id}`
-    )
-  );
+  const button = document.getElementById(`adminUserMenuButton${id}`);
+  invariant(button, `menu button ${id} is shown`);
+  fireEvent.click(button);
   const items = await screen.findAllByRole('menuitem');
   return items.map(item => item.textContent ?? '');
 }
@@ -252,6 +152,20 @@ async function openMenu(id: string): Promise<string[]> {
 async function choose(id: string, item: string) {
   await openMenu(id);
   fireEvent.click(screen.getByRole('menuitem', {name: item}));
+}
+
+/** Open the Audit log tab, and a finder of the row of `username`'s action. */
+async function showAuditLog() {
+  await renderAppAt('/admin', {act: true});
+  await usersTable();
+  fireEvent.click(screen.getByRole('tab', {name: 'Audit log'}));
+  const table = await screen.findByRole('table', {name: 'Audit log'});
+  return async (username: string) => {
+    const cell = await within(table).findByText(username);
+    const auditRow = cell.closest('tr');
+    invariant(auditRow, `${username}'s audit row is shown`);
+    return auditRow;
+  };
 }
 
 /** Confirm the dialog with its `button`. */
@@ -280,7 +194,7 @@ describe('AdminPage', () => {
   });
 
   it('turns away users who are not staff, without logging them out', async () => {
-    viewerIsStaff = false;
+    notStaff();
     act(() => store.setIsStaff(true));
 
     await renderAppAt('/admin', {act: true});
@@ -327,7 +241,7 @@ describe('AdminPage', () => {
   });
 
   it('says so when access is revoked while the page is open', async () => {
-    adminForbidden = true;
+    server.use(http.get(`${API}/admin/users`, forbidden));
 
     await renderAppAt('/admin', {act: true});
 
@@ -412,15 +326,10 @@ describe('AdminPage', () => {
   });
 
   it('unmarks a user, who stays deactivated', async () => {
-    users = users.map(user =>
-      user.id === '7'
-        ? {
-            ...user,
-            is_active: false,
-            date_marked_for_deletion: '2026-09-28T12:00:00.000000',
-          }
-        : user
-    );
+    const alice = adminUsers.find(user => user.id === '7');
+    invariant(alice, 'the mock API has alice');
+    alice.is_active = false;
+    alice.date_marked_for_deletion = '2026-09-28T12:00:00.000000';
     await renderAppAt('/admin', {act: true});
     await usersTable();
     expect(
@@ -461,7 +370,7 @@ describe('AdminPage', () => {
     await confirm('Deactivate');
 
     await waitFor(() => expect(store.loggedInUser).toBeNull());
-    expect(users.find(user => user.id === '7')?.is_active).toBe(true);
+    expect(adminUsers.find(user => user.id === '7')?.is_active).toBe(true);
   });
 
   it("shows nothing of the last user's once the tab takes up another's sign-in", async () => {
@@ -469,7 +378,7 @@ describe('AdminPage', () => {
     await usersTable();
 
     // Another tab signed in as someone who is not staff; this one takes it up.
-    viewerIsStaff = false;
+    notStaff();
     act(() => store.setLoggedInUser('someone-else'));
 
     expect(screen.queryByRole('table', {name: 'Users'})).toBeNull();
@@ -497,16 +406,10 @@ describe('AdminPage', () => {
   });
 
   it('steps back a page when a change empties the last one', async () => {
-    users = [
-      ...users,
-      ...Array.from({length: 24}, (_, index) => ({
-        id: String(100 + index),
-        username: `user${index}`,
-        email: `user${index}@example.com`,
-        is_staff: false,
-        is_active: true,
-      })),
-    ];
+    for (let index = 0; index < 24; index += 1) {
+      addUser(String(100 + index), `user${index}`);
+    }
+    pagedUsers();
     await renderAppAt('/admin', {act: true});
     await usersTable();
     fireEvent.click(screen.getByRole('button', {name: 'Active'}));
@@ -597,16 +500,8 @@ describe('AdminPage', () => {
   });
 
   it('shows when each user was last active, after their last login', async () => {
-    users = [
-      ...users,
-      {
-        id: '9',
-        username: 'bob',
-        email: 'bob@example.com',
-        is_staff: false,
-        is_active: false,
-      },
-    ];
+    addUser('9', 'bob', false);
+    pagedUsers();
     await renderAppAt('/admin', {act: true});
     const table = await usersTable();
     await within(table).findByText('alice');
@@ -617,10 +512,10 @@ describe('AdminPage', () => {
     const column = headers.indexOf('Last active');
     expect(column).toBe(headers.indexOf('Last login') + 1);
     const cellText = (id: string) =>
-      within(present(document.getElementById(`adminUserRow${id}`), 'row'))
+      within(row(id))
         .getAllByRole('cell')
         .map(cell => cell.textContent)[column];
-    // The fixtures' last_active: 2026-09-02 for active users, null otherwise.
+    // `pagedUsers`' last_active: 2026-09-02 for active users, null otherwise.
     expect(cellText('7')).toMatch(/2026/);
     expect(cellText('9')).toBe('Never');
   });
@@ -662,22 +557,54 @@ describe('AdminPage', () => {
   });
 
   it('shows the audit log', async () => {
-    await renderAppAt('/admin', {act: true});
-    await usersTable();
+    adminAuditLog.push(
+      {
+        id: '2',
+        created: '2026-09-28T13:00:00.000000',
+        action: 'mark_user_for_deletion',
+        target: 'bob',
+      },
+      {
+        id: '1',
+        created: '2026-09-28T12:00:00.000000',
+        action: 'deactivate_user',
+        target: 'alice',
+      }
+    );
+    const actionOf = await showAuditLog();
 
-    fireEvent.click(screen.getByRole('tab', {name: 'Audit log'}));
-
-    const table = await screen.findByRole('table', {name: 'Audit log'});
-    const actionOf = async (username: string) => {
-      const cell = await within(table).findByText(username);
-      return present(cell.closest('tr'), 'audit row');
-    };
     expect(
       within(await actionOf('alice')).getByText('Deactivated')
     ).toBeInTheDocument();
     expect(
       within(await actionOf('bob')).getByText('Marked for deletion')
     ).toBeInTheDocument();
+  });
+
+  it('shows an action it does not know by its name', async () => {
+    // One the API added since (the mock API records only those it knows).
+    server.use(
+      http.get(`${API}/admin/audit_log`, ({request}) =>
+        HttpResponse.json(
+          listDocument(request.url, [
+            {
+              type: 'AdminAuditLogEntry',
+              id: '11',
+              attributes: {
+                created: '2026-09-28T14:00:00.000000',
+                action: 'delete_user',
+                actor_id: '1',
+                actor_username: 'test',
+                target_user_id: null,
+                target_username: 'carol',
+              },
+            },
+          ])
+        )
+      )
+    );
+    const actionOf = await showAuditLog();
+
     expect(
       within(await actionOf('carol')).getByText('delete_user')
     ).toBeInTheDocument();

@@ -61,6 +61,155 @@ export const chromeCapabilities: WebdriverIO.Capabilities = {
   },
 };
 
+type Browser = WebdriverIO.Browser;
+
+/** `waitForMSW` and `resetMSWHandlers`: the mock API's readiness and reset. */
+function addMSWCommands(browser: Browser): void {
+  browser.addCommand('waitForMSW', async () => {
+    await browser.waitUntil(
+      () =>
+        browser.execute(
+          () =>
+            // The worker is up and controls the page, which has rendered.
+            !!window.__MSW_WORKER__ &&
+            !!navigator.serviceWorker?.controller &&
+            (document.body.textContent?.length ?? 0) > 0
+        ),
+      {
+        timeout: 10000,
+        timeoutMsg: 'MSW not ready within 10 seconds',
+      }
+    );
+  });
+
+  // Its handlers, its data (`resetMSWState`) and its request counts.
+  browser.addCommand('resetMSWHandlers', async () => {
+    await browser.execute(() => {
+      if (window.__MSW_WORKER__) {
+        window.__MSW_WORKER__.resetHandlers();
+        window.resetMSWState?.();
+        window.__MSW_REQUESTS__?.reset();
+      }
+    });
+  });
+}
+
+/** The commands that read and reset the mock API's request counts. */
+function addRequestCountCommands(browser: Browser): void {
+  // The requests the page has made, as the mock API counted them.
+  const requests = (method: HttpMethod, url: string) =>
+    browser.execute(
+      (m: HttpMethod, u: string) => ({
+        count: window.__MSW_REQUESTS__?.getCount(m, u) ?? -1,
+        all: window.__MSW_REQUESTS__?.getAll() ?? [],
+      }),
+      method,
+      url
+    );
+
+  /**
+   * Wait until `method url` has been requested `expected` times, then (if
+   * `exactly`) check it has not been requested more: a page makes its
+   * requests as it syncs, after it renders, so a count read at once can
+   * come before them.
+   */
+  const expectRequested = async (
+    method: HttpMethod,
+    url: string,
+    expected: number,
+    exactly: boolean
+  ) => {
+    let result = await requests(method, url);
+    const failure = () =>
+      `Expected ${method} ${url} to be requested ${exactly ? '' : 'at least '}${expected} times, but was ${result.count}. All counts: ${JSON.stringify(
+        result.all
+      )}`;
+    await browser.waitUntil(
+      async () => {
+        result = await requests(method, url);
+        return result.count >= expected;
+      },
+      {timeoutMsg: failure}
+    );
+    if (exactly && result.count !== expected) {
+      throw new Error(failure());
+    }
+  };
+
+  browser.addCommand(
+    'getMSWRequestCount',
+    async (method: HttpMethod, url: string) =>
+      (await requests(method, url)).count
+  );
+  browser.addCommand(
+    'toBeRequestedAtLeastTimes',
+    (method: HttpMethod, url: string, minExpected: number) =>
+      expectRequested(method, url, minExpected, false)
+  );
+  browser.addCommand(
+    'toBeRequestedTimes',
+    (method: HttpMethod, url: string, expected: number) =>
+      expectRequested(method, url, expected, true)
+  );
+  browser.addCommand('resetMSWRequestCounts', async () => {
+    await browser.execute(() => {
+      window.__MSW_REQUESTS__?.reset();
+    });
+  });
+}
+
+/** `waitAndRightClick` and `waitAndLeftClick`, on elements. */
+function addClickCommands(browser: Browser): void {
+  browser.addCommand(
+    'waitAndRightClick',
+    async function (this: WebdriverIO.Element) {
+      await this.waitForClickable();
+      await this.click({button: 'right'});
+    },
+    true
+  );
+  browser.addCommand(
+    'waitAndLeftClick',
+    async function (this: WebdriverIO.Element) {
+      await this.waitForClickable();
+      await this.click();
+    },
+    true
+  );
+}
+
+/** `login`: the test user signed in, as the app saves it. */
+function addLoginCommand(browser: Browser): void {
+  browser.addCommand('login', async () => {
+    // The app's saved state (src/lib/state/appState.ts: zustand's persist
+    // format, merged over the defaults): the test user signed in.
+    const saved = {state: {loggedInUser: 'test'}, version: 0};
+    await browser.execute(
+      (key: string, value: string) => {
+        window.localStorage.setItem(key, value);
+      },
+      'commandsnippets-test',
+      JSON.stringify(saved)
+    );
+    await browser.setCookies({
+      name: 'LoggedIn',
+      value: 'None',
+    });
+  });
+}
+
+/** Print each error the page logs, and keep it in `currentTestErrors`. */
+async function collectLoggedErrors(browser: Browser): Promise<void> {
+  browser.currentTestErrors = [];
+  await browser.sessionSubscribe({events: ['log.entryAdded']});
+  browser.on('log.entryAdded', (logEntry: LogEntry) => {
+    if (logEntry.level === 'error') {
+      console.info(JSON.stringify(logEntry, null, '  '));
+      browser.currentTestErrors.push(logEntry);
+    }
+  });
+}
+
 export const config: WebdriverIO.Config = {
   runner: 'local',
   path: '/',
@@ -101,164 +250,11 @@ export const config: WebdriverIO.Config = {
     _specs: string[],
     browser
   ) => {
-    // Initialize currentTestErrors as a property of the browser object
-    browser.currentTestErrors = [];
-
-    await browser.sessionSubscribe({events: ['log.entryAdded']});
-
-    // Add helper command to wait for MSW to be ready
-    browser.addCommand('waitForMSW', async () => {
-      await browser.waitUntil(
-        async () => {
-          const mswReady = await browser.execute(() => {
-            // Check if MSW worker is available
-            const hasMSWWorker = !!window.__MSW_WORKER__;
-            // Check if service worker is controlling the page
-            const hasServiceWorker = !!navigator.serviceWorker?.controller;
-            // Check if page content is loaded
-            const pageLoaded =
-              document.body.textContent && document.body.textContent.length > 0;
-            return hasMSWWorker && hasServiceWorker && pageLoaded;
-          });
-          return mswReady;
-        },
-        {
-          timeout: 10000,
-          timeoutMsg: 'MSW not ready within 10 seconds',
-        }
-      );
-    });
-
-    // Add helper command to reset MSW handlers between tests
-    browser.addCommand('resetMSWHandlers', async () => {
-      await browser.execute(() => {
-        if (window.__MSW_WORKER__) {
-          window.__MSW_WORKER__.resetHandlers();
-          // Reset stateful MSW data
-          if (window.resetMSWState) {
-            window.resetMSWState();
-          }
-          // Reset request counters
-          if (window.__MSW_REQUESTS__) {
-            window.__MSW_REQUESTS__.reset();
-          }
-        }
-      });
-    });
-
-    // The requests the page has made, as the mock API counted them.
-    const requests = (method: HttpMethod, url: string) =>
-      browser.execute(
-        (m: HttpMethod, u: string) => ({
-          count: window.__MSW_REQUESTS__?.getCount(m, u) ?? -1,
-          all: window.__MSW_REQUESTS__?.getAll() ?? [],
-        }),
-        method,
-        url
-      );
-
-    /**
-     * Wait until `method url` has been requested `expected` times, then (if
-     * `exactly`) check it has not been requested more: a page makes its
-     * requests as it syncs, after it renders, so a count read at once can
-     * come before them.
-     */
-    const expectRequested = async (
-      method: HttpMethod,
-      url: string,
-      expected: number,
-      exactly: boolean
-    ) => {
-      let result = await requests(method, url);
-      const failure = () =>
-        `Expected ${method} ${url} to be requested ${exactly ? '' : 'at least '}${expected} times, but was ${result.count}. All counts: ${JSON.stringify(
-          result.all
-        )}`;
-      await browser.waitUntil(
-        async () => {
-          result = await requests(method, url);
-          return result.count >= expected;
-        },
-        {timeoutMsg: failure}
-      );
-      if (exactly && result.count !== expected) {
-        throw new Error(failure());
-      }
-    };
-
-    browser.addCommand(
-      'getMSWRequestCount',
-      async (method: HttpMethod, url: string) =>
-        (await requests(method, url)).count
-    );
-
-    browser.addCommand(
-      'toBeRequestedAtLeastTimes',
-      (method: HttpMethod, url: string, minExpected: number) =>
-        expectRequested(method, url, minExpected, false)
-    );
-
-    // Add helper to reset only request counters
-    browser.addCommand('resetMSWRequestCounts', async () => {
-      await browser.execute(() => {
-        if (window.__MSW_REQUESTS__) {
-          window.__MSW_REQUESTS__.reset();
-        }
-      });
-    });
-
-    browser.addCommand(
-      'toBeRequestedTimes',
-      (method: HttpMethod, url: string, expected: number) =>
-        expectRequested(method, url, expected, true)
-    );
-
-    // Create a properly typed wrapper for the log event handler
-    function addLogEntryHandler(
-      browser: WebdriverIO.Browser,
-      handler: (logEntry: LogEntry) => void
-    ) {
-      browser.on('log.entryAdded', handler);
-    }
-
-    addLogEntryHandler(browser, logEntry => {
-      if (logEntry.level === 'error') {
-        console.info(JSON.stringify(logEntry, null, '  '));
-        browser.currentTestErrors.push(logEntry);
-      }
-    });
-    browser.addCommand(
-      'waitAndRightClick',
-      async function (this: WebdriverIO.Element) {
-        await this.waitForClickable();
-        await this.click({button: 'right'});
-      },
-      true
-    );
-    browser.addCommand(
-      'waitAndLeftClick',
-      async function (this: WebdriverIO.Element) {
-        await this.waitForClickable();
-        await this.click();
-      },
-      true
-    );
-    browser.addCommand('login', async () => {
-      // The app's saved state (src/lib/state/appState.ts: zustand's persist
-      // format, merged over the defaults): the test user signed in.
-      const saved = {state: {loggedInUser: 'test'}, version: 0};
-      await browser.execute(
-        (key: string, value: string) => {
-          window.localStorage.setItem(key, value);
-        },
-        'commandsnippets-test',
-        JSON.stringify(saved)
-      );
-      await browser.setCookies({
-        name: 'LoggedIn',
-        value: 'None',
-      });
-    });
+    await collectLoggedErrors(browser);
+    addMSWCommands(browser);
+    addRequestCountCommands(browser);
+    addClickCommands(browser);
+    addLoginCommand(browser);
   },
   // Each test starts with the mock API's data, handlers and counts reset,
   // and counts the errors logged from the end of the last test on.

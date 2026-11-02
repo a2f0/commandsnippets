@@ -48,7 +48,13 @@ import {LAST_MADE_KEY} from '../../../../src/lib/sync/made';
 import {claimData, syncSession} from '../../../../src/lib/sync/session';
 import {errorDocument} from '../../../../src/msw/documents';
 import {apiClientMethods} from '../../../util/apiClientMethods';
-import {API, offlineForWrites, serveMockApi, server} from '../../../util/msw';
+import {
+  API,
+  offlineForWrites,
+  recordRequests,
+  serveMockApi,
+  server,
+} from '../../../util/msw';
 import {signIn, store, TEST_USER} from '../../../util/signIn';
 import {tag} from '../../../util/storeFixtures';
 
@@ -58,7 +64,6 @@ beforeEach(() => {
   // The mock API announces each request; a flush that fails warns.
   vi.spyOn(console, 'log').mockImplementation(() => {});
   vi.spyOn(console, 'warn').mockImplementation(() => {});
-  return () => vi.restoreAllMocks();
 });
 
 const session = () => syncSession(TEST_USER);
@@ -73,15 +78,10 @@ const inTag = async (tagId: string) =>
   (await entriesOfTag(session(), tagId)).map(({entry}) => entry.id).sort();
 
 /** The writes sent from now on, as `METHOD path`. */
-function sent(): string[] {
-  const writes: string[] = [];
-  server.events.on('request:start', ({request}) => {
-    if (request.method !== 'GET') {
-      writes.push(`${request.method} ${new URL(request.url).pathname}`);
-    }
-  });
-  return writes;
-}
+const sent = () =>
+  recordRequests(({method}, path) =>
+    method === 'GET' ? undefined : `${method} ${path}`
+  );
 
 describe('a write', () => {
   it('is stored and queued at once, before the API answers', async () => {
@@ -143,16 +143,15 @@ describe('a write', () => {
 
   it('names when it was made, the signed-in user, and itself on every attempt', async () => {
     await session().sync.syncAll();
-    const headers: Array<Array<string | null>> = [];
-    server.events.on('request:start', ({request}) => {
-      if (request.method !== 'GET') {
-        headers.push([
-          request.headers.get(CLIENT_UPDATED_HEADER),
-          request.headers.get(EXPECTED_USER_HEADER),
-          request.headers.get(CLIENT_WRITE_ID_HEADER),
-        ]);
-      }
-    });
+    const headers = recordRequests(request =>
+      request.method === 'GET'
+        ? undefined
+        : [
+            request.headers.get(CLIENT_UPDATED_HEADER),
+            request.headers.get(EXPECTED_USER_HEADER),
+            request.headers.get(CLIENT_WRITE_ID_HEADER),
+          ]
+    );
     offlineForWrites();
     await renameTag(session(), '2', 'renamed');
     await renameTag(session(), '3', 'renamed-too');
@@ -306,12 +305,9 @@ describe('a write naming a local id', () => {
   });
 
   it("names the queue's owner, whoever this tab is signed in as when it is sent", async () => {
-    const named: Array<string | null> = [];
-    server.events.on('request:start', ({request}) => {
-      if (request.method !== 'GET') {
-        named.push(request.headers.get(EXPECTED_USER_HEADER));
-      }
-    });
+    const named = recordRequests(({method, headers}) =>
+      method === 'GET' ? undefined : headers.get(EXPECTED_USER_HEADER)
+    );
     offlineForWrites();
     await createTag(session(), 'mine');
     await expect(session().sync.flush()).rejects.toThrow();

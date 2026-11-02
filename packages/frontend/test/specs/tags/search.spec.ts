@@ -22,8 +22,6 @@ describe('Tag Search Menu Behavior', () => {
       }
     });
 
-    console.log('API result:', apiResult);
-
     // MSW should be providing 4 tags
     expect(apiResult.ok).toBe(true);
     expect(apiResult.dataLength).toBe(4);
