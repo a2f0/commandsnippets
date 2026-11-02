@@ -35,7 +35,6 @@ beforeEach(() => {
 });
 afterEach(() => {
   vi.useRealTimers();
-  vi.restoreAllMocks();
 });
 
 /** The entries the list shows (drag handle, subject, body), in order. */

@@ -193,7 +193,6 @@ describe('signOut', () => {
     await signingOut;
 
     expect(store.loggedInUser).toBe('someone-else');
-    vi.restoreAllMocks();
   });
 
   it("leaves another tab's sign-in standing when the session is theirs", async () => {
@@ -213,7 +212,6 @@ describe('signOut', () => {
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}')).toMatchObject(
       {state: {loggedInUser: TEST_USER}}
     );
-    vi.restoreAllMocks();
   });
 });
 

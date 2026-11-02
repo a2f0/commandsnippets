@@ -55,10 +55,6 @@ describe('TagList', () => {
       .spyOn(global.console, 'debug')
       .mockImplementation(() => undefined);
   });
-  afterEach(() => {
-    reorderTagSpy.mockRestore();
-    consoleMock.mockReset();
-  });
   it('Hovers', async () => {
     const {user, tags} = await renderTags();
     const handle = await pointAtHandle(user, 'tag', 0, 4);

@@ -1,5 +1,4 @@
 import {act, fireEvent, screen, waitFor, within} from '@testing-library/react';
-import {vi} from 'vitest';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {serveMockApi} from '../util/msw';
 import {signIn} from '../util/signIn';
@@ -28,11 +27,6 @@ describe('Dark Mode Toggle', () => {
     assignLoggedInCookie();
 
     signIn();
-  });
-
-  afterEach(() => {
-    // Clean up any rendered components
-    vi.clearAllMocks();
   });
 
   it('successfully toggles from dark to light mode', async () => {

@@ -27,7 +27,6 @@ beforeEach(() => {
 });
 afterEach(() => {
   process.off('unhandledRejection', collectUnhandled);
-  vi.restoreAllMocks();
 });
 
 /** Give Node time to report a rejection left unhandled. */

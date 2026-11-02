@@ -43,15 +43,11 @@ describe('formatTimestamp', () => {
 
   it('makes one formatter for each locale and time style', () => {
     const made = vi.spyOn(Intl, 'DateTimeFormat');
-    try {
-      formatTimestamp('2026-01-02T03:04:05', 'fr-FR');
-      formatTimestamp('2026-01-03T03:04:05', 'fr-FR');
-      formatTimestamp('2026-01-03T03:04:05', 'fr-FR', 'medium');
-      formatTimestamp('2026-01-04T03:04:05', 'fr-FR', 'medium');
-      expect(made).toHaveBeenCalledTimes(2);
-    } finally {
-      made.mockRestore();
-    }
+    formatTimestamp('2026-01-02T03:04:05', 'fr-FR');
+    formatTimestamp('2026-01-03T03:04:05', 'fr-FR');
+    formatTimestamp('2026-01-03T03:04:05', 'fr-FR', 'medium');
+    formatTimestamp('2026-01-04T03:04:05', 'fr-FR', 'medium');
+    expect(made).toHaveBeenCalledTimes(2);
   });
 });
 

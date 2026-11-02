@@ -19,7 +19,6 @@ const loadingWait = {timeout: 10000};
 vi.setConfig({testTimeout: 30000});
 
 serveMockApi({onUnhandledFrame: 'error'});
-afterEach(() => vi.restoreAllMocks());
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();

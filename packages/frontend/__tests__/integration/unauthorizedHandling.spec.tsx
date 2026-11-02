@@ -44,7 +44,6 @@ const server = setupServer();
 beforeAll(() => server.listen({onUnhandledFrame: 'error'}));
 afterEach(() => {
   server.resetHandlers();
-  vi.restoreAllMocks();
 });
 afterAll(() => server.close());
 beforeEach(() => {

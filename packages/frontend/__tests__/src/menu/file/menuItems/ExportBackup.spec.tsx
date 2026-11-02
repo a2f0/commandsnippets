@@ -66,7 +66,6 @@ let downloads: Download[];
 
 serveMockApi();
 afterEach(() => {
-  vi.restoreAllMocks();
   Reflect.deleteProperty(URL, 'createObjectURL');
   Reflect.deleteProperty(URL, 'revokeObjectURL');
 });

@@ -1,6 +1,6 @@
 import {act, fireEvent, screen, waitFor} from '@testing-library/react';
 import {HttpResponse, http} from 'msw/http';
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
 import {setEntryPublic, setTagPublic} from '../../src/lib/data/writes';
 import {useAppState} from '../../src/lib/state/appState';
@@ -12,7 +12,6 @@ import {entry, tag} from '../util/storeFixtures';
 import {renderAppAt} from '../util/TestAppRouter';
 
 serveMockApi({onUnhandledFrame: 'error'});
-afterEach(() => vi.restoreAllMocks());
 beforeEach(() => {
   vi.spyOn(console, 'log').mockImplementation(() => {});
 });

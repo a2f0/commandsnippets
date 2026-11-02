@@ -20,10 +20,7 @@ import {isRecording} from '../../../../src/lib/metrics/timings';
 const useEnvironment = (name: string) =>
   vi.spyOn(envModule, 'environment', 'get').mockReturnValue(name);
 
-afterEach(() => {
-  vi.restoreAllMocks();
-  resetFeatureFlagOverrides();
-});
+afterEach(() => resetFeatureFlagOverrides());
 
 describe('feature flags', () => {
   it('defines every flag it names', () => {

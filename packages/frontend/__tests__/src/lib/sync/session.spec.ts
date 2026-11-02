@@ -16,10 +16,7 @@ import {
   withDataLock,
 } from '../../../../src/lib/sync/session';
 
-afterEach(() => {
-  vi.unstubAllGlobals();
-  return endSyncSession(null);
-});
+afterEach(() => endSyncSession(null));
 
 describe('syncSession', () => {
   it("opens the user's own database, one at a time", async () => {

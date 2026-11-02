@@ -114,7 +114,6 @@ function restoreRequests(): RestoreRequest[] {
 }
 
 serveMockApi();
-afterEach(() => vi.restoreAllMocks());
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();

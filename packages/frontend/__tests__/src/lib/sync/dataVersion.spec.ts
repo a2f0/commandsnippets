@@ -50,7 +50,6 @@ beforeEach(() => {
   db = new CommandsnippetsDatabase(`data-version-spec-${databases}`);
 });
 afterEach(async () => {
-  vi.restoreAllMocks();
   server.resetHandlers();
   server.events.removeAllListeners();
   await db.delete();

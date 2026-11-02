@@ -1,4 +1,4 @@
-import {afterEach, describe, expect, it, vi} from 'vitest';
+import {describe, expect, it, vi} from 'vitest';
 
 import * as envModule from '../../../src/lib/environment';
 import {getOAuthRedirectUrl} from '../../../src/lib/oauth';
@@ -6,10 +6,6 @@ import {getOAuthRedirectUrl} from '../../../src/lib/oauth';
 // The callback must return to the origin that started the login: the OAuth
 // state is kept in that origin's sessionStorage.
 describe('getOAuthRedirectUrl', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   it.each([
     ['production', 'https://app.commandsnippets.com'],
     ['staging', 'https://app-staging.commandsnippets.com'],

@@ -17,7 +17,6 @@ import {signIn, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
 serveMockApi();
-afterEach(() => vi.restoreAllMocks());
 beforeEach(() => {
   vi.spyOn(console, 'log').mockImplementation(() => {});
   // Clicking an entry's body copies it.

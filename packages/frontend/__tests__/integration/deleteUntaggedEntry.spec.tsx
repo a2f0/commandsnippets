@@ -31,11 +31,6 @@ describe('Delete Untagged Entry', () => {
     untagEntrySpy = vi.spyOn(apiClientMethods, 'untagEntry');
   });
 
-  afterEach(() => {
-    deleteEntrySpy.mockRestore();
-    untagEntrySpy.mockRestore();
-  });
-
   it('deletes an entry from the untagged entries', async () => {
     renderAppAt('/test?entries=untagged');
     await openContextMenu('untagged-subject');

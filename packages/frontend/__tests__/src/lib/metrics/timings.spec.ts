@@ -22,7 +22,6 @@ import {
 beforeEach(() => clearMetrics());
 afterEach(() => {
   vi.useRealTimers();
-  vi.restoreAllMocks();
 });
 
 /**

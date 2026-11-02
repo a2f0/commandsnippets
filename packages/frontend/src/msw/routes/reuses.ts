@@ -8,6 +8,7 @@ import {
 } from '@commandsnippets/api-shared';
 import {HttpResponse} from 'msw/http';
 import {nextRevision, pagination} from '../documents';
+import type {EntriesState} from '../fixtures';
 import {ownedByTestUser} from '../fixtures';
 import {
   type ErrorObject,
@@ -17,7 +18,6 @@ import {
   validateFields,
 } from '../requests';
 import {type RouteInfo, route} from '../route';
-import type {EntriesState} from '../fixtures';
 import {activeEntries, compare} from '../rows';
 import {nextId, reuses, setReuses} from '../state';
 

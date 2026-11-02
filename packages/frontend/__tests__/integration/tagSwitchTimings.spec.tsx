@@ -18,7 +18,6 @@ beforeEach(() => {
   signIn();
   assignLoggedInCookie();
 });
-afterEach(() => vi.restoreAllMocks());
 
 /**
  * Each list the entry list says it shows (`listShown`), with the entries

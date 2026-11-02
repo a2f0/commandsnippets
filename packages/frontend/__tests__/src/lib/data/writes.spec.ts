@@ -58,7 +58,6 @@ beforeEach(() => {
   // The mock API announces each request; a flush that fails warns.
   vi.spyOn(console, 'log').mockImplementation(() => {});
   vi.spyOn(console, 'warn').mockImplementation(() => {});
-  return () => vi.restoreAllMocks();
 });
 
 const session = () => syncSession(TEST_USER);

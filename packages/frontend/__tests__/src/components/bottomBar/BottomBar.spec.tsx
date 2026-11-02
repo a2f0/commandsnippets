@@ -52,10 +52,6 @@ const crash = () => {
 };
 
 describe('BottomBar Component', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   it.each(['development', 'test'])(
     'renders HUD button in %s environment',
     env => {

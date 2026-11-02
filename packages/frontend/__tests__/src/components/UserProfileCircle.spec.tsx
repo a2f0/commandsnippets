@@ -1,7 +1,7 @@
 import {ThemeProvider} from '@mui/material/styles';
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {HttpResponse, http} from 'msw/http';
-import {type MockInstance, vi} from 'vitest';
+import {vi} from 'vitest';
 import {UserProfileCircle} from '../../../src/components/UserProfileCircle';
 import {apiClient} from '../../../src/lib/api/apiClient';
 import {darkTheme} from '../../../src/theme/themes';
@@ -26,14 +26,8 @@ const renderWithContext = (loggedInUser: string | null = 'testuser') => {
 serveMockApi();
 
 describe('UserProfileCircle', () => {
-  let consoleMock: MockInstance;
-
   beforeEach(() => {
-    consoleMock = vi.spyOn(global.console, 'log').mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    consoleMock.mockRestore();
+    vi.spyOn(console, 'log').mockImplementation(() => {});
   });
 
   describe('Rendering', () => {
@@ -232,8 +226,6 @@ describe('UserProfileCircle', () => {
       await waitFor(() => {
         expect(screen.queryByText('Logout')).not.toBeInTheDocument();
       });
-
-      consoleErrorSpy.mockRestore();
     });
 
     it('ensures menu closes via finally block even if logout throws', async () => {
@@ -278,8 +270,6 @@ describe('UserProfileCircle', () => {
       });
 
       expect(logoutSpy).toHaveBeenCalledTimes(1);
-      logoutSpy.mockRestore();
-      consoleErrorSpy.mockRestore();
     });
   });
 

@@ -51,7 +51,6 @@ const apiVersion = () => useApiVersion.getState().version;
 beforeEach(() => useApiVersion.setState({version: null}));
 afterEach(() => {
   vi.useRealTimers();
-  vi.restoreAllMocks();
 });
 
 describe('fetchApi', () => {

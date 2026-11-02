@@ -602,7 +602,10 @@ per-row work multiplies (the HUD's Analytics tab times it).
   1 and 2 in tag 1, and entry 3 in no tag.
 - **Vitest**: specs in `__tests__/`, in jsdom. `__tests__/setup.ts` loads the
   jest-dom matchers and stubs `scrollIntoView`; `vite.config.ts` also loads
-  `fake-indexeddb/auto`. Unit specs mock the API with `msw/node`
+  `fake-indexeddb/auto`, and undoes every spy (`vi.spyOn`) and stubbed global
+  (`vi.stubGlobal`) before each test (`restoreMocks`, `unstubGlobals`;
+  `setup.ts` undoes them after each jsdom test, before its cleanup), so specs
+  restore none themselves. Unit specs mock the API with `msw/node`
   (`__tests__/util/msw.ts`). The specs are in three places:
   - `__tests__/src/` mirrors `src/`: the spec for `src/pages/AdminPage.tsx` is
     `__tests__/src/pages/AdminPage.spec.tsx`

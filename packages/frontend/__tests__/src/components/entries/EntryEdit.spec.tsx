@@ -21,7 +21,6 @@ beforeEach(() => {
   updateEntry.mockResolvedValue(undefined);
 });
 afterEach(() => {
-  vi.restoreAllMocks();
   updateEntry.mockReset();
 });
 

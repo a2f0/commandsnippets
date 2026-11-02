@@ -24,10 +24,6 @@ beforeEach(() => {
   vi.spyOn(envModule, 'environment', 'get').mockReturnValue('development');
 });
 
-afterEach(() => {
-  vi.restoreAllMocks();
-});
-
 it('records what its error boundary catches, which a HUD then lists', async () => {
   const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
 

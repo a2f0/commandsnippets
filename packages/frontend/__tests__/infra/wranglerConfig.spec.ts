@@ -1,6 +1,6 @@
 import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-import {afterEach, describe, expect, it, vi} from 'vitest';
+import {describe, expect, it, vi} from 'vitest';
 
 import * as envModule from '../../src/lib/environment';
 import {getOAuthRedirectUrl} from '../../src/lib/oauth';
@@ -26,10 +26,6 @@ const config = JSON.parse(
 };
 
 describe('wrangler.jsonc', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   it('serves the Vite build as a single-page app', () => {
     expect(read('../../vite.config.ts')).toContain("outDir: 'build'");
     expect(config.assets).toEqual({

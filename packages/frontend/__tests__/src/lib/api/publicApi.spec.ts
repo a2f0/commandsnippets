@@ -1,6 +1,6 @@
 import {CODES, DATA_ACCESS_HEADER} from '@commandsnippets/api-shared';
 import {CURSOR_START} from '@commandsnippets/api-shared/cursor';
-import {afterEach, describe, expect, it, vi} from 'vitest';
+import {describe, expect, it, vi} from 'vitest';
 
 import {publicSyncApi} from '../../../../src/lib/api/publicApi';
 import {PublicViewChangedError} from '../../../../src/lib/sync/publicView';
@@ -16,10 +16,6 @@ const reply = (status: number, body: unknown) =>
         status,
       })
   );
-
-afterEach(() => {
-  vi.restoreAllMocks();
-});
 
 describe('publicSyncApi', () => {
   // The sync's reads, of the owner's public routes.

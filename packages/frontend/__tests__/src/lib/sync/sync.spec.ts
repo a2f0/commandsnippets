@@ -63,10 +63,7 @@ beforeEach(() => {
   databases += 1;
   db = new CommandsnippetsDatabase(`sync-spec-${databases}`);
 });
-afterEach(async () => {
-  vi.restoreAllMocks();
-  await db.delete();
-});
+afterEach(() => db.delete());
 
 const read = async (path: string) => (await fetch(`${API}${path}`)).json();
 const after = (value: string) => encodeURIComponent(value);

@@ -22,7 +22,6 @@ beforeEach(() => {
   vi.spyOn(console, 'log').mockImplementation(() => {});
   vi.spyOn(console, 'warn').mockImplementation(() => {});
 });
-afterEach(() => vi.restoreAllMocks());
 
 function mount(path = '/test/activity/analytics', signedIn = true) {
   if (signedIn) {

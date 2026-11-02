@@ -50,10 +50,6 @@ describe('Entries List', () => {
       .spyOn(global.console, 'debug')
       .mockImplementation(() => undefined);
   });
-  afterEach(() => {
-    reorderEntrySpy.mockRestore();
-    consoleMock.mockReset();
-  });
   it('Hovers', async () => {
     const {user, entries} = await renderEntries();
     const handle = await pointAtHandle(user, 'entry', 0, 4);

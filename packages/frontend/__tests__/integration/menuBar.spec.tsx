@@ -1,6 +1,6 @@
 import {act, render, screen, waitFor} from '@testing-library/react';
 import {createMemoryHistory} from 'history';
-import {type MockInstance, vi} from 'vitest';
+import {vi} from 'vitest';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {serveMockApi} from '../util/msw';
 import {signIn} from '../util/signIn';
@@ -31,14 +31,8 @@ async function signInFreshModules(environment: string) {
 }
 
 describe('MenuBar', () => {
-  let consoleMock: MockInstance;
-
   beforeEach(() => {
-    consoleMock = vi.spyOn(global.console, 'log').mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    consoleMock.mockRestore();
+    vi.spyOn(console, 'log').mockImplementation(() => {});
   });
 
   describe('Rendering', () => {
