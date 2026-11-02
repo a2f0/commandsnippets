@@ -219,8 +219,9 @@ describe('a queue that takes longer to send than sign-out waits', () => {
     await logOut();
     await queueHanging();
     const first = requestSignOut();
-    await new Promise(resolve => setTimeout(resolve, 25));
+    // Asked again while the first is deciding: it joins the first.
     const second = requestSignOut();
+    expect(second).toBe(first);
     expect(
       await screen.findByText('Changes not saved yet')
     ).toBeInTheDocument();
@@ -228,9 +229,7 @@ describe('a queue that takes longer to send than sign-out waits', () => {
     await waitFor(() =>
       expect(screen.queryByText('Changes not saved yet')).toBeNull()
     );
-    await Promise.all([first, second]);
-    // Past the second request's wait too: it never comes back.
-    await new Promise(resolve => setTimeout(resolve, 150));
+    await first;
 
     expect(screen.queryByText('Changes not saved yet')).toBeNull();
     expect(store.loggedInUser).toBe(TEST_USER);

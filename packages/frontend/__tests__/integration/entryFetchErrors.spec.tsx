@@ -29,9 +29,12 @@ afterEach(() => {
   process.off('unhandledRejection', collectUnhandled);
 });
 
-/** Give Node time to report a rejection left unhandled. */
+/**
+ * Let Node report the rejections left unhandled so far, which it does once
+ * the microtasks of a turn of the event loop have run: before the next turn.
+ */
 function settle() {
-  return new Promise(resolve => setTimeout(resolve, 50));
+  return new Promise(resolve => setImmediate(resolve));
 }
 
 const syncError = ['ERROR: sync failed:', expect.any(Error)];

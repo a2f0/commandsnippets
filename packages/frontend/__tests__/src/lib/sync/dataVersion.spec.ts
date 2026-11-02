@@ -227,17 +227,14 @@ describe('the sync', () => {
     const tags = gate('get', '/tags');
     const syncing = sync.syncAll();
     await tags.reached;
-    let adopted = false;
-    const adopting = sync.adopt(2).then(() => {
-      adopted = true;
-    });
-    await new Promise(resolve => setTimeout(resolve, 20));
-    // Its turn is after the sync's.
-    expect(adopted).toBe(false);
+    const done: string[] = [];
+    const adopting = sync.adopt(2).then(() => done.push('adopt'));
 
     tags.release();
-    await syncing;
+    await syncing.then(() => done.push('sync'));
     await adopting;
+    // Its turn is after the sync's.
+    expect(done).toEqual(['sync', 'adopt']);
 
     expect(await heldVersion(db, OWNER)).toBe(2);
     expect(await entryIds()).toEqual([]);
