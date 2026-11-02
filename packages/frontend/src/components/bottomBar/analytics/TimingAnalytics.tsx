@@ -7,6 +7,7 @@ import {
   clearMetrics,
   type Interaction,
   statsOf,
+  type Timing,
   type TimingKind,
   timingsOf,
 } from '../../../lib/metrics/timings';
@@ -90,6 +91,169 @@ const Tile = ({
   </Box>
 );
 
+/** Which interaction to show (the latest by default), and Clear. */
+const InteractionPicker = ({
+  interactions,
+  interaction,
+  onSelect,
+  onClear,
+}: {
+  interactions: readonly Interaction[];
+  interaction: Interaction | undefined;
+  onSelect: (id: number) => void;
+  onClear: () => void;
+}) => {
+  const {t} = useTypedTranslation('menu');
+  return (
+    <Box sx={{display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap'}}>
+      <Box component="h3" sx={heading}>
+        {t('timingsInteraction')}
+      </Box>
+      {interactions.length > 0 && (
+        <Box
+          component="select"
+          aria-label={t('timingsInteraction')}
+          value={interaction?.id ?? ''}
+          onChange={event => onSelect(Number(event.target.value))}
+          sx={selectSx}
+        >
+          {[...interactions].reverse().map(option => (
+            <option key={option.id} value={option.id}>
+              {`${clockTime(option)} · ${option.name} · ${option.target} · ${
+                option.painted === null
+                  ? t('timingsNotPainted')
+                  : formatMs(option.painted - option.start)
+              }`}
+            </option>
+          ))}
+        </Box>
+      )}
+      <Box sx={{flex: 1}} />
+      <Button
+        size="small"
+        onClick={onClear}
+        sx={{textTransform: 'none', fontSize: 12, minWidth: 'unset'}}
+      >
+        {t('timingsClear')}
+      </Button>
+    </Box>
+  );
+};
+
+/**
+ * An interaction from the click to the paint of its list: how long it
+ * took, how long each kind of work was running before the paint, and each
+ * timing on one axis.
+ */
+const InteractionSummary = ({
+  interaction,
+  timings,
+}: {
+  interaction: Interaction;
+  /** Its timings (`timingsOf`). */
+  timings: readonly Timing[];
+}) => {
+  const {t} = useTypedTranslation('menu');
+  const kindLabels = useKindLabels();
+  const end =
+    interaction.painted ??
+    Math.max(
+      interaction.start,
+      ...timings.map(({start, duration}) => start + duration)
+    );
+  return (
+    <>
+      <Box sx={{display: 'flex', gap: 3, flexWrap: 'wrap'}}>
+        <Tile
+          label={t('timingsClickToPaint')}
+          value={
+            interaction.painted === null
+              ? t('timingsNotPainted')
+              : formatMs(interaction.painted - interaction.start)
+          }
+        />
+        {KINDS.map(kind => {
+          const ofKind = timings.filter(timing => timing.kind === kind);
+          return (
+            <Tile
+              key={kind}
+              kind={kind}
+              label={t('timingsBusy', {kind: kindLabels[kind]})}
+              value={formatMs(busyTime(ofKind, interaction.start, end))}
+              caption={t('timingsCount', {count: ofKind.length})}
+            />
+          );
+        })}
+      </Box>
+      <Box sx={{fontSize: 12, color: 'text.disabled', mt: -1}}>
+        {t('timingsBusyNote')}
+      </Box>
+      <InteractionWaterfall interaction={interaction} timings={timings} />
+    </>
+  );
+};
+
+/** The span of time the timings below cover, and the kinds' colors. */
+const WindowPicker = ({
+  timeWindow,
+  onChange,
+}: {
+  timeWindow: TimeWindow;
+  onChange: (timeWindow: TimeWindow) => void;
+}) => {
+  const {t} = useTypedTranslation('menu');
+  const kindLabels = useKindLabels();
+  const windowLabels: Record<string, string> = {
+    '10000': t('timingsWindowTenSeconds'),
+    '60000': t('timingsWindowMinute'),
+    '300000': t('timingsWindowFiveMinutes'),
+    all: t('timingsWindowAll'),
+  };
+  return (
+    <Box sx={{display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap'}}>
+      <Box component="h3" sx={heading}>
+        {t('timingsAll')}
+      </Box>
+      <Box
+        component="select"
+        aria-label={t('timingsWindow')}
+        value={timeWindow === null ? 'all' : String(timeWindow)}
+        onChange={event =>
+          onChange(
+            WINDOWS.find(
+              option => String(option ?? 'all') === event.target.value
+            ) ?? null
+          )
+        }
+        sx={selectSx}
+      >
+        {WINDOWS.map(option => {
+          const value = option === null ? 'all' : String(option);
+          return (
+            <option key={value} value={value}>
+              {windowLabels[value]}
+            </option>
+          );
+        })}
+      </Box>
+      <Box
+        sx={{display: 'flex', gap: 1.5, fontSize: 12, color: 'text.secondary'}}
+      >
+        {KINDS.map(kind => (
+          <Box
+            key={kind}
+            component="span"
+            sx={{display: 'inline-flex', alignItems: 'center', gap: 0.75}}
+          >
+            <KindSwatch kind={kind} />
+            {kindLabels[kind]}
+          </Box>
+        ))}
+      </Box>
+    </Box>
+  );
+};
+
 /**
  * The HUD's Analytics tab: the timings of the network, IndexedDB and
  * renders (`lib/metrics/`). First an interaction (the latest by default,
@@ -100,7 +264,6 @@ const Tile = ({
  */
 export const TimingAnalytics = () => {
   const {t} = useTypedTranslation('menu');
-  const kindLabels = useKindLabels();
   const metrics = useMetrics();
   const now = useClock();
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -128,150 +291,25 @@ export const TimingAnalytics = () => {
   }, [metrics, timeWindow, now]);
   const stats = useMemo(() => statsOf(recent), [recent]);
 
-  const windowLabels: Record<string, string> = {
-    '10000': t('timingsWindowTenSeconds'),
-    '60000': t('timingsWindowMinute'),
-    '300000': t('timingsWindowFiveMinutes'),
-    all: t('timingsWindowAll'),
-  };
-
-  const interactionEnd =
-    interaction === undefined
-      ? 0
-      : (interaction.painted ??
-        Math.max(
-          interaction.start,
-          ...ofInteraction.map(({start, duration}) => start + duration)
-        ));
-
   return (
     <Box sx={{display: 'flex', flexDirection: 'column', gap: 2, pb: 2}}>
-      <Box
-        sx={{display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap'}}
-      >
-        <Box component="h3" sx={heading}>
-          {t('timingsInteraction')}
-        </Box>
-        {interactions.length > 0 && (
-          <Box
-            component="select"
-            aria-label={t('timingsInteraction')}
-            value={interaction?.id ?? ''}
-            onChange={event => setSelectedId(Number(event.target.value))}
-            sx={selectSx}
-          >
-            {[...interactions].reverse().map(option => (
-              <option key={option.id} value={option.id}>
-                {`${clockTime(option)} · ${option.name} · ${option.target} · ${
-                  option.painted === null
-                    ? t('timingsNotPainted')
-                    : formatMs(option.painted - option.start)
-                }`}
-              </option>
-            ))}
-          </Box>
-        )}
-        <Box sx={{flex: 1}} />
-        <Button
-          size="small"
-          onClick={() => {
-            clearMetrics();
-            setSelectedId(null);
-          }}
-          sx={{textTransform: 'none', fontSize: 12, minWidth: 'unset'}}
-        >
-          {t('timingsClear')}
-        </Button>
-      </Box>
+      <InteractionPicker
+        interactions={interactions}
+        interaction={interaction}
+        onSelect={setSelectedId}
+        onClear={() => {
+          clearMetrics();
+          setSelectedId(null);
+        }}
+      />
       {interaction === undefined ? (
         <Box sx={{color: 'text.disabled', fontSize: 12}}>
           {t('timingsNoInteractions')}
         </Box>
       ) : (
-        <>
-          <Box sx={{display: 'flex', gap: 3, flexWrap: 'wrap'}}>
-            <Tile
-              label={t('timingsClickToPaint')}
-              value={
-                interaction.painted === null
-                  ? t('timingsNotPainted')
-                  : formatMs(interaction.painted - interaction.start)
-              }
-            />
-            {KINDS.map(kind => {
-              const ofKind = ofInteraction.filter(
-                timing => timing.kind === kind
-              );
-              return (
-                <Tile
-                  key={kind}
-                  kind={kind}
-                  label={t('timingsBusy', {kind: kindLabels[kind]})}
-                  value={formatMs(
-                    busyTime(ofKind, interaction.start, interactionEnd)
-                  )}
-                  caption={t('timingsCount', {count: ofKind.length})}
-                />
-              );
-            })}
-          </Box>
-          <Box sx={{fontSize: 12, color: 'text.disabled', mt: -1}}>
-            {t('timingsBusyNote')}
-          </Box>
-          <InteractionWaterfall
-            interaction={interaction}
-            timings={ofInteraction}
-          />
-        </>
+        <InteractionSummary interaction={interaction} timings={ofInteraction} />
       )}
-      <Box
-        sx={{display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap'}}
-      >
-        <Box component="h3" sx={heading}>
-          {t('timingsAll')}
-        </Box>
-        <Box
-          component="select"
-          aria-label={t('timingsWindow')}
-          value={timeWindow === null ? 'all' : String(timeWindow)}
-          onChange={event =>
-            setTimeWindow(
-              WINDOWS.find(
-                option => String(option ?? 'all') === event.target.value
-              ) ?? null
-            )
-          }
-          sx={selectSx}
-        >
-          {WINDOWS.map(option => {
-            const value = option === null ? 'all' : String(option);
-            return (
-              <option key={value} value={value}>
-                {windowLabels[value]}
-              </option>
-            );
-          })}
-        </Box>
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 1.5,
-            fontSize: 12,
-            color: 'text.secondary',
-          }}
-        >
-          {KINDS.map(kind => (
-            <Box
-              key={kind}
-              component="span"
-              sx={{display: 'inline-flex', alignItems: 'center', gap: 0.75}}
-            >
-              <KindSwatch kind={kind} />
-              {kindLabels[kind]}
-            </Box>
-          ))}
-        </Box>
-      </Box>
+      <WindowPicker timeWindow={timeWindow} onChange={setTimeWindow} />
       {recent.length === 0 ? (
         <Box sx={{color: 'text.disabled', fontSize: 12}}>
           {t('timingsNone')}
