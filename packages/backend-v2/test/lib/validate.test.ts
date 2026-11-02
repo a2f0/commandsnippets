@@ -8,41 +8,38 @@ import {
 } from '@commandsnippets/api-shared';
 import {describe, expect, it} from 'vitest';
 import * as z from 'zod/mini';
-import {ApiError} from '../../src/lib/errors';
 import {eachField, parseOrThrow, validateFields} from '../../src/lib/validate';
+import {apiErrorOf} from '../support/errors';
 
 /** The errors `run` throws, as `[pointer, detail, code]`. */
-function errorsOf(run: () => unknown): Array<[string, string, string]> {
-  try {
-    run();
-  } catch (error) {
-    expect(error).toBeInstanceOf(ApiError);
-    expect((error as ApiError).status).toBe(400);
-    return (error as ApiError).errors.map(({source, detail, code}) => [
-      source?.pointer ?? '',
-      detail,
-      code ?? '',
-    ]);
-  }
-  throw new Error('Expected validation to fail');
+async function errorsOf(
+  run: () => unknown
+): Promise<Array<[string, string, string]>> {
+  const error = await apiErrorOf(run);
+  expect(error.status).toBe(400);
+  return error.errors.map(({source, detail, code}) => [
+    source?.pointer ?? '',
+    detail,
+    code,
+  ]);
 }
 
 describe('validation fields', () => {
   const one = (field: z.ZodMiniType, value: unknown) =>
     errorsOf(() => validateFields(z.object({f: field}), {f: value}));
 
-  it('charField rejects null and non-strings, and trims', () => {
+  it('charField rejects null and non-strings, and trims', async () => {
     const field = charField({maxLength: 3});
-    expect(one(field, null)).toEqual([
+    expect(await one(field, null)).toEqual([
       ['/data/attributes/f', 'This field may not be null.', 'null'],
     ]);
-    expect(one(field, {})).toEqual([
+    expect(await one(field, {})).toEqual([
       ['/data/attributes/f', 'Not a valid string.', 'invalid'],
     ]);
-    expect(one(field, true)).toEqual([
+    expect(await one(field, true)).toEqual([
       ['/data/attributes/f', 'Not a valid string.', 'invalid'],
     ]);
-    expect(one(field, '  ')).toEqual([
+    expect(await one(field, '  ')).toEqual([
       ['/data/attributes/f', 'This field may not be blank.', 'blank'],
     ]);
     const schema = z.object({f: field});
@@ -50,12 +47,12 @@ describe('validation fields', () => {
     expect(validateFields(schema, {f: 12})).toEqual({f: '12'});
   });
 
-  it('charField measures length in characters, not UTF-16 units', () => {
+  it('charField measures length in characters, not UTF-16 units', async () => {
     const field = charField({maxLength: 3});
     expect(validateFields(z.object({f: field}), {f: '😀😀😀'})).toEqual({
       f: '😀😀😀',
     });
-    expect(one(field, '😀😀😀😀')).toEqual([
+    expect(await one(field, '😀😀😀😀')).toEqual([
       [
         '/data/attributes/f',
         'Ensure this field has no more than 3 characters.',
@@ -64,27 +61,27 @@ describe('validation fields', () => {
     ]);
   });
 
-  it('booleanField accepts DRF truthy/falsy spellings', () => {
+  it('booleanField accepts DRF truthy/falsy spellings', async () => {
     const schema = z.object({f: booleanField()});
     expect(validateFields(schema, {f: 'true'})).toEqual({f: true});
     expect(validateFields(schema, {f: 0})).toEqual({f: false});
-    expect(one(booleanField(), 'maybe')).toEqual([
+    expect(await one(booleanField(), 'maybe')).toEqual([
       ['/data/attributes/f', 'Must be a valid boolean.', 'invalid'],
     ]);
   });
 
-  it('reports every missing field in order, and skips them under partial', () => {
+  it('reports every missing field in order, and skips them under partial', async () => {
     const schema = z.object({b: charField(), a: charField()});
-    expect(errorsOf(() => validateFields(schema, {}))).toEqual([
+    expect(await errorsOf(() => validateFields(schema, {}))).toEqual([
       ['/data/attributes/b', 'This field is required.', 'required'],
       ['/data/attributes/a', 'This field is required.', 'required'],
     ]);
     expect(validateFields(z.partial(schema), {})).toEqual({});
   });
 
-  it('points under the given base', () => {
+  it('points under the given base', async () => {
     expect(
-      errorsOf(() =>
+      await errorsOf(() =>
         validateFields(z.object({f: charField()}), {}, '/data/relationships')
       )
     ).toEqual([
@@ -94,7 +91,7 @@ describe('validation fields', () => {
 });
 
 describe('parseOrThrow', () => {
-  it('throws only the first error, with its status and pointer', () => {
+  it('throws only the first error, with its status and pointer', async () => {
     const schema = z.pipe(
       z.unknown(),
       z.transform((_, ctx) => {
@@ -102,21 +99,16 @@ describe('parseOrThrow', () => {
         return fail(ctx, 'second', QUERY_ERROR);
       })
     );
-    try {
-      parseOrThrow(schema, 1);
-      expect.unreachable();
-    } catch (error) {
-      expect(error).toBeInstanceOf(ApiError);
-      expect((error as ApiError).status).toBe(404);
-      expect((error as ApiError).errors).toEqual([
-        {
-          detail: 'first',
-          status: '404',
-          source: {pointer: '/data'},
-          code: 'not_found',
-        },
-      ]);
-    }
+    const error = await apiErrorOf(() => parseOrThrow(schema, 1));
+    expect(error.status).toBe(404);
+    expect(error.errors).toEqual([
+      {
+        detail: 'first',
+        status: '404',
+        source: {pointer: '/data'},
+        code: 'not_found',
+      },
+    ]);
   });
 
   it('returns the parsed value', () => {
@@ -128,7 +120,10 @@ describe('parseOrThrow', () => {
 describe('toErrorObject', () => {
   it('reads zod issues without metadata as 400 invalid at /data', () => {
     const [issue] = z.string().safeParse(5).error?.issues ?? [];
-    expect(toErrorObject(issue as z.core.$ZodIssue)).toEqual({
+    if (issue === undefined) {
+      throw new Error('Expected an issue');
+    }
+    expect(toErrorObject(issue)).toEqual({
       detail: 'Invalid input: expected string, received number',
       status: '400',
       source: {pointer: '/data'},

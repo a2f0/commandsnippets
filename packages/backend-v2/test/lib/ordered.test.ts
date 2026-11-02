@@ -1,9 +1,10 @@
+import {sql} from 'drizzle-orm';
 import {describe, expect, it, vi} from 'vitest';
 import {now} from '../../src/lib/clock';
-import {ApiError} from '../../src/lib/errors';
 import {OrderedModel, type OrderedRow} from '../../src/lib/ordered';
 import {tagOrdering} from '../../src/resources/orderings';
 import {db, refreshTag, setUpBase, tagFactory, tagsOf} from '../helpers';
+import {apiErrorOf} from '../support/errors';
 
 const row = (tag: {
   id: number;
@@ -19,11 +20,17 @@ const row = (tag: {
 describe('OrderedModel', () => {
   const model = () => new OrderedModel(db(), tagOrdering);
 
-  it('nextOrder is 0 for an empty scope and max + 1 otherwise', async () => {
+  it('nextOrderSql is 0 for an empty scope and max + 1 otherwise', async () => {
     const {user1} = await setUpBase();
-    expect(await model().nextOrder(999999)).toBe(0);
+    const nextOrder = async (scope: number) =>
+      (
+        await db().get<{rank: number}>(
+          sql`SELECT ${model().nextOrderSql(scope)} AS rank`
+        )
+      ).rank;
+    expect(await nextOrder(999999)).toBe(0);
     // Example tags are ranked 1 and 2.
-    expect(await model().nextOrder(user1.id)).toBe(3);
+    expect(await nextOrder(user1.id)).toBe(3);
   });
 
   it('above is a no-op for rows with the same rank', async () => {
@@ -94,21 +101,16 @@ describe('OrderedModel', () => {
     const a = await tagFactory({user: user1, order: 10});
     const b = await tagFactory({user: user1, order: 11});
     vi.spyOn(OrderedModel.prototype, 'to').mockResolvedValue(false);
-    const error = await model()
-      .above(row(b), row(a), now())
-      .catch((caught: unknown) => caught);
-    expect(error).toBeInstanceOf(ApiError);
-    expect((error as ApiError).status).toBe(409);
+    const error = await apiErrorOf(() => model().above(row(b), row(a), now()));
+    expect(error.status).toBe(409);
   });
 
   it('404s when a moved row disappears', async () => {
     const {user1} = await setUpBase();
     const a = await tagFactory({user: user1, order: 10});
     const ghost = {id: 999999, order: 20, scope: user1.id};
-    const error = await model()
-      .above(ghost, row(a), now())
-      .catch((caught: unknown) => caught);
-    expect((error as ApiError).status).toBe(404);
+    const error = await apiErrorOf(() => model().above(ghost, row(a), now()));
+    expect(error.status).toBe(404);
   });
 
   it('refuses to order rows from different scopes', async () => {

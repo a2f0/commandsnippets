@@ -18,13 +18,13 @@ export async function appRequest(
 }
 
 /** A Set-Cookie header: name, raw value, and attributes by lower-case name. */
-export interface SetCookie {
+interface SetCookie {
   name: string;
   value: string;
   attributes: Record<string, string | true>;
 }
 
-export function parseSetCookie(header: string): SetCookie {
+function parseSetCookie(header: string): SetCookie {
   const [pair = '', ...parts] = header.split(';').map(part => part.trim());
   const separator = pair.indexOf('=');
   const attributes: Record<string, string | true> = {};

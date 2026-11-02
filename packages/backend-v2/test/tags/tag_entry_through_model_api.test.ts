@@ -1,4 +1,4 @@
-import {describe, expect, it} from 'vitest';
+import {beforeEach, describe, expect, it} from 'vitest';
 import {
   type Base,
   json,
@@ -17,8 +17,11 @@ import {
 describe('TestTagsEntriesApi', () => {
   let base: Base;
 
-  it('test_retrieve_fails', async () => {
+  beforeEach(async () => {
     base = await setUpBase();
+  });
+
+  it('test_retrieve_fails', async () => {
     const tag = await tagFactory({user: base.user1});
     const textEntry = await textEntryFactory({user: base.user1});
     const tagTextEntry = await tagTextEntryFactory({
@@ -33,13 +36,11 @@ describe('TestTagsEntriesApi', () => {
   });
 
   it('test_retrieve_missing_fails', async () => {
-    base = await setUpBase();
     const response = await base.user1Client.get('/api/v1/tags_entries/1');
     expect(response.status).toBe(405);
   });
 
   it('test_can_tag_self_owned', async () => {
-    base = await setUpBase();
     const tag = await tagFactory({user: base.user1});
     const textEntry = await textEntryFactory({user: base.user1});
     const response = await base.user1Client.post(
@@ -50,7 +51,6 @@ describe('TestTagsEntriesApi', () => {
   });
 
   it('test_create_requires_authentication', async () => {
-    base = await setUpBase();
     const response = await base.unauthenticatedClient.post(
       '/api/v1/tags_entries',
       {}
@@ -64,7 +64,6 @@ describe('TestTagsEntriesApi', () => {
   });
 
   it('test_reorder_requires_authentication', async () => {
-    base = await setUpBase();
     const response = await base.unauthenticatedClient.post(
       '/api/v1/tags_entries/reorder',
       {}
@@ -78,7 +77,6 @@ describe('TestTagsEntriesApi', () => {
   });
 
   it('test_reorder_works', async () => {
-    base = await setUpBase();
     const entry1 = await textEntryFactory({user: base.user1});
     const entry2 = await textEntryFactory({user: base.user1});
     const tag1 = await tagFactory({user: base.user1});
@@ -120,7 +118,6 @@ describe('TestTagsEntriesApi', () => {
   });
 
   it('test_reorder_fails_if_not_top_owner', async () => {
-    base = await setUpBase();
     const entry1 = await textEntryFactory({user: base.user2});
     const entry2 = await textEntryFactory({user: base.user1});
     const tag1 = await tagFactory({user: base.user1});
@@ -161,7 +158,6 @@ describe('TestTagsEntriesApi', () => {
   });
 
   it('test_reorder_fails_if_not_bottom_owner', async () => {
-    base = await setUpBase();
     const entry1 = await textEntryFactory({user: base.user1});
     const entry2 = await textEntryFactory({user: base.user2});
     const tag1 = await tagFactory({user: base.user1});
@@ -198,7 +194,6 @@ describe('TestTagsEntriesApi', () => {
   });
 
   it('test_delete_requires_authentication', async () => {
-    base = await setUpBase();
     const tag = await tagFactory({user: base.user1});
     const textEntry = await textEntryFactory({user: base.user1});
     const tagTextEntry = await tagTextEntryFactory({
@@ -219,7 +214,6 @@ describe('TestTagsEntriesApi', () => {
   });
 
   it('test_delete_succeeds_when_user_owns_relationship', async () => {
-    base = await setUpBase();
     const tag = await tagFactory({user: base.user1});
     const textEntry = await textEntryFactory({user: base.user1});
     const tagTextEntry = await tagTextEntryFactory({
@@ -243,7 +237,6 @@ describe('TestTagsEntriesApi', () => {
   });
 
   it('test_delete_fails_when_user_doesnt_own_relationship', async () => {
-    base = await setUpBase();
     // Create a relationship owned by user2
     const tag = await tagFactory({user: base.user2});
     const textEntry = await textEntryFactory({user: base.user2});
@@ -270,8 +263,11 @@ describe('TestTagsEntriesApi', () => {
 describe('TestTagsEntriesApi v2', () => {
   let base: Base;
 
-  it('returns 405 for GET, PATCH and PUT', async () => {
+  beforeEach(async () => {
     base = await setUpBase();
+  });
+
+  it('returns 405 for GET, PATCH and PUT', async () => {
     const tag = await tagFactory({user: base.user1});
     const textEntry = await textEntryFactory({user: base.user1});
     const junction = await tagTextEntryFactory({
@@ -292,7 +288,6 @@ describe('TestTagsEntriesApi v2', () => {
   });
 
   it('returns 404 when deleting a missing junction', async () => {
-    base = await setUpBase();
     const response = await base.user1Client.delete(
       '/api/v1/tags_entries/999999'
     );
@@ -304,7 +299,6 @@ describe('TestTagsEntriesApi v2', () => {
   });
 
   it('renders the created junction with its tag, entry and user', async () => {
-    base = await setUpBase();
     const tag = await tagFactory({user: base.user1});
     const textEntry = await textEntryFactory({user: base.user1});
     const response = await base.user1Client.post(
@@ -338,7 +332,6 @@ describe('TestTagsEntriesApi v2', () => {
   });
 
   it('is idempotent (get_or_create)', async () => {
-    base = await setUpBase();
     const tag = await tagFactory({user: base.user1});
     const textEntry = await textEntryFactory({user: base.user1});
     const first = await json(
@@ -359,7 +352,6 @@ describe('TestTagsEntriesApi v2', () => {
   });
 
   it('ranks junctions per tag', async () => {
-    base = await setUpBase();
     const tag = await tagFactory({user: base.user1});
     const otherTag = await tagFactory({user: base.user1});
     const entries = [
@@ -388,7 +380,6 @@ describe('TestTagsEntriesApi v2', () => {
 
   // v2: the tag and entry must belong to the requester (Django accepted any).
   it("rejects tagging with another user's tag or entry", async () => {
-    base = await setUpBase();
     const ownTag = await tagFactory({user: base.user1});
     const ownEntry = await textEntryFactory({user: base.user1});
     const otherTag = await tagFactory({user: base.user2});
@@ -422,7 +413,6 @@ describe('TestTagsEntriesApi v2', () => {
   });
 
   it('validates junction relationships', async () => {
-    base = await setUpBase();
     let response = await base.user1Client.post('/api/v1/tags_entries', {
       data: {type: 'TagTextEntryThroughModel', attributes: {}},
     });
@@ -469,7 +459,6 @@ describe('TestTagsEntriesApi v2', () => {
 
   // v2: junction ranks are per tag, so cross-tag reorders are rejected.
   it('rejects reordering junctions from different tags', async () => {
-    base = await setUpBase();
     const tag1 = await tagFactory({user: base.user1});
     const tag2 = await tagFactory({user: base.user1});
     const entry = await textEntryFactory({user: base.user1});
@@ -498,7 +487,6 @@ describe('TestTagsEntriesApi v2', () => {
   });
 
   it('leaves a gap (no compaction) when a junction is deleted', async () => {
-    base = await setUpBase();
     const tag = await tagFactory({user: base.user1});
     const junctions = [];
     for (const order of [0, 1, 2]) {
