@@ -1,9 +1,8 @@
 import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-import {describe, expect, it, vi} from 'vitest';
-
-import * as envModule from '../../src/lib/environment';
+import {describe, expect, it} from 'vitest';
 import {getOAuthRedirectUrl} from '../../src/lib/oauth';
+import {stubEnvironment} from '../util/environment';
 
 const read = (path: string) =>
   readFileSync(fileURLToPath(new URL(path, import.meta.url)), 'utf8');
@@ -39,7 +38,7 @@ describe('wrangler.jsonc', () => {
   it.each(['staging', 'production'])(
     'serves %s only on the host its OAuth callbacks return to',
     env => {
-      vi.spyOn(envModule, 'environment', 'get').mockReturnValue(env);
+      stubEnvironment(env);
       const host = new URL(getOAuthRedirectUrl('github')).host;
       expect(config.env[env]?.routes).toEqual([
         {pattern: host, custom_domain: true},

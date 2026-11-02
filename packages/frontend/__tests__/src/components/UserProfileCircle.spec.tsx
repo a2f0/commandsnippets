@@ -8,11 +8,6 @@ import {darkTheme} from '../../../src/theme/themes';
 import {serveMockApi, server} from '../../util/msw';
 import {store} from '../../util/signIn';
 
-// Mock the environment module to ensure it's not production
-vi.mock('../../../src/lib/environment', () => ({
-  environment: 'test',
-}));
-
 const renderWithContext = (loggedInUser: string | null = 'testuser') => {
   store.setLoggedInUser(loggedInUser);
   return render(

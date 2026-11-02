@@ -1,7 +1,8 @@
-import {act, render, screen, waitFor} from '@testing-library/react';
-import {createMemoryHistory} from 'history';
+import {screen, waitFor} from '@testing-library/react';
 import {vi} from 'vitest';
+import {loggedInCookieNames} from '../../src/lib/auth/authUtils';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
+import {stubEnvironment} from '../util/environment';
 import {serveMockApi} from '../util/msw';
 import {signIn} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
@@ -11,24 +12,6 @@ beforeEach(() => {
   signIn();
   assignLoggedInCookie();
 });
-
-/**
- * Sign in to the modules `vi.resetModules()` loaded afresh for a mocked
- * `environment`: their store starts signed out, and staging reads its own
- * login cookie. Signed out, every page would be the sign-in page.
- */
-async function signInFreshModules(environment: string) {
-  const [{useAppState}, {loggedInCookieNames}] = await Promise.all([
-    import('../../src/lib/state/appState'),
-    import('../../src/lib/auth/authUtils'),
-  ]);
-  useAppState.setState({loggedInUser: 'test'});
-  assignLoggedInCookie(
-    loggedInCookieNames(environment)
-      .map(name => `${name}=True`)
-      .join('; ')
-  );
-}
 
 describe('MenuBar', () => {
   beforeEach(() => {
@@ -137,81 +120,25 @@ describe('MenuBar', () => {
   });
 
   describe('Environment-specific Behavior', () => {
-    it('shows Debug menu in non-production environment', async () => {
+    it.each([
+      ['test', true],
+      ['staging', true],
+      ['production', false],
+    ])('in %s, shows the Debug menu: %s', async (environment, shown) => {
+      stubEnvironment(environment);
+      // Staging reads a login cookie of its own.
+      assignLoggedInCookie(
+        loggedInCookieNames(environment)
+          .map(name => `${name}=True`)
+          .join('; ')
+      );
+
       await renderAppAt('/test/test', {act: true});
 
-      await waitFor(() => {
-        expect(screen.getByRole('menu', {name: 'Debug'})).toBeInTheDocument();
-      });
-    });
-
-    it('hides Debug menu in production environment', async () => {
-      // Mock the environment module to return 'production' for this test only
-      vi.doMock('../../src/lib/environment', () => ({
-        environment: 'production',
-      }));
-
-      // Clear module cache to ensure the mock is used
-      vi.resetModules();
-
-      // Dynamically import the TestAppRouter to use the mocked environment
-      const {TestAppRouter: MockedTestAppRouter} = await import(
-        '../util/TestAppRouter'
-      );
-      await signInFreshModules('production');
-
-      const history = createMemoryHistory();
-      const route = '/test/test';
-      history.push(route);
-
-      await act(async () => {
-        render(<MockedTestAppRouter history={history} />);
-      });
-
-      await waitFor(() => {
-        // In production, the Debug menu should not be rendered
-        expect(screen.getByRole('menu', {name: 'File'})).toBeInTheDocument();
-        expect(
-          screen.queryByRole('menu', {name: 'Debug'})
-        ).not.toBeInTheDocument();
-      });
-
-      // Restore the original module
-      vi.doUnmock('../../src/lib/environment');
-      vi.resetModules();
-    });
-
-    it('shows Debug menu in staging environment', async () => {
-      // Mock the environment module to return 'staging' for this test only
-      vi.doMock('../../src/lib/environment', () => ({
-        environment: 'staging',
-      }));
-
-      // Clear module cache to ensure the mock is used
-      vi.resetModules();
-
-      // Dynamically import the TestAppRouter to use the mocked environment
-      const {TestAppRouter: MockedTestAppRouter} = await import(
-        '../util/TestAppRouter'
-      );
-      await signInFreshModules('staging');
-
-      const history = createMemoryHistory();
-      const route = '/test/test';
-      history.push(route);
-
-      await act(async () => {
-        render(<MockedTestAppRouter history={history} />);
-      });
-
-      await waitFor(() => {
-        // In staging, the Debug menu should be rendered (non-production)
-        expect(screen.getByRole('menu', {name: 'Debug'})).toBeInTheDocument();
-      });
-
-      // Restore the original module
-      vi.doUnmock('../../src/lib/environment');
-      vi.resetModules();
+      expect(
+        await screen.findByRole('menu', {name: 'File'})
+      ).toBeInTheDocument();
+      expect(screen.queryByRole('menu', {name: 'Debug'}) !== null).toBe(shown);
     });
   });
 

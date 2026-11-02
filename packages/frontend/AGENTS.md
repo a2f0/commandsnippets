@@ -728,6 +728,8 @@ console.error('ERROR: Build failed');
   - `apiClientMethods.ts` - the API client's methods, shared by every client
     (`apiClient` and `apiClient.writesAs`'s): spy on these to see a call
     whichever client makes it
+  - `environment.ts` - `stubEnvironment(name)`, the app's environment for
+    the rest of the test (read at call time; values derived at load stay)
   - `restoreElsewhere.ts` - another device's restore against the mock API
     (over the active data version), making a new version active
 - Every jsdom test starts signed out, with no IndexedDB data and the mock

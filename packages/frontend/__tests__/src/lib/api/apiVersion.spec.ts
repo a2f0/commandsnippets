@@ -8,12 +8,12 @@ import {
   requestName,
   useApiVersion,
 } from '../../../../src/lib/api/apiVersion';
-import * as envModule from '../../../../src/lib/environment';
 import {
   clearMetrics,
   metricsSnapshot,
   NOTIFY_MS,
 } from '../../../../src/lib/metrics/timings';
+import {stubEnvironment} from '../../../util/environment';
 
 const user = JSON.stringify({
   data: {
@@ -134,7 +134,7 @@ describe('fetchApi timings', () => {
   it('neither copies a body nor times a request in production', async () => {
     // A fake clock for the HUD's notification (`NOTIFY_MS`), moved past it.
     vi.useFakeTimers({toFake: ['setTimeout', 'clearTimeout']});
-    vi.spyOn(envModule, 'environment', 'get').mockReturnValue('production');
+    stubEnvironment('production');
     const clone = vi.spyOn(Response.prototype, 'clone');
     answer('0.2.1');
 

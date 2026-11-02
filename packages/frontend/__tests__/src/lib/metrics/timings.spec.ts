@@ -1,5 +1,4 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
-import * as envModule from '../../../../src/lib/environment';
 import {
   beginInteraction,
   busyTime,
@@ -18,6 +17,7 @@ import {
   timed,
   timingsOf,
 } from '../../../../src/lib/metrics/timings';
+import {stubEnvironment} from '../../../util/environment';
 
 beforeEach(() => clearMetrics());
 afterEach(() => {
@@ -111,7 +111,7 @@ describe('recordTiming', () => {
 
   it('records nothing in production, which has no HUD', async () => {
     fakeTimers();
-    vi.spyOn(envModule, 'environment', 'get').mockReturnValue('production');
+    stubEnvironment('production');
     recordTiming('network', 'GET /tags', 0, 1);
     beginInteraction('tag switch', listKey({tag: 'a'}));
 

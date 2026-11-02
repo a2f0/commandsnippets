@@ -9,8 +9,8 @@ import {BottomBar} from '../../../../src/components/bottomBar/BottomBar';
 import {ErrorBoundary} from '../../../../src/components/errorBoundary';
 import {recordError} from '../../../../src/hooks/useErrorStore';
 import {i18n} from '../../../../src/i18n/i18n';
-import * as envModule from '../../../../src/lib/environment';
 import {darkTheme} from '../../../../src/theme/themes';
+import {stubEnvironment} from '../../../util/environment';
 import {signIn} from '../../../util/signIn';
 
 // The Analytics tab loads its module when first shown (React.lazy): load
@@ -55,7 +55,7 @@ describe('BottomBar Component', () => {
   it.each(['development', 'test'])(
     'renders HUD button in %s environment',
     env => {
-      vi.spyOn(envModule, 'environment', 'get').mockReturnValue(env);
+      stubEnvironment(env);
 
       render(<BottomBarWithProviders />);
 
@@ -64,7 +64,7 @@ describe('BottomBar Component', () => {
   );
 
   it('does not render HUD button in production environment', () => {
-    vi.spyOn(envModule, 'environment', 'get').mockReturnValue('production');
+    stubEnvironment('production');
 
     render(<BottomBarWithProviders />);
 
@@ -72,7 +72,7 @@ describe('BottomBar Component', () => {
   });
 
   it('always renders the mode, and no version (it is in Help > About)', () => {
-    vi.spyOn(envModule, 'environment', 'get').mockReturnValue('production');
+    stubEnvironment('production');
 
     render(<BottomBarWithProviders />);
 
@@ -103,7 +103,7 @@ describe('BottomBar Component', () => {
     });
 
     it('aligns mode and HUD options at the bottom on the right side', () => {
-      vi.spyOn(envModule, 'environment', 'get').mockReturnValue('development');
+      stubEnvironment('development');
       render(<BottomBarWithProviders />);
 
       // Get the mode and HUD button elements to verify they exist
@@ -140,7 +140,7 @@ describe('BottomBar Component', () => {
 
   describe('HUD Menu functionality', () => {
     beforeEach(() => {
-      vi.spyOn(envModule, 'environment', 'get').mockReturnValue('development');
+      stubEnvironment('development');
     });
 
     it('renders HUD button with correct accessibility attributes', () => {
@@ -292,9 +292,7 @@ describe('BottomBar Component', () => {
 
     describe('HUD Layout and Expand Functionality', () => {
       beforeEach(() => {
-        vi.spyOn(envModule, 'environment', 'get').mockReturnValue(
-          'development'
-        );
+        stubEnvironment('development');
       });
 
       it('renders expand button with correct initial state', async () => {
@@ -466,7 +464,7 @@ describe('BottomBar Component', () => {
     it.each(['development', 'test'])(
       'renders language switcher in %s environment',
       env => {
-        vi.spyOn(envModule, 'environment', 'get').mockReturnValue(env);
+        stubEnvironment(env);
 
         render(<BottomBarWithProviders />);
 
@@ -477,7 +475,7 @@ describe('BottomBar Component', () => {
     );
 
     it('does not render language switcher in production environment', () => {
-      vi.spyOn(envModule, 'environment', 'get').mockReturnValue('production');
+      stubEnvironment('production');
 
       render(<BottomBarWithProviders />);
 
@@ -486,9 +484,7 @@ describe('BottomBar Component', () => {
 
     describe('in development environment', () => {
       beforeEach(() => {
-        vi.spyOn(envModule, 'environment', 'get').mockReturnValue(
-          'development'
-        );
+        stubEnvironment('development');
       });
 
       it('renders language switcher with current language', () => {
