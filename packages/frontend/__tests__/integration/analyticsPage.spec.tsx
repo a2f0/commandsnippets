@@ -13,7 +13,7 @@ import {entriesResponse} from '../../test/mocks/entries/entriesResponse';
 import {apiClientMethods} from '../util/apiClientMethods';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {serveMockApi, server} from '../util/msw';
-import {signIn} from '../util/signIn';
+import {signIn, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
 const API = 'http://localhost:9001/api/v1/user/analytics';
@@ -213,7 +213,7 @@ it('ignores a late response for the previous slice', async () => {
 it('resyncs stale analytics after a restore on another device', async () => {
   mount();
   await screen.findByText(/No activity in this slice/);
-  const session = syncSession('test');
+  const session = syncSession(TEST_USER);
   await apiClient.forVersion(1).reuseEntry('1', 'version-reuse');
   await select('Date to analyze', 'Entries reused');
   await screen.findByRole('img', {name: /Activity over time/});
@@ -288,7 +288,7 @@ it.each(['abc', '0'])(
 it('refuses a mismatched response version and preserves that error when resync fails', async () => {
   mount();
   await screen.findByText(/No activity in this slice/);
-  const session = syncSession('test');
+  const session = syncSession(TEST_USER);
   const params = {
     activity: 'created',
     interval: 'day',

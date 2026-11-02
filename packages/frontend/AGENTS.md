@@ -724,7 +724,8 @@ console.error('ERROR: Build failed');
   - `documents.ts` - request documents and headers specs send the mock API
     themselves (`JSON_API`, `tagEntryDocument`, `reorderDocument`)
   - `storeFixtures.ts` - builders of tags, entries and junctions, and
-    `seed()`, which stores them in the signed-in user's database
+    `seed()`, which stores them in the signed-in user's database; `own()`
+    and `rowKey()` make a resource a row and key a row as the database does
   - `apiClientMethods.ts` - the API client's methods, shared by every client
     (`apiClient` and `apiClient.writesAs`'s): spy on these to see a call
     whichever client makes it

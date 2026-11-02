@@ -1,9 +1,6 @@
 import {afterEach, beforeEach, describe, expect, it} from 'vitest';
 
-import {
-  CommandsnippetsDatabase,
-  type RowKey,
-} from '../../../../src/lib/db/database';
+import {CommandsnippetsDatabase} from '../../../../src/lib/db/database';
 import {
   checkOwner,
   ForeignDataError,
@@ -11,12 +8,8 @@ import {
   putJunctions,
   putNewer,
 } from '../../../../src/lib/sync/store';
-import {entry, junction} from '../../../util/storeFixtures';
-
-/** Whose rows the database holds (the store keys every row by its owner). */
-const OWNER = 'test';
-const key = (id: string): RowKey => [OWNER, id];
-const own = <R>(resource: R) => ({...resource, owner: OWNER});
+import {TEST_USER} from '../../../util/signIn';
+import {entry, junction, rowKey as key, own} from '../../../util/storeFixtures';
 
 let db: CommandsnippetsDatabase;
 let databases = 0;
@@ -32,7 +25,7 @@ describe('putNewer', () => {
       own(entry('1', {date_updated: '2024-01-01T00:00:00.5'})),
       own(entry('2', {date_updated: '2024-01-01T00:00:00'})),
     ]);
-    const {stored} = await putNewer(db, db.entries, OWNER, [
+    const {stored} = await putNewer(db, db.entries, TEST_USER, [
       // Older than the stored one: `.5` is past the whole second.
       entry('1', {date_updated: '2024-01-01T00:00:00'}),
       entry('2', {date_updated: '2024-01-01T00:00:01'}),
@@ -56,7 +49,7 @@ describe('putEntries', () => {
       own(junction('1', '1', '1')),
       own(junction('2', '1', '1')),
     ]);
-    await putEntries(db, OWNER, [
+    await putEntries(db, TEST_USER, [
       entry('1', {date_updated: '2024-01-01T00:00:00'}, ['2']),
     ]);
     expect((await db.junctions.get(key('1')))?.attributes.is_deleted).toBe(
@@ -82,7 +75,7 @@ describe('putEntries', () => {
     ]);
     // A tagging of entry 2 not on the API yet.
     await db.outbox.add({
-      owner: OWNER,
+      owner: TEST_USER,
       made: '2024-01-01T00:00:00.000000',
       writeId: 'write-1',
       write: {
@@ -91,10 +84,10 @@ describe('putEntries', () => {
         tagId: '1',
         entryId: '2',
       },
-      rows: [`${OWNER}|TagTextEntryThroughModel|local-6`],
+      rows: [`${TEST_USER}|TagTextEntryThroughModel|local-6`],
     });
 
-    await putEntries(db, OWNER, [
+    await putEntries(db, TEST_USER, [
       entry('1', {date_updated: '2024-01-01T00:00:00'}, ['2']),
       entry('2', {date_updated: '2024-01-01T00:00:00'}, ['3']),
       // Older than the copy held: its junctions are left alone.
@@ -106,12 +99,12 @@ describe('putEntries', () => {
     );
     expect(deleted).toEqual([
       ['alice', '7', false],
-      [OWNER, '1', true],
-      [OWNER, '2', false],
-      [OWNER, '3', false],
-      [OWNER, '4', true],
-      [OWNER, '5', false],
-      [OWNER, 'local-6', false],
+      [TEST_USER, '1', true],
+      [TEST_USER, '2', false],
+      [TEST_USER, '3', false],
+      [TEST_USER, '4', true],
+      [TEST_USER, '5', false],
+      [TEST_USER, 'local-6', false],
     ]);
   });
 
@@ -120,7 +113,7 @@ describe('putEntries', () => {
       own(entry('1', {date_updated: '2024-01-02T00:00:00'}, ['1']))
     );
     await db.junctions.put(own(junction('1', '1', '1')));
-    await putEntries(db, OWNER, [
+    await putEntries(db, TEST_USER, [
       entry('1', {date_updated: '2024-01-01T00:00:00'}),
     ]);
     expect((await db.junctions.get(key('1')))?.attributes.is_deleted).toBe(
@@ -131,7 +124,7 @@ describe('putEntries', () => {
   it('stores the junctions read with the entries', async () => {
     await putEntries(
       db,
-      OWNER,
+      TEST_USER,
       [entry('1', {date_updated: '2024-01-01T00:00:00'}, ['5'])],
       [junction('5', '1', '1', {date_updated: '2024-01-01T00:00:00'})]
     );
@@ -143,7 +136,7 @@ describe('putEntries', () => {
   it('never brings back a junction with an older copy of its entry', async () => {
     // Entry 1's newer listing left junction 1 out: deleted here.
     await db.junctions.put(own(junction('1', '1', '1')));
-    await putEntries(db, OWNER, [
+    await putEntries(db, TEST_USER, [
       entry('1', {date_updated: '2024-01-02T00:00:00'}),
     ]);
     expect((await db.junctions.get(key('1')))?.attributes.is_deleted).toBe(
@@ -153,7 +146,7 @@ describe('putEntries', () => {
     // An older response lists it, with the revision it had then.
     await putEntries(
       db,
-      OWNER,
+      TEST_USER,
       [entry('1', {date_updated: '2024-01-01T00:00:00'}, ['1'])],
       [junction('1', '1', '1')]
     );
@@ -161,12 +154,12 @@ describe('putEntries', () => {
       true
     );
     // A tag's list with that revision, active, does not either.
-    await putJunctions(db, OWNER, [junction('1', '1', '1')]);
+    await putJunctions(db, TEST_USER, [junction('1', '1', '1')]);
     expect((await db.junctions.get(key('1')))?.attributes.is_deleted).toBe(
       true
     );
     // Restoring it gives it a newer revision, which is stored.
-    await putJunctions(db, OWNER, [
+    await putJunctions(db, TEST_USER, [
       junction('1', '1', '1', {date_updated: '2024-01-03T00:00:00'}),
     ]);
     expect((await db.junctions.get(key('1')))?.attributes.is_deleted).toBe(
@@ -178,7 +171,7 @@ describe('putEntries', () => {
 describe('a row with a write queued', () => {
   const queue = (rows: string[]) =>
     db.outbox.add({
-      owner: OWNER,
+      owner: TEST_USER,
       made: '2024-01-01T00:00:00.000000',
       writeId: 'write-1',
       write: {kind: 'deleteEntry', entryId: '1'},
@@ -189,9 +182,9 @@ describe('a row with a write queued', () => {
     await db.entries.put(
       own(entry('1', {date_updated: '2024-01-01T00:00:00'}))
     );
-    await queue([`${OWNER}|TextEntry|1`]);
+    await queue([`${TEST_USER}|TextEntry|1`]);
 
-    await putEntries(db, OWNER, [
+    await putEntries(db, TEST_USER, [
       entry('1', {date_updated: '2024-01-05T00:00:00'}),
     ]);
     expect((await db.entries.get(key('1')))?.attributes.date_updated).toBe(
@@ -199,7 +192,7 @@ describe('a row with a write queued', () => {
     );
 
     await db.outbox.clear();
-    await putEntries(db, OWNER, [
+    await putEntries(db, TEST_USER, [
       entry('1', {date_updated: '2024-01-05T00:00:00'}),
     ]);
     expect((await db.entries.get(key('1')))?.attributes.date_updated).toBe(
@@ -211,11 +204,11 @@ describe('a row with a write queued', () => {
     await db.entries.put(
       own(entry('1', {date_updated: '2024-01-01T00:00:00'}))
     );
-    await queue([`${OWNER}|TextEntry|1`]);
+    await queue([`${TEST_USER}|TextEntry|1`]);
 
     await putEntries(
       db,
-      OWNER,
+      TEST_USER,
       [entry('1', {date_updated: '2024-01-05T00:00:00'}, ['7'])],
       [junction('7', '1', '1', {date_updated: '2024-01-05T00:00:00'})]
     );
@@ -230,9 +223,9 @@ describe('a row with a write queued', () => {
 
   it("keeps a junction an entry's listing leaves out while its tagging is queued", async () => {
     await db.junctions.put(own(junction('local-1', '1', '1')));
-    await queue([`${OWNER}|TagTextEntryThroughModel|local-1`]);
+    await queue([`${TEST_USER}|TagTextEntryThroughModel|local-1`]);
 
-    await putEntries(db, OWNER, [
+    await putEntries(db, TEST_USER, [
       entry('1', {date_updated: '2024-01-01T00:00:00'}),
     ]);
     expect(
@@ -248,14 +241,14 @@ describe('an older copy of an entry', () => {
     await db.junctions.put(
       own(junction('7', '1', '1', {date_updated: '2024-01-01T00:00:00'}))
     );
-    await putEntries(db, OWNER, [
+    await putEntries(db, TEST_USER, [
       entry('1', {date_updated: '2024-01-05T00:00:00'}),
     ]);
 
     // An older page lists it, at a later revision of the junction's own.
     await putEntries(
       db,
-      OWNER,
+      TEST_USER,
       [entry('1', {date_updated: '2024-01-03T00:00:00'}, ['7'])],
       [junction('7', '1', '1', {date_updated: '2024-01-02T00:00:00'})]
     );
@@ -274,7 +267,7 @@ describe("a write's answer (force)", () => {
 
     await putEntries(
       db,
-      OWNER,
+      TEST_USER,
       [entry('1', {date_updated: '2024-01-01T00:00:00'})],
       [],
       true
@@ -294,7 +287,7 @@ describe("each owner's rows", () => {
       [entry('1', {date_updated: '2024-01-01T00:00:00'}, ['1'])],
       [junction('1', '1', '1')]
     );
-    await putEntries(db, OWNER, [
+    await putEntries(db, TEST_USER, [
       entry('1', {date_updated: '2024-01-02T00:00:00'}),
     ]);
 

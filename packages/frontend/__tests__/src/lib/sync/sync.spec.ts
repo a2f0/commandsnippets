@@ -16,7 +16,6 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {adminSyncApi} from '../../../../src/lib/api/adminApi';
 import {
   CommandsnippetsDatabase,
-  type RowKey,
   tagCursorKey,
 } from '../../../../src/lib/db/database';
 import {ownSyncApi} from '../../../../src/lib/sync/session';
@@ -31,7 +30,8 @@ import {onePage} from '../../../../src/msw/documents';
 import {setRuntimeEntriesOverride} from '../../../../src/msw/handlers';
 import {JSON_API, tagEntryDocument} from '../../../util/documents';
 import {API, serveMockApi} from '../../../util/msw';
-import {entry} from '../../../util/storeFixtures';
+import {TEST_USER} from '../../../util/signIn';
+import {entry, rowKey as key, own} from '../../../util/storeFixtures';
 
 serveMockApi({onUnhandledFrame: 'error'});
 
@@ -50,17 +50,12 @@ afterEach(() => db.delete());
 const read = async (path: string) => (await fetch(`${API}${path}`)).json();
 const after = (value: string) => encodeURIComponent(value);
 
-/** The mock API's signed-in user, whose data the syncs read. */
-const OWNER = 'test';
-const key = (id: string): RowKey => [OWNER, id];
-const own = <R>(rows: R[]) => rows.map(row => ({...row, owner: OWNER}));
-
 /** The mock API's signed-in user's sync of `db`. */
 const createSyncEngine = (
   database: CommandsnippetsDatabase,
   api: SyncApi,
   lockName: string
-) => createEngine(database, api, lockName, OWNER);
+) => createEngine(database, api, lockName, TEST_USER);
 
 /** The sync's reads, `size` rows a page (the app reads 100). */
 function pagedApi(size: number, pages: string[] = []): SyncApi {
@@ -234,7 +229,7 @@ describe('syncAll', () => {
     expect(await db.cursors.get(key('tags'))).toBeDefined();
     expect(await db.cursors.get(key('entries'))).toBeDefined();
     for (const tagId of ['1', '2', '3', '4']) {
-      expect(await isTagSynced(db, OWNER, tagId)).toBe(true);
+      expect(await isTagSynced(db, TEST_USER, tagId)).toBe(true);
     }
   });
 
@@ -303,7 +298,7 @@ describe('syncAll', () => {
     // The two entries after the first page's (a page each).
     expect(pages.filter(page => page.startsWith('/entries'))).toHaveLength(2);
     for (const tagId of ['1', '2', '3', '4']) {
-      expect(await isTagSynced(db, OWNER, tagId)).toBe(true);
+      expect(await isTagSynced(db, TEST_USER, tagId)).toBe(true);
     }
   });
 
@@ -333,7 +328,7 @@ describe('syncAll', () => {
     await tagSync;
     // Tag 1's two junctions (a page each), after the entries' first page.
     expect(reads).toEqual(['entries', 'tag 1', 'tag 1', 'entries', 'entries']);
-    expect(await isTagSynced(db, OWNER, '1')).toBe(true);
+    expect(await isTagSynced(db, TEST_USER, '1')).toBe(true);
   });
 
   it("refuses to sync another user's data into the database", async () => {
@@ -425,7 +420,7 @@ describe('syncAll', () => {
 describe("another user's data (staff reading it)", () => {
   it("syncs beside the owner's own, keyed by theirs", async () => {
     await createSyncEngine(db, pagedApi(2), 'spec').syncAll();
-    const own = await db.tags.where('owner').equals(OWNER).count();
+    const owned = await db.tags.where('owner').equals(TEST_USER).count();
 
     const alice = createEngine(
       db,
@@ -436,7 +431,7 @@ describe("another user's data (staff reading it)", () => {
     await alice.syncAll();
     await alice.syncTag('70');
 
-    expect(await db.tags.where('owner').equals(OWNER).count()).toBe(own);
+    expect(await db.tags.where('owner').equals(TEST_USER).count()).toBe(owned);
     expect((await db.tags.get(['alice', '70']))?.attributes.name).toBe(
       'alices-tag'
     );
@@ -445,7 +440,7 @@ describe("another user's data (staff reading it)", () => {
     );
     expect(await db.junctions.get(['alice', '700'])).toBeDefined();
     expect(await isTagSynced(db, 'alice', '70')).toBe(true);
-    expect(await isTagSynced(db, OWNER, '70')).toBe(false);
+    expect(await isTagSynced(db, TEST_USER, '70')).toBe(false);
   });
 
   it('refuses a user the admin API does not find', async () => {
@@ -498,13 +493,13 @@ describe('syncTag', () => {
     const sync = createSyncEngine(db, api, 'spec');
     // The tags only, as the first sync's first pages store them.
     const tags = await api.getTagsAfter(CURSOR_START);
-    await db.tags.bulkPut(own(tags.data));
+    await db.tags.bulkPut(tags.data.map(tag => own(tag)));
 
     await sync.syncTag('1');
     expect(await activeJunctions()).toEqual(['1', '2']);
     expect(ids(await db.entries.toArray())).toEqual(['1', '2']);
-    expect(await isTagSynced(db, OWNER, '1')).toBe(true);
-    expect(await isTagSynced(db, OWNER, '2')).toBe(false);
+    expect(await isTagSynced(db, TEST_USER, '1')).toBe(true);
+    expect(await isTagSynced(db, TEST_USER, '2')).toBe(false);
   });
 
   it('is out of sync once the tag reaches a newer revision', async () => {
@@ -514,12 +509,12 @@ describe('syncTag', () => {
     await send('DELETE', '/tags_entries/1');
     // A read of the tags stores tag 1's new revision.
     const tags = await pagedApi(100).getTagsAfter(CURSOR_START);
-    await db.tags.bulkPut(own(tags.data));
-    expect(await isTagSynced(db, OWNER, '1')).toBe(false);
-    expect(await isTagSynced(db, OWNER, '2')).toBe(true);
+    await db.tags.bulkPut(tags.data.map(tag => own(tag)));
+    expect(await isTagSynced(db, TEST_USER, '1')).toBe(false);
+    expect(await isTagSynced(db, TEST_USER, '2')).toBe(true);
 
     await sync.syncTag('1');
-    expect(await isTagSynced(db, OWNER, '1')).toBe(true);
+    expect(await isTagSynced(db, TEST_USER, '1')).toBe(true);
     expect((await db.junctions.get(key('1')))?.attributes.is_deleted).toBe(
       true
     );
