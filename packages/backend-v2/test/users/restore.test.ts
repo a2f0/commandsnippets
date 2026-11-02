@@ -15,12 +15,12 @@ import {
   type User,
 } from '../../src/db/schema';
 import {now} from '../../src/lib/clock';
+import {restoreInto} from '../../src/resources/restore';
 import {
   CHUNK_BYTES,
   chunked,
   prepareRestore,
-  restoreInto,
-} from '../../src/resources/restore';
+} from '../../src/resources/restorePlan';
 import {
   type ApiClient,
   type Base,
