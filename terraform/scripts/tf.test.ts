@@ -118,7 +118,9 @@ describe('scripts/tf', () => {
     tierSecrets('prod');
     const {code, terraform} = run([stack, 'plan']);
     expect(code).toBe(0);
-    expect(terraform?.args[0]).toBe(`-chdir=${join(repo, 'terraform', 'stacks', stack)}`);
+    expect(terraform?.args[0]).toBe(
+      `-chdir=${join(repo, 'terraform', 'stacks', stack)}`
+    );
     expect(terraform?.env).toEqual({
       CLOUDFLARE_API_TOKEN: `${tier}-token`,
       AWS_ACCESS_KEY_ID: `${tier}-key-id`,
@@ -134,12 +136,17 @@ describe('scripts/tf', () => {
       AWS_SECRET_ACCESS_KEY: 'inherited-secret',
     });
     expect(code).toBe(1);
-    expect(stderr).toContain(`${join(repo, '.secrets', 'prod', 'app.env')} not found`);
+    expect(stderr).toContain(
+      `${join(repo, '.secrets', 'prod', 'app.env')} not found`
+    );
     expect(terraform).toBeUndefined();
   });
 
   test('stops, naming each one, when a credential is missing', () => {
-    secrets('prod', 'app.env', ['CLOUDFLARE_API_TOKEN=prod-token', 'TF_STATE_SECRET_ACCESS_KEY=']);
+    secrets('prod', 'app.env', [
+      'CLOUDFLARE_API_TOKEN=prod-token',
+      'TF_STATE_SECRET_ACCESS_KEY=',
+    ]);
     const {code, stderr, terraform} = run(['zone', 'plan'], {
       AWS_ACCESS_KEY_ID: 'inherited-key',
       AWS_SECRET_ACCESS_KEY: 'inherited-secret',
@@ -148,7 +155,9 @@ describe('scripts/tf', () => {
     const file = join(repo, '.secrets', 'prod', 'app.env');
     expect(code).toBe(1);
     expect(stderr).toContain(`TF_STATE_ACCESS_KEY_ID is missing from ${file}`);
-    expect(stderr).toContain(`TF_STATE_SECRET_ACCESS_KEY is missing from ${file}`);
+    expect(stderr).toContain(
+      `TF_STATE_SECRET_ACCESS_KEY is missing from ${file}`
+    );
     expect(stderr).not.toContain('CLOUDFLARE_API_TOKEN is missing');
     expect(terraform).toBeUndefined();
   });

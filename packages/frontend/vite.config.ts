@@ -118,7 +118,64 @@ const robotsHeaders = (indexable: boolean): Plugin => {
   };
 };
 
-// biome-ignore lint/style/noDefaultExport: Vite requires default export for config
+const pwa = VitePWA({
+  devOptions: {
+    enabled: false,
+  },
+  registerType: 'autoUpdate',
+  // The icons are rendered into public/ from ../../assets/brand by
+  // `bun run images`, which the dev, test and build scripts run first.
+  includeAssets: ['favicon.ico', 'favicon.svg', 'apple-touch-icon.png'],
+  manifest: {
+    name: 'Command Snippets',
+    short_name: 'Command Snippets',
+    description:
+      'An opinionated note-taking system for technical professionals.',
+    theme_color: '#ffffff',
+    icons: [
+      {src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png'},
+      {src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png'},
+      {src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml'},
+    ],
+  },
+  workbox: {
+    globPatterns: ['**/*.{js,css,ico,png,svg,webmanifest}'],
+    cleanupOutdatedCaches: true,
+    skipWaiting: true,
+    clientsClaim: true,
+    navigateFallback: null,
+    // These cache names predate the rename to Command Snippets. Keep them:
+    // new names would leave the caches browsers already hold behind.
+    runtimeCaching: [
+      {
+        urlPattern: ({url}) =>
+          url.origin === self.location.origin &&
+          /\.(js|css|ico|png|svg)$/.test(url.pathname),
+        handler: 'CacheFirst',
+        options: {
+          cacheName: 'tearleads-static-cache',
+          expiration: {
+            maxEntries: 50,
+            maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days instead of 30
+          },
+        },
+      },
+      {
+        urlPattern: ({request}) => request.mode === 'navigate',
+        handler: 'NetworkFirst',
+        options: {
+          cacheName: 'tearleads-html-cache',
+          networkTimeoutSeconds: 3, // Wait max 3 seconds for network
+          expiration: {
+            maxEntries: 10,
+            maxAgeSeconds: 0, // Expire immediately, but still available as fallback
+          },
+        },
+      },
+    ],
+  },
+});
+
 export default defineConfig(({command, mode}) => {
   const indexable = mode === 'production';
   const basePlugins = [
@@ -139,63 +196,7 @@ export default defineConfig(({command, mode}) => {
             ],
       },
     }),
-    VitePWA({
-      devOptions: {
-        enabled: false,
-      },
-      registerType: 'autoUpdate',
-      // The icons are rendered into public/ from ../../assets/brand by
-      // `bun run images`, which the dev, test and build scripts run first.
-      includeAssets: ['favicon.ico', 'favicon.svg', 'apple-touch-icon.png'],
-      manifest: {
-        name: 'Command Snippets',
-        short_name: 'Command Snippets',
-        description:
-          'An opinionated note-taking system for technical professionals.',
-        theme_color: '#ffffff',
-        icons: [
-          {src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png'},
-          {src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png'},
-          {src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml'},
-        ],
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,ico,png,svg,webmanifest}'],
-        cleanupOutdatedCaches: true,
-        skipWaiting: true,
-        clientsClaim: true,
-        navigateFallback: null,
-        // These cache names predate the rename to Command Snippets. Keep them:
-        // new names would leave the caches browsers already hold behind.
-        runtimeCaching: [
-          {
-            urlPattern: ({url}) =>
-              url.origin === self.location.origin &&
-              /\.(js|css|ico|png|svg)$/.test(url.pathname),
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'tearleads-static-cache',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days instead of 30
-              },
-            },
-          },
-          {
-            urlPattern: ({request}) => request.mode === 'navigate',
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'tearleads-html-cache',
-              networkTimeoutSeconds: 3, // Wait max 3 seconds for network
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 0, // Expire immediately, but still available as fallback
-              },
-            },
-          },
-        ],
-      },
-    }),
+    pwa,
   ];
 
   const plugins: PluginOption[] = [...basePlugins, robotsHeaders(indexable)];

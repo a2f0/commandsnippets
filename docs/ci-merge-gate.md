@@ -11,9 +11,10 @@ requires each lane to have succeeded, or to have been skipped *because* change
 detection marked it irrelevant. A failed, cancelled, missing, or unexpectedly
 skipped lane fails the gate. Changes to a workflow or to the setup action
 every job uses (`.github/actions/setup`), to the CI policy itself
-(`scripts/checks/ci*`), or to the root `.mise.toml`, or to the workspace install
+(`scripts/checks/ci*`), to the root `.mise.toml`, to the workspace install
 files every package shares (the root `package.json`, `bunfig.toml` and
-`bun.lock`) exercise every lane.
+`bun.lock`), or to the root `biome.json` every package's lint extends
+exercise every lane.
 
 The gate always checks managed skill and permission-rule drift and lints the
 actual PR title with commitlint, including on documentation-only PRs. It
@@ -101,8 +102,8 @@ changes take effect. `bun run hooks:check` reports missing or stale copies.
   checked paths. The `api-shared` checks start with the workspace install,
   then `backend-v2` runs against api-shared through its workspace link. A
   change that runs every lane in CI (a workflow or the setup action, the CI
-  policy, `.mise.toml` or the workspace install files) runs every local check. It refuses to run
-  when the installed copy is stale. Per-check timings are logged under
+  policy, `.mise.toml`, the workspace install files or the root `biome.json`)
+  runs every local check. It refuses to run when the installed copy is stale. Per-check timings are logged under
   `.git/commandsnippets/pushGateTimings.tsv`
   (`scripts/git/showPushGateTimings.sh`).
 

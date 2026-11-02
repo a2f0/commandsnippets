@@ -25,9 +25,9 @@ Run these from `packages/frontend`.
   http://localhost:8081, with the API mocked by MSW (what the E2E tests use)
 
 ### Code Quality
-- `bun run lint` - Biome lint
-- `bun run format` - Check formatting with Biome (reports, does not write)
-- `bun run fix` - Fix lint and formatting issues (`biome check --write`)
+- `bun run lint` - Biome lint, formatting and import order (`biome check .`,
+  reports only)
+- `bun run fix` - Fix what Biome can (`biome check --write .`)
 - `bun run compile` - TypeScript check (`tsc -b --force`), which `bun install`
   also runs (`prepare`). `--force` rebuilds every project each time (about 2
   seconds) instead of reusing `.ts-out`: TypeScript 7.0.2's incremental build
@@ -516,12 +516,12 @@ writing its type by hand.
 - **Layering**: `src/lib/` never imports `components/`, `pages/`, `menu/` or
   `hooks/`. The UI (those folders and the app shell) reaches IndexedDB only
   through `lib/data/` (`keyOfRow` is in `lib/data/rowKey.ts`), never
-  `lib/db/`: a `biome.json` override's `noRestrictedImports` refuses it
-  (Biome does not merge override options, so it repeats the MUI icon rule).
+  `lib/db/`: `biome.json` overrides' `noRestrictedImports` refuse both
+  (Biome does not merge override options, so each repeats the MUI icon rule).
   `lib/sync/` takes the API errors from `lib/api/errors.ts`, never from a
   client module, since `apiClient` imports the sync's reads. Biome's
-  `noImportCycles` (`ignoreTypes: false`, in `biome.json`) fails `bun run lint`
-  on any import cycle, type-only imports included
+  `noImportCycles` (`ignoreTypes: false`, in the root `biome.json`) fails
+  `bun run lint` on any import cycle, type-only imports included
 - **Routes**: `src/Routes.tsx`; the first path segment is a username
   (`/:user/:tag`, `/:user/entries/:id`)
 - **Libraries**: Material UI, Emotion (styled components), React DnD
@@ -643,8 +643,8 @@ per-row work multiplies (the HUD's Analytics tab times it).
 - Directories are camelCase too (`bottomBar/`, `menuItems/`).
 
 ### Linting & Formatting
-- Run `bun run lint` and `bun run format` to check changes
-- Use `bun run fix` (`biome check --write`) to fix issues
+- Run `bun run lint` to check changes
+- Use `bun run fix` (`biome check --write .`) to fix issues
 - Never add linting or formatting exceptions in code
 - Import each MUI icon from its own path
   (`import Check from '@mui/icons-material/Check'`): the package index loads

@@ -33,7 +33,14 @@ Monorepo for the Command Snippets app.
   `bun run agents:sync` and commit the lockfile, skills, rules,
   `.agent-tool-skills.json`, and `.agent-tool-permissions.json` together.
   `bun run agents:check` reports drift in either.
-- Validate root tooling with `bun run check`, which records shell lint,
+- Lint is enforced, never suppressed. The root `biome.json` holds the shared
+  formatter and rules, and every package's `biome.json` extends it: a
+  cognitive complexity of at most 20, functions of at most 75 lines and files
+  of at most 800 (blank lines skipped; tests are exempt), and no import
+  cycles, type-only imports included. Split code by responsibility to stay
+  within them. `bun run lint` checks (`biome check`) and `bun run fix` writes,
+  at the root (its scripts and configs) and in each package.
+- Validate root tooling with `bun run check`, which records Biome, shell lint,
   typecheck, script tests, and managed-skill and permission-rule checks; run
   every affected application's documented checks. Full PR-title commitlint
   runs in `CI gate`.

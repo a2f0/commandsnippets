@@ -24,39 +24,42 @@ export const CI_SCOPES = {
 
 export type CiScope = keyof typeof CI_SCOPES;
 
-/** Changes that can affect every lane run them all. */
+/**
+ * Changes that can affect every lane run them all, including the root
+ * `biome.json`, which every package's config extends.
+ */
 const COMMON =
-  /^(\.github\/(workflows|actions)\/|scripts\/checks\/ci|package\.json$|bun\.lock$|bunfig\.toml$|\.mise\.toml$)/;
+  /^(\.github\/(workflows|actions)\/|scripts\/checks\/ci|package\.json$|bun\.lock$|bunfig\.toml$|\.mise\.toml$|biome\.json$)/;
 
 export function ciDiffRange(
   base: string | undefined,
-  head: string | undefined,
+  head: string | undefined
 ): string | undefined {
   if (!base || /^0+$/.test(base)) return undefined;
   if (!/^[a-f0-9]{40}$/.test(base) || !head || !/^[a-f0-9]{40}$/.test(head)) {
-    throw new Error("CI diff requires full base and head commit SHAs.");
+    throw new Error('CI diff requires full base and head commit SHAs.');
   }
   return `${base}...${head}`;
 }
 
 /** Each scope, applicable or not by `applies`. */
 function scopesWhere(
-  applies: (scope: CiScope) => boolean,
+  applies: (scope: CiScope) => boolean
 ): Record<CiScope, boolean> {
   return {
-    tooling: applies("tooling"),
-    frontend: applies("frontend"),
-    backendV2: applies("backendV2"),
-    apiShared: applies("apiShared"),
-    website: applies("website"),
-    terraform: applies("terraform"),
+    tooling: applies('tooling'),
+    frontend: applies('frontend'),
+    backendV2: applies('backendV2'),
+    apiShared: applies('apiShared'),
+    website: applies('website'),
+    terraform: applies('terraform'),
   };
 }
 
 export function ciScopes(paths: readonly string[]): Record<CiScope, boolean> {
-  const common = paths.some((path) => COMMON.test(path));
+  const common = paths.some(path => COMMON.test(path));
   return scopesWhere(
-    (scope) => common || paths.some((path) => CI_SCOPES[scope].test(path)),
+    scope => common || paths.some(path => CI_SCOPES[scope].test(path))
   );
 }
 

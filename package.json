@@ -9,6 +9,8 @@
   ],
   "scripts": {
     "hooks:install": "agent-tool hooks install --apply",
+    "lint": "biome check biome.json commitlint.config.mts package.json scripts terraform/scripts tsconfig.base.json tsconfig.scripts.json",
+    "fix": "biome check --write biome.json commitlint.config.mts package.json scripts terraform/scripts tsconfig.base.json tsconfig.scripts.json",
     "lint:branch-name": "agent-tool branch check",
     "lint:shell": "shellcheck --shell=sh scripts/git/showPushGateTimings.sh scripts/git/hooks/commit-msg scripts/git/hooks/pre-push scripts/lib/stepTimings.sh scripts/testing/*.sh packages/frontend/scripts/testing/*.sh",
     "test:agent-tool": "bun run agents:check",
@@ -28,6 +30,7 @@
   },
   "devDependencies": {
     "@a2f0/agent-tool": "0.1.30",
+    "@biomejs/biome": "2.6.4",
     "@commitlint/cli": "21.2.4",
     "@commitlint/config-conventional": "21.2.4",
     "@tsconfig/strictest": "2.0.8",

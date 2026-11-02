@@ -91,11 +91,10 @@ compiles and bundles with its own code:
 
 ## Code Quality
 
-Check linting and formatting (`bun run fix` fixes what it can):
+Check linting, formatting and import order (`bun run fix` fixes what it can):
 
 ```shell
 bun run lint
-bun run format
 ```
 
 Run TypeScript compilation check:

@@ -56,6 +56,8 @@ jobs:
         uses: ./.github/actions/setup
         with:
           install: root
+      - name: Lint and format the root scripts and configs
+        run: bun run lint
       - name: Lint shell scripts
         run: bun run lint:shell
       - name: Typecheck
