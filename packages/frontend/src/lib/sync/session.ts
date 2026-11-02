@@ -70,8 +70,10 @@ export function publicSyncSession(owner: string): SyncSession {
       `commandsnippets-public-${environment}`
     );
     db.on('versionchange', () => {
-      publicOpen = null;
-      ended();
+      if (publicOpen?.db === db) {
+        publicOpen = null;
+        ended();
+      }
     });
     publicOpen = {username: '', db, sessions: new Map()};
   }
