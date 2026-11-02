@@ -91,8 +91,8 @@ compiles and bundles with its own code:
 
 ## Code Quality
 
-Check linting, formatting, import order and unused code (Biome, then knip;
-`bun run fix` fixes what Biome can):
+Check linting, formatting, import order, file names and unused code (Biome,
+ls-lint, then knip; `bun run fix` fixes what Biome can):
 
 ```shell
 bun run lint

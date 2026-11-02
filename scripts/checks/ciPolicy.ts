@@ -10,12 +10,14 @@
  * packages that render icons from them. The frontend's spec launchers
  * (`packages/frontend/scripts/`) are shell-linted and tested with the tooling,
  * and the root typecheck covers Terraform's TypeScript (`terraform/scripts/`).
+ * The file-name rules (`.ls-lint.yml`) cover only the frontend, whose lint
+ * runs them.
  */
 export const CI_SCOPES = {
   tooling:
     /^(scripts\/|packages\/frontend\/scripts\/|terraform\/scripts\/[^/]+\.ts$|\.agents\/|\.claude\/|\.codex\/|agent-tool\.json$|\.agent-tool-(skills|permissions)\.json$|commitlint\.config\.mts$|tsconfig[^/]*\.json$)/,
   frontend:
-    /^(packages\/(frontend|api-shared)\/|scripts\/testing\/(runUnitTests|runWebdriverTests)\.sh$|assets\/brand\/|agent-tool\.json$)/,
+    /^(packages\/(frontend|api-shared)\/|scripts\/testing\/(runUnitTests|runWebdriverTests)\.sh$|assets\/brand\/|agent-tool\.json$|\.ls-lint\.yml$)/,
   backendV2: /^packages\/(backend-v2|api-shared)\//,
   apiShared: /^packages\/api-shared\//,
   website: /^(packages\/website\/|assets\/brand\/|agent-tool\.json$)/,

@@ -11,11 +11,14 @@ on:
   push:
     branches: [main, staging]
     paths:
+      - '.ls-lint.yml'
       - '.mise.toml'
       - 'agent-tool.json'
       - 'assets/brand/**'
+      - 'biome.json'
       - 'bun.lock'
       - 'bunfig.toml'
+      - 'knip.config.ts'
       - 'package.json'
       - 'packages/frontend/**'
       - 'packages/api-shared/**'
@@ -32,7 +35,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
-      - name: Lint and check formatting
+      - name: Lint (Biome, file names, knip)
         run: bun run lint
       - name: Compile TypeScript
         run: bun run compile

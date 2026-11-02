@@ -43,7 +43,8 @@ Monorepo for the Command Snippets app.
 - Each `lint` also runs knip on its workspace (`knip.config.ts` at the root
   covers the root and every package): no unused files, exports or
   dependencies. Delete dead code rather than ignore it; configure only what a
-  tool loads by name.
+  tool loads by name. The frontend's lint also checks file and directory
+  names against the root `.ls-lint.yml` (`lint:files`).
 - Validate root tooling with `bun run check`, which records Biome, shell lint,
   typecheck, script tests, and managed-skill and permission-rule checks; run
   every affected application's documented checks. Full PR-title commitlint

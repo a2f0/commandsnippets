@@ -26,7 +26,7 @@ evaluates the local `scripts/checks/ciGate.json` policy through
 | `tooling` | inline in `ci.yml` | `scripts/`, `packages/frontend/scripts/`, `terraform/scripts/*.ts` (root typecheck), managed skills and permission rules, tooling config |
 | `backend-v2` | `backend-v2.yml` (Backend v2 CI) | `packages/backend-v2/`, `packages/api-shared/` |
 | `api-shared` | `api-shared.yml` (API Shared CI) | `packages/api-shared/` |
-| `frontend` | `frontend.yml` (Frontend CI) | `packages/frontend/`, `packages/api-shared/`, app test scripts, `assets/brand/`, `agent-tool.json` |
+| `frontend` | `frontend.yml` (Frontend CI) | `packages/frontend/`, `packages/api-shared/`, app test scripts, `assets/brand/`, `agent-tool.json`, `.ls-lint.yml` |
 | `website` | `website.yml` (Website CI) | `packages/website/`, `assets/brand/`, `agent-tool.json` |
 | `terraform` | `terraform.yml` (Terraform CI) | `terraform/` |
 

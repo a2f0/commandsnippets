@@ -26,7 +26,8 @@ Run these from `packages/frontend`.
 
 ### Code Quality
 - `bun run lint` - Biome lint, formatting and import order (`biome check .`,
-  reports only), then knip on this workspace (`lint:knip`)
+  reports only), then file names (`lint:files`) and knip on this workspace
+  (`lint:knip`)
 - `bun run fix` - Fix what Biome can (`biome check --write .`)
 - `bun run compile` - TypeScript check (`tsc -b --force`), which `bun install`
   also runs (`prepare`). `--force` rebuilds every project each time (about 2
@@ -641,6 +642,9 @@ per-row work multiplies (the HUD's Analytics tab times it).
 - Component files are PascalCase (`EntryList.tsx`); every other file is
   camelCase (`fetchWithAuth.ts`).
 - Directories are camelCase too (`bottomBar/`, `menuItems/`).
+- `bun run lint` enforces both (`lint:files`, ls-lint with the root
+  `.ls-lint.yml`); specs take their subject's name, and the WebdriverIO
+  module declarations in `test/` are kebab-case.
 
 ### Linting & Formatting
 - Run `bun run lint` to check changes
