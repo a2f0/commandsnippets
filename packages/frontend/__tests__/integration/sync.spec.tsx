@@ -91,7 +91,7 @@ describe('The entries page', () => {
     });
     comeBackIntoView();
 
-    await waitFor(() => expect(screen.getByText('edited')).toBeInTheDocument());
+    expect(await screen.findByText('edited')).toBeInTheDocument();
   });
 
   it('lists the tag shown, through its own sync, when the rest cannot sync', async () => {

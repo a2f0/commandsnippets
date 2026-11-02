@@ -69,9 +69,7 @@ describe('UserProfileCircle', () => {
         fireEvent.click(profileButton);
       });
 
-      await waitFor(() => {
-        expect(screen.getByText('Logout')).toBeInTheDocument();
-      });
+      expect(await screen.findByText('Logout')).toBeInTheDocument();
       // The username, then Logout: no Profile or Settings, which did nothing
       expect(
         screen.getAllByRole('menuitem').map(item => item.textContent)
@@ -163,9 +161,7 @@ describe('UserProfileCircle', () => {
       });
 
       // Wait for menu to be open
-      await waitFor(() => {
-        expect(screen.getByText('Logout')).toBeInTheDocument();
-      });
+      expect(await screen.findByText('Logout')).toBeInTheDocument();
 
       // Click logout
       const logoutButton = screen.getByText('Logout');
@@ -200,9 +196,7 @@ describe('UserProfileCircle', () => {
       });
 
       // Wait for menu to be open
-      await waitFor(() => {
-        expect(screen.getByText('Logout')).toBeInTheDocument();
-      });
+      expect(await screen.findByText('Logout')).toBeInTheDocument();
 
       // Click logout
       const logoutButton = screen.getByText('Logout');
@@ -242,9 +236,7 @@ describe('UserProfileCircle', () => {
       });
 
       // Verify menu is open
-      await waitFor(() => {
-        expect(screen.getByText('Logout')).toBeInTheDocument();
-      });
+      expect(await screen.findByText('Logout')).toBeInTheDocument();
 
       // Click logout
       const logoutButton = screen.getByText('Logout');

@@ -18,10 +18,10 @@ describe('Tag An Entry', () => {
     const user = userEvent.setup();
     const {history, rerender} = renderAppAt('/test/test-tag-1');
     expect(history.location.pathname).toBe('/test/test-tag-1');
-    await waitFor(() => screen.getByText(/entry-1-subject/i));
-    await waitFor(() => screen.getByText(/entry-1-body/i));
-    await waitFor(() => screen.getByText(/entry-2-subject/i));
-    await waitFor(() => screen.getByText(/entry-2-body/i));
+    await screen.findByText(/entry-1-subject/i);
+    await screen.findByText(/entry-1-body/i);
+    await screen.findByText(/entry-2-subject/i);
+    await screen.findByText(/entry-2-body/i);
     expect(history.location.pathname).toBe('/test/test-tag-1');
     const entries = screen.getAllByRole('entry');
     expect(entries).toHaveLength(4);

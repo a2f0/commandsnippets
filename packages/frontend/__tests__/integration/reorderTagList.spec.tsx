@@ -30,10 +30,10 @@ async function renderTags() {
   const user = userEvent.setup();
   const {history} = renderAppAt('/test/test');
   expect(history.location.pathname).toBe('/test/test');
-  await waitFor(() => screen.getByText(/test-tag-1/i));
-  await waitFor(() => screen.getByText(/test-tag-2/i));
-  await waitFor(() => screen.getByText(/test-tag-3/i));
-  await waitFor(() => screen.getByText(/test-tag-4/i));
+  await screen.findByText(/test-tag-1/i);
+  await screen.findByText(/test-tag-2/i);
+  await screen.findByText(/test-tag-3/i);
+  await screen.findByText(/test-tag-4/i);
   const tags = expectRows('tag', names(1, 2, 3, 4));
   return {user, tags};
 }
