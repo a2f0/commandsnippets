@@ -9,7 +9,7 @@ import {Router} from '../../src/lib/router/Router';
 // `Cookies`, which reads `document.cookie` afresh at every navigation.
 const COOKIE_OPTIONS = {path: '/'};
 
-export interface IProps {
+interface IProps {
   history: MemoryHistory;
 }
 
@@ -26,7 +26,7 @@ const TestAppRouter = ({history}: IProps) => (
 );
 
 /** The app as rendered (`render`'s result), and the history it follows. */
-export type RenderedApp = RenderResult & {history: MemoryHistory};
+type RenderedApp = RenderResult & {history: MemoryHistory};
 
 /**
  * Render the app (`TestAppRouter`) at `route`, pushed onto a new memory
@@ -48,4 +48,4 @@ function renderAppAt(
   return {history, ...render(app)};
 }
 
-export {renderAppAt, TestAppRouter};
+export {renderAppAt};

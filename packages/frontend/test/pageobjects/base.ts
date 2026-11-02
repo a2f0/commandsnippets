@@ -11,7 +11,7 @@ declare global {
   }
 }
 
-export class Base {
+class Base {
   // signed-out home screen
   get signInPage(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#signInPage');

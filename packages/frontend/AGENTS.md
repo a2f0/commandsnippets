@@ -609,7 +609,7 @@ per-row work multiplies (the HUD's Analytics tab times it).
   (`__tests__/util/msw.ts`). The specs are in three places:
   - `__tests__/src/` mirrors `src/`: the spec for `src/pages/AdminPage.tsx` is
     `__tests__/src/pages/AdminPage.spec.tsx`
-  - `__tests__/integration/` renders the whole app (`TestAppRouter`) to test a
+  - `__tests__/integration/` renders the whole app (`renderAppAt`) to test a
     behavior across modules, such as reordering or signing out when the
     session is gone
   - `__tests__/infra/` checks the hosting and the build: `hosting.spec.ts`
@@ -714,8 +714,8 @@ console.error('ERROR: Build failed');
   - `signIn.ts` - `signIn()` (as the mock API's user, `test`), `resetApp()`,
     and `store`, the app state as components use it (`store.setIsStaff(...)`)
   - `assignLoggedInCookie.ts` - sets the `LoggedIn` cookie the UI checks
-  - `TestAppRouter.tsx` - the app in a memory router that follows its
-    history; sign in first for a signed-in app
+  - `TestAppRouter.tsx` - `renderAppAt(route)`, the app in a memory router
+    that follows its history; sign in first for a signed-in app
   - `msw.ts` - an `msw/node` server of the mock API (`src/msw/handlers.ts`),
     with the entries of `test/mocks/entries/entriesResponse.ts`: a spec
     serves it with `serveMockApi()` (never a server of its own), overrides a
