@@ -9,7 +9,7 @@ import {requireUser} from '../auth/permissions';
 import {type TextEntry, textEntries, type User} from '../db/schema';
 import type {AppEnv} from '../env';
 import {now} from '../lib/clock';
-import {parseResource} from '../lib/jsonapi';
+import {parseResource} from '../lib/jsonapi/request';
 import {fold, searchColumns} from '../lib/search';
 import {validateFields} from '../lib/validate';
 import {versionOf} from './dataVersions';

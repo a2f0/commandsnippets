@@ -8,7 +8,7 @@ import {clientWrites} from '../db/schema';
 import type {AppEnv} from '../env';
 import {now} from '../lib/clock';
 import {permissionDenied, validationError} from '../lib/errors';
-import {parseResource} from '../lib/jsonapi';
+import {parseResource} from '../lib/jsonapi/request';
 import {OrderedModel, type OrderedSpec} from '../lib/ordered';
 import {eachField} from '../lib/validate';
 import {changedMeanwhile, clientWriteId, WRITE_ATTEMPTS} from './lww';

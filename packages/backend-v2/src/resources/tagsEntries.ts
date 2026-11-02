@@ -16,7 +16,7 @@ import {
 import type {AppEnv} from '../env';
 import {now} from '../lib/clock';
 import {methodNotAllowed} from '../lib/errors';
-import {parseResource} from '../lib/jsonapi';
+import {parseResource} from '../lib/jsonapi/request';
 import {OrderedModel, type OrderedSpec} from '../lib/ordered';
 import {versionOf} from './dataVersions';
 import {

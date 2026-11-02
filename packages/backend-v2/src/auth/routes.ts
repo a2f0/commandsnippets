@@ -2,7 +2,7 @@ import {loginAttributesSchema} from '@commandsnippets/api-shared';
 import {type Context, Hono} from 'hono';
 import type {AppEnv} from '../env';
 import {authenticationFailed, validationError} from '../lib/errors';
-import {parseResource} from '../lib/jsonapi';
+import {parseResource} from '../lib/jsonapi/request';
 import {validateFields} from '../lib/validate';
 import {GITHUB_LOGIN, GOOGLE_LOGIN} from '../resources/resourceTypes';
 import {getOrCreateUser, recordLogin} from '../services/users';

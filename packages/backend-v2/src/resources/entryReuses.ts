@@ -10,7 +10,7 @@ import {entryReuses, type TextEntryReused} from '../db/schema';
 import type {AppEnv} from '../env';
 import {now} from '../lib/clock';
 import {methodNotAllowed} from '../lib/errors';
-import {parseResource} from '../lib/jsonapi';
+import {parseResource} from '../lib/jsonapi/request';
 import {validateFields} from '../lib/validate';
 import {versionOf} from './dataVersions';
 import {textEntryResource, textEntryReusedResource} from './owned';

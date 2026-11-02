@@ -1,6 +1,7 @@
 import {describe, expect, it} from 'vitest';
 import {ApiError} from '../../src/lib/errors';
-import {parseResource, type Registry, serialize} from '../../src/lib/jsonapi';
+import {parseResource} from '../../src/lib/jsonapi/request';
+import {type Registry, serialize} from '../../src/lib/jsonapi/serialize';
 
 const post = (body: string) =>
   new Request('http://localhost/', {
@@ -56,7 +57,7 @@ describe('serialize', () => {
       relationships: {owner: {type: 'Missing', key: () => 1}},
       defaultIncludes: [],
     },
-  } as unknown as Registry;
+  } satisfies Registry;
 
   it('throws for an unregistered primary type', async () => {
     await expect(serialize(registry, 'Nope', [], null)).rejects.toThrow(
@@ -108,7 +109,7 @@ describe('include traversal', () => {
       },
       defaultIncludes: [],
     },
-  } as unknown as Registry;
+  } satisfies Registry;
 
   it('loads each row once per step on cyclic paths', async () => {
     loaded.length = 0;

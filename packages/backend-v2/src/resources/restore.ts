@@ -38,7 +38,7 @@ import {
 import type {AppEnv} from '../env';
 import {now} from '../lib/clock';
 import {ApiError, dataVersionChanged, parseError} from '../lib/errors';
-import {assertJsonMediaType} from '../lib/jsonapi';
+import {assertJsonMediaType} from '../lib/jsonapi/request';
 import {searchColumns} from '../lib/search';
 import {versionOf} from './dataVersions';
 import {

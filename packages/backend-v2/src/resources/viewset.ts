@@ -26,7 +26,6 @@ import {isoformat} from '../lib/clock';
 import {notFound, permissionDenied} from '../lib/errors';
 import {
   cursorPagination,
-  document,
   type FilterSpec,
   type ListQuery,
   listDocument,
@@ -34,8 +33,8 @@ import {
   type Pagination,
   paginate,
   parseListQuery,
-  serialize,
-} from '../lib/jsonapi';
+} from '../lib/jsonapi/query';
+import {document, serialize} from '../lib/jsonapi/serialize';
 import {versionOf} from './dataVersions';
 import {clientUpdated, writtenBefore} from './lww';
 import {nextRevision, type OwnedResource, type RevisedResource} from './owned';

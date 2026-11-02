@@ -21,7 +21,12 @@ import {
   type User,
 } from '../db/schema';
 import {isoformat} from '../lib/clock';
-import type {Registry, ResourceDef, ToMany, ToOne} from '../lib/jsonapi';
+import type {
+  Registry,
+  ResourceDef,
+  ToMany,
+  ToOne,
+} from '../lib/jsonapi/serialize';
 import {type EntryRow, entryColumns} from './owned';
 import {
   publicEntry,
@@ -56,24 +61,27 @@ type RelationshipsOf<T extends keyof Relationships, Row> = {
 };
 
 /**
- * Every loader is scoped to `owner`, whose data is read (the requesting
- * user, or the user a staff or public read names), and to the data version
- * read: reads are owner-only, and a relationship must not become a way
- * around that (nor into another version). A relationship never links two
- * users' rows (migrations/0021_own_links.sql).
+ * Whose data a registry reads, and how: every loader is scoped to `owner`,
+ * whose data is read (the requesting user, or the user a staff or public
+ * read names), and to the data version read: reads are owner-only, and a
+ * relationship must not become a way around that (nor into another
+ * version). A relationship never links two users' rows
+ * (migrations/0021_own_links.sql). A public read renders only what is
+ * shared (`publicPolicy.ts`).
  */
-export function createRegistry(
-  db: Db,
-  owner: User,
-  version: number,
-  publicOnly = false
-): Registry {
-  const userId = owner.id;
-  const user: ResourceDef<User> = {
+interface Scope {
+  db: Db;
+  owner: User;
+  version: number;
+  publicOnly: boolean;
+}
+
+function userDef({owner, publicOnly}: Scope): ResourceDef<User> {
+  return {
     type: USER,
     // The owner's row as the request read it, not read again: what renders
     // of it changes only through routes that render no `User`.
-    load: async ids => (ids.includes(userId) ? [owner] : []),
+    load: async ids => (ids.includes(owner.id) ? [owner] : []),
     // Only ever the requester's own row (see `load`), so is_staff tells the
     // web app whether to offer the admin page; the admin API checks it again.
     attributes: row => ({
@@ -85,8 +93,11 @@ export function createRegistry(
     relationships: {} satisfies RelationshipsOf<typeof USER, User>,
     defaultIncludes: DEFAULT_INCLUDES[USER],
   };
+}
 
-  const tag: ResourceDef<Tag> = {
+function tagDef({db, owner, version, publicOnly}: Scope): ResourceDef<Tag> {
+  const userId = owner.id;
+  return {
     type: TAG,
     load: ids =>
       db
@@ -116,8 +127,43 @@ export function createRegistry(
     } satisfies RelationshipsOf<typeof TAG, Tag>,
     defaultIncludes: DEFAULT_INCLUDES[TAG],
   };
+}
 
-  const textEntry: ResourceDef<EntryRow> = {
+/** An entry's junctions, as its `text_entry_to_tag` relationship loads them. */
+function entryTagsDef({
+  db,
+  owner,
+  version,
+  publicOnly,
+}: Scope): ToMany & {type: typeof TAG_TEXT_ENTRY} {
+  const userId = owner.id;
+  return {
+    type: TAG_TEXT_ENTRY,
+    many: true,
+    load: parentIds =>
+      db
+        .select()
+        .from(tagsEntries)
+        .where(
+          and(
+            inIds(tagsEntries.text_entry_id, parentIds),
+            eq(tagsEntries.user_id, userId),
+            eq(tagsEntries.version, version),
+            // The entry's tags: a deleted junction is only in the
+            // junction list, which shows its tag's syncs it left.
+            eq(tagsEntries.is_deleted, false),
+            publicOnly ? publicJunction(userId) : undefined
+          )
+        )
+        .orderBy(asc(tagsEntries.date_updated), asc(tagsEntries.id)),
+    parentKey: (row: TagTextEntry) => row.text_entry_id,
+  };
+}
+
+function textEntryDef(scope: Scope): ResourceDef<EntryRow> {
+  const {db, owner, version, publicOnly} = scope;
+  const userId = owner.id;
+  return {
     type: TEXT_ENTRY,
     load: ids =>
       db
@@ -144,32 +190,20 @@ export function createRegistry(
     }),
     relationships: {
       user: {type: USER, key: row => row.user_id},
-      text_entry_to_tag: {
-        type: TAG_TEXT_ENTRY,
-        many: true,
-        load: parentIds =>
-          db
-            .select()
-            .from(tagsEntries)
-            .where(
-              and(
-                inIds(tagsEntries.text_entry_id, parentIds),
-                eq(tagsEntries.user_id, userId),
-                eq(tagsEntries.version, version),
-                // The entry's tags: a deleted junction is only in the
-                // junction list, which shows its tag's syncs it left.
-                eq(tagsEntries.is_deleted, false),
-                publicOnly ? publicJunction(userId) : undefined
-              )
-            )
-            .orderBy(asc(tagsEntries.date_updated), asc(tagsEntries.id)),
-        parentKey: (row: TagTextEntry) => row.text_entry_id,
-      },
+      text_entry_to_tag: entryTagsDef(scope),
     } satisfies RelationshipsOf<typeof TEXT_ENTRY, EntryRow>,
     defaultIncludes: DEFAULT_INCLUDES[TEXT_ENTRY],
   };
+}
 
-  const tagTextEntry: ResourceDef<TagTextEntry> = {
+function tagTextEntryDef({
+  db,
+  owner,
+  version,
+  publicOnly,
+}: Scope): ResourceDef<TagTextEntry> {
+  const userId = owner.id;
+  return {
     type: TAG_TEXT_ENTRY,
     load: ids =>
       db
@@ -196,8 +230,14 @@ export function createRegistry(
     } satisfies RelationshipsOf<typeof TAG_TEXT_ENTRY, TagTextEntry>,
     defaultIncludes: DEFAULT_INCLUDES[TAG_TEXT_ENTRY],
   };
+}
 
-  const textEntryReused: ResourceDef<TextEntryReused> = {
+function textEntryReusedDef({
+  db,
+  owner,
+  version,
+}: Scope): ResourceDef<TextEntryReused> {
+  return {
     type: TEXT_ENTRY_REUSED,
     load: ids =>
       db
@@ -206,7 +246,7 @@ export function createRegistry(
         .where(
           and(
             inIds(entryReuses.id, ids),
-            eq(entryReuses.user_id, userId),
+            eq(entryReuses.user_id, owner.id),
             eq(entryReuses.version, version)
           )
         ),
@@ -217,12 +257,21 @@ export function createRegistry(
     } satisfies RelationshipsOf<typeof TEXT_ENTRY_REUSED, TextEntryReused>,
     defaultIncludes: DEFAULT_INCLUDES[TEXT_ENTRY_REUSED],
   };
+}
 
+/** Every resource, scoped to `owner`'s data of `version` (see `Scope`). */
+export function createRegistry(
+  db: Db,
+  owner: User,
+  version: number,
+  publicOnly = false
+): Registry {
+  const scope: Scope = {db, owner, version, publicOnly};
   return {
-    [USER]: user,
-    [TAG]: tag,
-    [TEXT_ENTRY]: textEntry,
-    [TAG_TEXT_ENTRY]: tagTextEntry,
-    [TEXT_ENTRY_REUSED]: textEntryReused,
-  } as unknown as Registry;
+    [USER]: userDef(scope),
+    [TAG]: tagDef(scope),
+    [TEXT_ENTRY]: textEntryDef(scope),
+    [TAG_TEXT_ENTRY]: tagTextEntryDef(scope),
+    [TEXT_ENTRY_REUSED]: textEntryReusedDef(scope),
+  };
 }

@@ -10,7 +10,7 @@ import {type Context, Hono} from 'hono';
 import {type User, users} from '../db/schema';
 import type {AppEnv} from '../env';
 import {ApiError, notFound} from '../lib/errors';
-import {document} from '../lib/jsonapi';
+import {document} from '../lib/jsonapi/serialize';
 import {listEntries} from './entries';
 import {DATA_OWNER} from './resourceTypes';
 import {jsonApi} from './responses';

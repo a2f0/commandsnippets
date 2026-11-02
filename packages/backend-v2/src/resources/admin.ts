@@ -25,12 +25,9 @@ import {
 import type {AppEnv} from '../env';
 import {isoformat} from '../lib/clock';
 import {ApiError, fieldError, notFound} from '../lib/errors';
-import {
-  document,
-  listDocument,
-  parseResource,
-  type ResourceObject,
-} from '../lib/jsonapi';
+import {listDocument} from '../lib/jsonapi/query';
+import {parseResource} from '../lib/jsonapi/request';
+import {document, type ResourceObject} from '../lib/jsonapi/serialize';
 import {validateFields} from '../lib/validate';
 import {changeAccountStatus} from '../services/accounts';
 import {listEntries} from './entries';

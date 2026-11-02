@@ -36,7 +36,7 @@ import {
 import type {AppEnv} from '../env';
 import {isoformat} from '../lib/clock';
 import {dataVersionChanged, notFound, validationError} from '../lib/errors';
-import {document} from '../lib/jsonapi';
+import {document} from '../lib/jsonapi/serialize';
 import {jsonApi} from './responses';
 
 /**
