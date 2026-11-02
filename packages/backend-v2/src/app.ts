@@ -25,7 +25,7 @@ import {
   originNotAllowed,
   userMismatch,
 } from './lib/errors';
-import {assertJsonMediaType} from './lib/jsonapi';
+import {assertJsonMediaType} from './lib/jsonapi/request';
 import {adminRoutes} from './resources/admin';
 import {analyticsRoutes} from './resources/analytics';
 import {backupRoutes} from './resources/backup';

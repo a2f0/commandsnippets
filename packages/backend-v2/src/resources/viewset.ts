@@ -26,7 +26,6 @@ import {isoformat} from '../lib/clock';
 import {notFound, permissionDenied} from '../lib/errors';
 import {
   cursorPagination,
-  document,
   type FilterSpec,
   type ListQuery,
   listDocument,
@@ -34,8 +33,8 @@ import {
   type Pagination,
   paginate,
   parseListQuery,
-  serialize,
-} from '../lib/jsonapi';
+} from '../lib/jsonapi/query';
+import {document, serialize} from '../lib/jsonapi/serialize';
 import {versionOf} from './dataVersions';
 import {clientUpdated, writtenBefore} from './lww';
 import {nextRevision, type OwnedResource, type RevisedResource} from './owned';
@@ -47,7 +46,7 @@ import {createRegistry} from './serializers';
  * (and refuses what the collection does not support), and the SQL for its
  * filters and sort fields.
  */
-export interface CollectionQuery<
+interface CollectionQuery<
   F extends FilterSchemas,
   S extends string,
   Search extends SearchMode,
@@ -69,8 +68,7 @@ interface RevisionOrder<Row> {
  * A page's query: run on its own, or batched with its count. Drizzle reads a
  * batch's rows by column name, so its columns must be named apart.
  */
-export type PageQuery<Row> = RunnableQuery<Row[], 'sqlite'> &
-  PromiseLike<Row[]>;
+type PageQuery<Row> = RunnableQuery<Row[], 'sqlite'> & PromiseLike<Row[]>;
 
 interface ListPageSpec<
   Row,

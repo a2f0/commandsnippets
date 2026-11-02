@@ -1,0 +1,28 @@
+---
+name: Set up the toolchain
+description: >-
+  Installs the Bun and Node versions in .mise.toml with the pinned mise, then
+  the dependencies from the root bun.lock. Check the repository out first.
+inputs:
+  install:
+    description: >-
+      What `bun install --frozen-lockfile` installs: `workspace`, every
+      package and the root tooling (including the pinned agent-tool, which
+      renders the icons from assets/brand); `root`, the root tooling alone;
+      or `none`.
+    default: workspace
+runs:
+  using: composite
+  steps:
+    - name: Set up Bun and Node with mise
+      uses: jdx/mise-action@8418fedb1110381a0d3ba51a7a415d7c1b884550 # v5.2.2
+      with:
+        version: 2026.10.17
+    - name: Install dependencies
+      if: inputs.install == 'workspace'
+      shell: bash
+      run: bun install --frozen-lockfile
+    - name: Install root tooling
+      if: inputs.install == 'root'
+      shell: bash
+      run: bun install --frozen-lockfile --filter commandsnippets

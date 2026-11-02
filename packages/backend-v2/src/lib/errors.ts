@@ -3,14 +3,7 @@
  * `rest_framework_json_api.exceptions.exception_handler` (api-shared's
  * `errorDocumentSchema`, with its `CODES`).
  */
-import {CODES} from '@commandsnippets/api-shared';
-
-export interface ErrorObject {
-  detail: string;
-  status: string;
-  source?: {pointer: string};
-  code?: string;
-}
+import {CODES, type ErrorObject} from '@commandsnippets/api-shared';
 
 export class ApiError extends Error {
   readonly status: number;

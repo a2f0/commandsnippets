@@ -9,7 +9,8 @@ alone does not make a check required.
 job decides which lanes apply (`scripts/checks/ciPolicy.ts`), and the gate then
 requires each lane to have succeeded, or to have been skipped *because* change
 detection marked it irrelevant. A failed, cancelled, missing, or unexpectedly
-skipped lane fails the gate. Changes to a workflow, to the CI policy itself
+skipped lane fails the gate. Changes to a workflow or to the setup action
+every job uses (`.github/actions/setup`), to the CI policy itself
 (`scripts/checks/ci*`), or to the root `.mise.toml`, or to the workspace install
 files every package shares (the root `package.json`, `bunfig.toml` and
 `bun.lock`) exercise every lane.
@@ -21,7 +22,7 @@ evaluates the local `scripts/checks/ciGate.json` policy through
 
 | Lane | Workflow | Scope |
 |---|---|---|
-| `tooling` | inline in `ci.yml` | `scripts/`, `packages/frontend/scripts/`, managed skills and permission rules, tooling config |
+| `tooling` | inline in `ci.yml` | `scripts/`, `packages/frontend/scripts/`, `terraform/scripts/*.ts` (root typecheck), managed skills and permission rules, tooling config |
 | `backend-v2` | `backend-v2.yml` (Backend v2 CI) | `packages/backend-v2/`, `packages/api-shared/` |
 | `api-shared` | `api-shared.yml` (API Shared CI) | `packages/api-shared/` |
 | `frontend` | `frontend.yml` (Frontend CI) | `packages/frontend/`, `packages/api-shared/`, app test scripts, `assets/brand/`, `agent-tool.json` |
@@ -33,10 +34,13 @@ change there also runs the lanes of its consumers: `backend-v2` and
 `frontend`. Both web packages render their icons from the brand sources in
 `assets/brand/` with the `images` settings in `agent-tool.json`, using the
 root's pinned agent-tool, so those paths run the `frontend` and `website`
-lanes (and, on push, the website checks). Every application lane runs one
+lanes (and, on push, the website checks). Every job checks the repository
+out, then sets up with `.github/actions/setup`: the pinned mise installs the
+Bun and Node versions in `.mise.toml`, and every application lane runs one
 `bun install --frozen-lockfile`, which installs the whole workspace, root
 tooling included, from the root `bun.lock`; the `tooling` lane and the gate
-install only the root workspace (`--filter commandsnippets`).
+install only the root workspace (`--filter commandsnippets`), and change
+detection and the `terraform` lane install nothing.
 
 The application workflows are reusable (`workflow_call`) and keep their manual
 dispatch entry points. They no longer run on pull requests or feature-branch
@@ -88,16 +92,17 @@ changes take effect. `bun run hooks:check` reports missing or stale copies.
   push remote, so integrating its fetched base does not re-check upstream commits.
   New branches retain the local-main range fallback; pushes to a URL/path retain
   the original range without remote-name filtering. Path selection still uses the
-  full diff, including base integration, and runs the
-  checks for the areas the push touches. Those checks run against the
+  full diff, including base integration: the hook classifies it with CI's
+  policy (`bun scripts/checks/ciChanges.ts --range <range>`, one per pushed
+  ref) and runs the local checks of every lane that applies except
+  `frontend`, whose suites are left to CI. Those checks run against the
   worktree, so the hook first requires the pushed commit to be the checked-out
   `HEAD`, with no uncommitted tracked changes and no untracked files under the
-  checked paths. A change to `packages/api-shared/` installs the workspace and
-  checks api-shared, then `packages/backend-v2/`, which bundles it through its
-  workspace link. A change to the root `package.json`, `bunfig.toml` or
-  `bun.lock` runs the tooling checks, that install, and the api-shared,
-  backend-v2 and website checks. It refuses to run when the installed copy is
-  stale. Per-check timings are logged under
+  checked paths. The `api-shared` checks start with the workspace install,
+  then `backend-v2` runs against api-shared through its workspace link. A
+  change that runs every lane in CI (a workflow or the setup action, the CI
+  policy, `.mise.toml` or the workspace install files) runs every local check. It refuses to run
+  when the installed copy is stale. Per-check timings are logged under
   `.git/commandsnippets/pushGateTimings.tsv`
   (`scripts/git/showPushGateTimings.sh`).
 

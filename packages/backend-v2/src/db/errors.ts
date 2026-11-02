@@ -34,6 +34,14 @@ export function isDataVersionChanged(error: unknown): boolean {
 }
 
 /**
+ * A write the data version triggers refused because its version is gone
+ * (deleted by another request since it was read: `0019_data_versions.sql`).
+ */
+export function isDataVersionMissing(error: unknown): boolean {
+  return messages(error).includes('data_version_missing:');
+}
+
+/**
  * A second row of a user's data version (`users_dataversion`'s primary key):
  * a restore's guard that the active version is the one it was made over
  * (`resources/restore.ts`).

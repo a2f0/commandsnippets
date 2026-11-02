@@ -24,23 +24,25 @@ async function insertUserWithToken(
   const joined = now();
   const userId = sql`(SELECT id FROM users_user WHERE username = ${username})`;
 
-  await db.batch([
-    db.insert(users).values({
-      username,
-      email,
-      date_joined: joined,
-      date_updated: now(),
-      last_login: joined,
-      last_active: joined,
-      login_count: 1,
-    }),
+  const [[user]] = await db.batch([
+    db
+      .insert(users)
+      .values({
+        username,
+        email,
+        date_joined: joined,
+        date_updated: now(),
+        last_login: joined,
+        last_active: joined,
+        login_count: 1,
+      })
+      .returning(),
     db.insert(tokens).values(newToken(userId)),
   ]);
-  const [user] = await db
-    .select()
-    .from(users)
-    .where(eq(users.username, username));
-  return user as User;
+  if (user === undefined) {
+    throw new Error(`creating user ${username} returned no row`);
+  }
+  return user;
 }
 
 const reserved = new Set(RESERVED_USERNAMES.map(name => name.toLowerCase()));

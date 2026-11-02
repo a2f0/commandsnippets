@@ -2,7 +2,7 @@ import {describe, expect, it} from 'vitest';
 import {type TextEntry, tagsEntries} from '../../src/db/schema';
 import {OrderedModel} from '../../src/lib/ordered';
 import {revision} from '../../src/lib/revision';
-import {tagEntryOrdering} from '../../src/resources/tagsEntries';
+import {tagEntryOrdering} from '../../src/resources/orderings';
 import {
   db,
   json,

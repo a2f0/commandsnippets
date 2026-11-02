@@ -1,8 +1,9 @@
 import {loginAttributesSchema} from '@commandsnippets/api-shared';
 import {type Context, Hono} from 'hono';
+import * as z from 'zod/mini';
 import type {AppEnv} from '../env';
 import {authenticationFailed, validationError} from '../lib/errors';
-import {parseResource} from '../lib/jsonapi';
+import {parseResource} from '../lib/jsonapi/request';
 import {validateFields} from '../lib/validate';
 import {GITHUB_LOGIN, GOOGLE_LOGIN} from '../resources/resourceTypes';
 import {getOrCreateUser, recordLogin} from '../services/users';
@@ -13,6 +14,34 @@ const unauthorized = (c: Context<AppEnv>) => c.json({errors: []}, 401);
 
 const noEmail = 'No email found in Google user data';
 const unverifiedEmail = 'Google email is not verified';
+
+/** GitHub's user (`GET /user`): its login is the account's username. */
+const githubUserSchema = z.object({login: z.string().check(z.minLength(1))});
+
+/** GitHub's emails (`GET /user/emails`). */
+const githubEmailsSchema = z.array(
+  z.object({
+    email: z.string(),
+    primary: z.boolean(),
+    verified: z.optional(z.boolean()),
+  })
+);
+
+/**
+ * A provider's JSON answer as `schema` reads it, or undefined when it is
+ * not one: an error status, not JSON, or not of that shape.
+ */
+async function payload<S extends z.ZodMiniType>(
+  response: Response,
+  schema: S
+): Promise<z.output<S> | undefined> {
+  if (!response.ok) {
+    return undefined;
+  }
+  const body: unknown = await response.json().catch(() => undefined);
+  const result = schema.safeParse(body);
+  return result.success ? result.data : undefined;
+}
 
 interface GoogleUserInfo {
   email?: string;
@@ -72,20 +101,13 @@ authRoutes.post('/api/v1/github-login', async c => {
   if (accessToken === null) {
     return unauthorized(c);
   }
-  const userResponse = await service.user(accessToken);
-  if (!userResponse.ok) {
+  const [user, emails] = await Promise.all([
+    service.user(accessToken).then(r => payload(r, githubUserSchema)),
+    service.emails(accessToken).then(r => payload(r, githubEmailsSchema)),
+  ]);
+  if (user === undefined || emails === undefined) {
     return unauthorized(c);
   }
-  const {login: username} = (await userResponse.json()) as {login: string};
-  const emailsResponse = await service.emails(accessToken);
-  if (!emailsResponse.ok) {
-    return unauthorized(c);
-  }
-  const emails = (await emailsResponse.json()) as Array<{
-    email: string;
-    primary: boolean;
-    verified?: boolean;
-  }>;
   // Accounts are keyed by email, so an unverified one would let anyone who
   // adds your address to their GitHub account sign in as you.
   const primary = emails.find(
@@ -94,7 +116,7 @@ authRoutes.post('/api/v1/github-login', async c => {
   if (primary === undefined) {
     return unauthorized(c);
   }
-  return login(c, username, primary.email);
+  return login(c, user.login, primary.email);
 });
 
 /** Web Google OAuth: exchange the authorization code, then read the email. */

@@ -16,6 +16,7 @@ on:
       - 'package.json'
       - 'packages/backend-v2/**'
       - 'packages/api-shared/**'
+      - '.github/actions/setup/**'
       - '.github/workflows/backend-v2.yml'
 jobs:
   test:
@@ -25,11 +26,7 @@ jobs:
         working-directory: packages/backend-v2
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: jdx/mise-action@8418fedb1110381a0d3ba51a7a415d7c1b884550 # v5.2.2
-        with:
-          version: 2026.10.17
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+      - uses: ./.github/actions/setup
       - name: Lint
         run: bun run lint
       - name: Typecheck
@@ -59,11 +56,7 @@ jobs:
         ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: jdx/mise-action@8418fedb1110381a0d3ba51a7a415d7c1b884550 # v5.2.2
-        with:
-          version: 2026.10.17
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+      - uses: ./.github/actions/setup
       - name: Apply D1 migrations
         run: bunx wrangler d1 migrations apply DB --remote --env "$DEPLOY_ENV"
       - name: Deploy

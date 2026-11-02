@@ -6,6 +6,7 @@
  */
 
 export * from './cursor';
+export * from './jsonapi/mediaTypes';
 export * from './jsonapi/response';
 export * from './resources/admin';
 export * from './resources/analytics';

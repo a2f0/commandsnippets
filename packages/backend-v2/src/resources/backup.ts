@@ -9,12 +9,12 @@ import {
   BACKUP_FORMAT,
   BACKUP_VERSION,
   type Backup,
-  DATA_VERSION,
 } from '@commandsnippets/api-shared';
 import {and, asc, eq} from 'drizzle-orm';
 import {alias} from 'drizzle-orm/sqlite-core';
 import {type Context, Hono} from 'hono';
 import {requireUser} from '../auth/permissions';
+import type {Db} from '../db/client';
 import {
   entryReuses,
   tags,
@@ -24,8 +24,7 @@ import {
 } from '../db/schema';
 import type {AppEnv} from '../env';
 import {isoformat, now} from '../lib/clock';
-import {notFound} from '../lib/errors';
-import {findVersionNumber, versionOf} from './dataVersions';
+import {findVersionNumber, versionNumber, versionOf} from './dataVersions';
 
 export const backupRoutes = new Hono<AppEnv>();
 
@@ -35,27 +34,31 @@ const taggedEntry = alias(textEntries, 'tagged_entry');
 const reusedEntry = alias(textEntries, 'reused_entry');
 
 /** The version a backup is of: `?version=`, one of the user's, else theirs. */
-async function backupVersion(c: Context<AppEnv>, user: User): Promise<number> {
+function backupVersion(
+  c: Context<AppEnv>,
+  user: User
+): Promise<number> | number {
   const param = c.req.query('version');
-  if (param === undefined) {
-    return versionOf(c, user);
-  }
-  const found = /^[1-9]\d*$/.test(param)
-    ? await findVersionNumber(c.get('db'), user.id, Number(param))
-    : undefined;
-  if (found === undefined) {
-    throw notFound(`No ${DATA_VERSION} matches the given query.`);
-  }
-  return found;
+  return param === undefined
+    ? versionOf(c, user)
+    : versionNumber(param, version =>
+        findVersionNumber(c.get('db'), user.id, version)
+      );
 }
 
-backupRoutes.get('/', async c => {
-  const user = requireUser(c);
-  const version = await backupVersion(c, user);
-  const db = c.get('db');
-  // One batch, so one transaction: the rows are read as of one moment, and
-  // every tagging's tag and entry is among the tags and entries read.
-  const [tagRows, entryRows, taggingRows, reuseRows] = await db.batch([
+/**
+ * `userId`'s live rows of `version`, in one batch, so one transaction: the
+ * rows are read as of one moment, and every tagging's tag and entry is
+ * among the tags and entries read.
+ */
+function readBackupRows(db: Db, userId: number, version: number) {
+  const live = (table: typeof tags | typeof textEntries | typeof tagsEntries) =>
+    and(
+      eq(table.user_id, userId),
+      eq(table.version, version),
+      eq(table.is_deleted, false)
+    );
+  return db.batch([
     db
       .select({
         id: tags.id,
@@ -66,13 +69,7 @@ backupRoutes.get('/', async c => {
         date_updated: tags.date_updated,
       })
       .from(tags)
-      .where(
-        and(
-          eq(tags.user_id, user.id),
-          eq(tags.version, version),
-          eq(tags.is_deleted, false)
-        )
-      )
+      .where(live(tags))
       .orderBy(asc(tags.order), asc(tags.id)),
     db
       .select({
@@ -84,13 +81,7 @@ backupRoutes.get('/', async c => {
         date_updated: textEntries.date_updated,
       })
       .from(textEntries)
-      .where(
-        and(
-          eq(textEntries.user_id, user.id),
-          eq(textEntries.version, version),
-          eq(textEntries.is_deleted, false)
-        )
-      )
+      .where(live(textEntries))
       .orderBy(asc(textEntries.id)),
     // A tagging of a deleted tag or entry is left out with it. (A tagging is
     // of its tag's and entry's user and version: migrations/0019 and 0021.)
@@ -108,9 +99,7 @@ backupRoutes.get('/', async c => {
       .innerJoin(taggedEntry, eq(taggedEntry.id, tagsEntries.text_entry_id))
       .where(
         and(
-          eq(tagsEntries.user_id, user.id),
-          eq(tagsEntries.version, version),
-          eq(tagsEntries.is_deleted, false),
+          live(tagsEntries),
           eq(taggedTag.is_deleted, false),
           eq(taggedEntry.is_deleted, false)
         )
@@ -130,14 +119,23 @@ backupRoutes.get('/', async c => {
       .innerJoin(reusedEntry, eq(reusedEntry.id, entryReuses.text_entry_id))
       .where(
         and(
-          eq(entryReuses.user_id, user.id),
+          eq(entryReuses.user_id, userId),
           eq(entryReuses.version, version),
           eq(reusedEntry.is_deleted, false)
         )
       )
       .orderBy(asc(entryReuses.date_created), asc(entryReuses.id)),
   ]);
-  const backup: Backup = {
+}
+
+/** The rows read, as `user`'s backup file. */
+function toBackup(
+  user: User,
+  [tagRows, entryRows, taggingRows, reuseRows]: Awaited<
+    ReturnType<typeof readBackupRows>
+  >
+): Backup {
+  return {
     format: BACKUP_FORMAT,
     version: BACKUP_VERSION,
     date_exported: isoformat(now()),
@@ -172,5 +170,11 @@ backupRoutes.get('/', async c => {
       date_created: isoformat(row.date_created),
     })),
   };
-  return c.json(backup, 200, {'Cache-Control': 'no-store'});
+}
+
+backupRoutes.get('/', async c => {
+  const user = requireUser(c);
+  const version = await backupVersion(c, user);
+  const rows = await readBackupRows(c.get('db'), user.id, version);
+  return c.json(toBackup(user, rows), 200, {'Cache-Control': 'no-store'});
 });

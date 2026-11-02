@@ -24,9 +24,11 @@ export function failure(
   schema: z.ZodMiniType,
   input: unknown
 ): [string, string] {
-  const all = failures(schema, input);
-  expect(all.length).toBe(1);
-  const [first] = all as [Failure];
+  const [first, ...rest] = failures(schema, input);
+  expect(rest).toEqual([]);
+  if (first === undefined) {
+    throw new Error('Expected one issue');
+  }
   return [first.message, first.code];
 }
 
@@ -37,5 +39,8 @@ export function parsed<S extends z.ZodMiniType>(
 ): z.output<S> {
   const result = schema.safeParse(input);
   expect(result.error?.issues ?? []).toEqual([]);
-  return result.data as z.output<S>;
+  if (!result.success) {
+    throw new Error('Expected the input to parse');
+  }
+  return result.data;
 }
