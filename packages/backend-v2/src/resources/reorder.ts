@@ -1,6 +1,5 @@
 import {reorderAttributesSchema} from '@commandsnippets/api-shared';
 import {and, eq, type SQL, sql} from 'drizzle-orm';
-import type {RunnableQuery} from 'drizzle-orm/runnable-query';
 import type {Context} from 'hono';
 import {requireUser} from '../auth/permissions';
 import {isUniqueViolation} from '../db/errors';
@@ -11,20 +10,12 @@ import {permissionDenied, validationError} from '../lib/errors';
 import {parseResource} from '../lib/jsonapi/request';
 import {OrderedModel, type OrderedSpec} from '../lib/ordered';
 import {eachField} from '../lib/validate';
-import {changedMeanwhile, clientWriteId, WRITE_ATTEMPTS} from './lww';
+import {clientWriteId, retryWrite} from './lww';
 import {nextRevision, type RevisedResource} from './owned';
 import {existingRows} from './related';
 
 /** The resource and its ordering (whose owner/touch the move honors). */
 type ReorderOptions = RevisedResource & OrderedSpec;
-
-interface Row {
-  id: number;
-  order: number;
-  user_id: number;
-  owner: number;
-  scope: number;
-}
 
 /**
  * POST .../reorder with `{top, bottom}` attributes: move `top` directly above
@@ -53,9 +44,9 @@ export async function reorder(
             pk: field.value,
             query: db
               .select({
-                id: options.id,
-                order: options.order,
-                user_id: options.userId,
+                id: sql<number>`${options.id}`.as('id'),
+                order: sql<number>`${options.order}`.as('order'),
+                user_id: sql<number>`${options.userId}`.as('user_id'),
                 // Named apart: the same column twice (or thrice: a tag's
                 // scope is its user) would come back from the batch as one.
                 owner: sql<number>`${options.userId}`.as('owner'),
@@ -65,7 +56,7 @@ export async function reorder(
               // A row out of the order (a deleted junction) does not exist
               // here.
               .where(and(eq(options.id, Number(field.value)), options.ranked))
-              .limit(1) as unknown as RunnableQuery<Row[], 'sqlite'>,
+              .limit(1),
           }
     )
   );
@@ -107,30 +98,35 @@ export async function reorder(
     sql`INSERT INTO sync_clientwrite (user_id, write_id, made, date_created)
       SELECT ${user.id}, ${writeId}, ${timestamp}, ${timestamp}
       WHERE ${condition}`;
-  for (let attempt = 0; attempt < WRITE_ATTEMPTS; attempt += 1) {
-    if (await applied()) {
-      return c.body(null, 200);
-    }
-    try {
-      const inPlace = await db.run(
-        recordWhere(model.directlyAbove(top, bottom))
-      );
-      if (inPlace.meta.changes > 0) {
+  return retryWrite(
+    await applied(),
+    applied,
+    async isApplied => {
+      if (isApplied) {
         return c.body(null, 200);
       }
-      await model.above(
-        top,
-        bottom,
-        nextRevision(options, user.id),
-        recordWhere(sql`changes() > 0`)
-      );
-    } catch (error) {
-      if (isUniqueViolation(error)) {
-        return c.body(null, 200);
+      try {
+        const inPlace = await db.run(
+          recordWhere(model.directlyAbove(top, bottom))
+        );
+        if (inPlace.meta.changes > 0) {
+          return c.body(null, 200);
+        }
+        await model.above(
+          top,
+          bottom,
+          nextRevision(options, user.id),
+          recordWhere(sql`changes() > 0`)
+        );
+      } catch (error) {
+        if (isUniqueViolation(error)) {
+          return c.body(null, 200);
+        }
+        throw error;
       }
-      throw error;
-    }
-    // Nothing moved (in place by then): recorded as such next.
-  }
-  throw changedMeanwhile('ordering');
+      // Nothing moved (in place by then): recorded as such next.
+      return undefined;
+    },
+    'ordering'
+  );
 }

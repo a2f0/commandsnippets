@@ -15,7 +15,7 @@ import {
 import {now} from '../../src/lib/clock';
 import {OrderedModel} from '../../src/lib/ordered';
 import {searchColumns} from '../../src/lib/search';
-import {tagOrdering} from '../../src/resources/tags';
+import {tagOrdering} from '../../src/resources/orderings';
 import {createUser} from '../../src/services/users';
 import {db} from './db';
 

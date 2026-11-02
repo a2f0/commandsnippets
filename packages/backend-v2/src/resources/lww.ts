@@ -124,11 +124,11 @@ export const appliesAfter = (last: string | null, at: string): boolean =>
   last === null || last <= at;
 
 /**
- * How many times a write to a row it read reads it again, when another write
- * changed it in between (a compare and set: each write applies only to the
- * row as read).
+ * How many times a write to a row it read is made, reading the row again
+ * each time another write changed it in between (a compare and set: each
+ * attempt applies only to the row as read).
  */
-export const WRITE_ATTEMPTS = 3;
+const WRITE_ATTEMPTS = 3;
 
 /** A 409 to retry: the row kept changing while the write was made. */
 export const changedMeanwhile = (what: string): ApiError =>
@@ -137,3 +137,29 @@ export const changedMeanwhile = (what: string): ApiError =>
     `The ${what} changed while it was being written. Please retry.`,
     CODES.orderingConflict
   );
+
+/**
+ * A compare-and-set write: `attempt` writes `row`, as read, only while it is
+ * still so, and answers with what it wrote (or what stands), or undefined
+ * when another write changed the row in between. Then the row is read again
+ * (`read`) and the write made again, `WRITE_ATTEMPTS` times in all; after
+ * that, a 409 naming `what` (`changedMeanwhile`).
+ */
+export async function retryWrite<Row, T>(
+  row: Row,
+  read: () => Promise<Row>,
+  attempt: (row: Row) => Promise<T | undefined>,
+  what: string
+): Promise<T> {
+  let current = row;
+  for (let made = 1; ; made += 1) {
+    const written = await attempt(current);
+    if (written !== undefined) {
+      return written;
+    }
+    if (made >= WRITE_ATTEMPTS) {
+      throw changedMeanwhile(what);
+    }
+    current = await read();
+  }
+}

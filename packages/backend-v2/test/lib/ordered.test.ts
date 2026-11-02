@@ -2,7 +2,7 @@ import {describe, expect, it, vi} from 'vitest';
 import {now} from '../../src/lib/clock';
 import {ApiError} from '../../src/lib/errors';
 import {OrderedModel, type OrderedRow} from '../../src/lib/ordered';
-import {tagOrdering} from '../../src/resources/tags';
+import {tagOrdering} from '../../src/resources/orderings';
 import {db, refreshTag, setUpBase, tagFactory, tagsOf} from '../helpers';
 
 const row = (tag: {
