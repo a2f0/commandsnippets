@@ -1,6 +1,7 @@
 import {useCallback, useRef} from 'react';
 import {
   type ConnectDragPreview,
+  type DragSourceMonitor,
   type DropTargetMonitor,
   useDrag,
 } from 'react-dnd';
@@ -19,12 +20,12 @@ interface ISortableRowOptions<T extends {id: string}>
   /** Store the order a drop leaves: the row `topId` right above `bottomId`. */
   reorder: (topId: string, bottomId: string) => Promise<void>;
   /** Dropped on a tag: the entry dragged is tagged with it. */
-  onDropOnTag?: (tagId: string) => void;
+  onDropOnTag?: ((tagId: string) => void) | undefined;
   /** Whether a row dragged over this one moves here (the list's order). */
   canMoveHere?: () => boolean;
 }
 
-interface ISortableRow {
+export interface ISortableRow {
   isDragging: boolean;
   /** The drag handle's ref: where a drag starts, and what a hover measures. */
   handleRef: (element: HTMLDivElement | null) => void;
@@ -35,6 +36,61 @@ interface ISortableRow {
     item: DraggableItem,
     monitor: DropTargetMonitor<DraggableItem, DropResult>
   ) => void;
+}
+
+/**
+ * Where a drag ends: a drop on no target puts the row back, a drop on a tag
+ * tags the entry dragged (`onDropOnTag`), and a move within the list stores
+ * the order the list now shows.
+ */
+async function endDrag<T extends {id: string}>(
+  draggedItem: DraggableItem,
+  monitor: DragSourceMonitor<DraggableItem, DropResult>,
+  {
+    findEntry,
+    findEntryByIndex,
+    moveEntry,
+    reorder,
+    onDropOnTag,
+  }: Pick<
+    ISortableRowOptions<T>,
+    'findEntry' | 'findEntryByIndex' | 'moveEntry' | 'reorder' | 'onDropOnTag'
+  >
+): Promise<void> {
+  const {id: droppedId, originalIndex} = monitor.getItem();
+  console.debug(
+    `useDrag end: draggedItem ID: ${draggedItem.id} originalIndex: ${draggedItem.originalIndex} index ${draggedItem.index}`
+  );
+  console.debug(
+    `useDrag end: droppedId: ${droppedId} originalIndex ${originalIndex}`
+  );
+  if (!monitor.didDrop()) {
+    console.debug('!didDrop');
+    // No target took the drop: the row goes back where it was.
+    moveEntry(droppedId, originalIndex);
+    return;
+  }
+  const dropResult = monitor.getDropResult();
+  if (onDropOnTag !== undefined && dropResult?.type === 'Tag') {
+    onDropOnTag(dropResult.id);
+    return;
+  }
+  if (originalIndex === draggedItem.index) {
+    console.debug('useDrag end: it was not moved within the list.');
+    return;
+  }
+  console.debug(
+    `useDrag end: it moved from index ${originalIndex} to ${draggedItem.index}`
+  );
+  // Right above the row now below it; at the bottom, right below the row
+  // above it.
+  const {entry, index: at} = findEntry(draggedItem.id);
+  const below = findEntryByIndex(at + 1);
+  const top = below === null ? findEntryByIndex(at - 1) : entry;
+  const bottom = below ?? entry;
+  if (top !== null) {
+    await reorder(top.id, bottom.id);
+  }
 }
 
 /**
@@ -68,42 +124,14 @@ export function useSortableRow<T extends {id: string}>({
       collect: monitor => ({
         isDragging: monitor.isDragging(),
       }),
-      end: async (draggedItem, monitor) => {
-        const {id: droppedId, originalIndex} = monitor.getItem();
-        console.debug(
-          `useDrag end: draggedItem ID: ${draggedItem.id} originalIndex: ${draggedItem.originalIndex} index ${draggedItem.index}`
-        );
-        console.debug(
-          `useDrag end: droppedId: ${droppedId} originalIndex ${originalIndex}`
-        );
-        if (!monitor.didDrop()) {
-          console.debug('!didDrop');
-          // No target took the drop: the row goes back where it was.
-          moveEntry(droppedId, originalIndex);
-          return;
-        }
-        const dropResult = monitor.getDropResult();
-        if (onDropOnTag !== undefined && dropResult?.type === 'Tag') {
-          onDropOnTag(dropResult.id);
-          return;
-        }
-        if (originalIndex === draggedItem.index) {
-          console.debug('useDrag end: it was not moved within the list.');
-          return;
-        }
-        console.debug(
-          `useDrag end: it moved from index ${originalIndex} to ${draggedItem.index}`
-        );
-        // Right above the row now below it; at the bottom, right below the
-        // row above it.
-        const {entry, index: at} = findEntry(draggedItem.id);
-        const below = findEntryByIndex(at + 1);
-        const top = below === null ? findEntryByIndex(at - 1) : entry;
-        const bottom = below ?? entry;
-        if (top !== null) {
-          await reorder(top.id, bottom.id);
-        }
-      },
+      end: (draggedItem, monitor) =>
+        endDrag(draggedItem, monitor, {
+          findEntry,
+          findEntryByIndex,
+          moveEntry,
+          reorder,
+          onDropOnTag,
+        }),
     },
     [
       type,
