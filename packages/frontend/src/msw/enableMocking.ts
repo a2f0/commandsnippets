@@ -31,13 +31,8 @@ export async function enableMocking() {
   // Expose MSW utilities globally for tests
   exposeMSWToGlobal();
 
-  // Verify MSW is working with a health check
-  try {
-    await healthCheck();
-  } catch (_error) {
-    // Health check failure is logged but doesn't stop initialization
-    // This allows the app to continue working even if health check fails
-  }
+  // Verify MSW is working (a failure is logged, and initialization goes on)
+  await healthCheck();
 
   return registration;
 }

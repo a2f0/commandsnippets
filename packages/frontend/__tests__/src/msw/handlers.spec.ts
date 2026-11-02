@@ -33,15 +33,7 @@ import {
 } from '@commandsnippets/api-shared';
 import invariant from 'invariant';
 import {setupServer} from 'msw/node';
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import {afterAll, beforeAll, beforeEach, describe, expect, it} from 'vitest';
 
 import {
   handlers,
@@ -68,9 +60,6 @@ let named: number | undefined;
 beforeEach(() => {
   resetMSWState();
   named = 1;
-  // The handlers announce each request.
-  vi.spyOn(console, 'log').mockImplementation(() => {});
-  return () => vi.restoreAllMocks();
 });
 
 async function send(
