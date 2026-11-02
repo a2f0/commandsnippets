@@ -6,7 +6,7 @@ import {initClickTracking} from './lib/clickTracking';
 async function init() {
   if (import.meta.env.MODE === 'test') {
     try {
-      const {enableMocking} = await import('./msw');
+      const {enableMocking} = await import('./msw/enableMocking');
       await enableMocking();
       console.log('MSW initialized successfully');
 

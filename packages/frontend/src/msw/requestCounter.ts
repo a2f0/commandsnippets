@@ -9,7 +9,14 @@ export type HttpMethod =
   | 'OPTIONS'
   | 'HEAD';
 
-const requestCountMap: Map<string, number> = new Map();
+interface RequestCount {
+  method: HttpMethod;
+  url: string;
+  count: number;
+}
+
+/** The counts, by `makeKey` of their method and URL. */
+const requestCounts = new Map<string, RequestCount>();
 
 function makeKey(method: HttpMethod, url: string): string {
   return `${method} ${url}`;
@@ -22,35 +29,25 @@ function makeKey(method: HttpMethod, url: string): string {
 export function recordRequest(method: HttpMethod, url: string): void {
   const urlString = `${url}`;
   const normalizedUrl = urlString.split('?')[0] ?? urlString;
-  const keys = new Set([
-    makeKey(method, urlString),
-    makeKey(method, normalizedUrl),
-  ]);
-  for (const key of keys) {
-    requestCountMap.set(key, (requestCountMap.get(key) ?? 0) + 1);
+  for (const counted of new Set([urlString, normalizedUrl])) {
+    const key = makeKey(method, counted);
+    const held = requestCounts.get(key);
+    if (held === undefined) {
+      requestCounts.set(key, {method, url: counted, count: 1});
+    } else {
+      held.count += 1;
+    }
   }
 }
 
 export function getRequestCount(method: HttpMethod, url: string): number {
-  const key = makeKey(method, url);
-  return requestCountMap.get(key) ?? 0;
+  return requestCounts.get(makeKey(method, url))?.count ?? 0;
 }
 
 export function resetRequestCounts(): void {
-  requestCountMap.clear();
+  requestCounts.clear();
 }
 
-export function getAllRequestCounts(): Array<{
-  method: HttpMethod;
-  url: string;
-  count: number;
-}> {
-  const results: Array<{method: HttpMethod; url: string; count: number}> = [];
-  for (const [key, count] of requestCountMap.entries()) {
-    const spaceIndex = key.indexOf(' ');
-    const method = key.slice(0, spaceIndex) as HttpMethod;
-    const url = key.slice(spaceIndex + 1);
-    results.push({method, url, count});
-  }
-  return results;
+export function getAllRequestCounts(): RequestCount[] {
+  return [...requestCounts.values()].map(counted => ({...counted}));
 }

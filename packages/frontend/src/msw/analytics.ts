@@ -7,6 +7,133 @@ import type {
   TextEntryReused,
 } from '@commandsnippets/api-shared/responses';
 
+/** One counted event: when, and the entry or tag (or both) it was of. */
+type Event = {date: string; entry?: string; tag?: string};
+
+/** The live rows the analytics count: no deleted ones, no dangling links. */
+interface LiveRows {
+  tags: Tag[];
+  entries: TextEntry[];
+  links: TagTextEntry[];
+}
+
+function liveRows(
+  allTags: Tag[],
+  allEntries: TextEntry[],
+  allLinks: TagTextEntry[]
+): LiveRows {
+  const tags = allTags.filter(row => !row.attributes.is_deleted);
+  const entries = allEntries.filter(row => !row.attributes.is_deleted);
+  const links = allLinks.filter(
+    row =>
+      !row.attributes.is_deleted &&
+      tags.some(tag => tag.id === row.relationships.tag.data.id) &&
+      entries.some(entry => entry.id === row.relationships.text_entry.data.id)
+  );
+  return {tags, entries, links};
+}
+
+/** The events of `params.activity` in its range and of its tag, if named. */
+function eventsOf(
+  params: AnalyticsParams,
+  {tags, entries, links}: LiveRows,
+  reuses: TextEntryReused[]
+): Event[] {
+  const sources: Record<AnalyticsParams['activity'], () => Event[]> = {
+    created: () =>
+      entries.map(row => ({date: row.attributes.date_created, entry: row.id})),
+    tags_created: () =>
+      tags.map(row => ({date: row.attributes.date_created, tag: row.id})),
+    tagged: () =>
+      links.map(row => ({
+        date: row.attributes.date_created,
+        entry: row.relationships.text_entry.data.id,
+        tag: row.relationships.tag.data.id,
+      })),
+    reused: () =>
+      reuses
+        .filter(row =>
+          entries.some(
+            entry => entry.id === row.relationships.text_entry.data.id
+          )
+        )
+        .map(row => ({
+          date: row.attributes.date_created,
+          entry: row.relationships.text_entry.data.id,
+        })),
+  };
+  const ofTag = (row: Event) =>
+    row.tag
+      ? row.tag === params.tag
+      : links.some(
+          link =>
+            link.relationships.tag.data.id === params.tag &&
+            link.relationships.text_entry.data.id === row.entry
+        );
+  return sources[params.activity]().filter(
+    row =>
+      (params.from === 'all' || row.date.slice(0, 10) >= params.from) &&
+      row.date.slice(0, 10) <= params.to &&
+      (!params.tag || ofTag(row))
+  );
+}
+
+const count = (map: Map<string, number>, key: string) =>
+  map.set(key, (map.get(key) ?? 0) + 1);
+
+/** The first day of the `interval` an event's day falls in. */
+function bucketOf(date: string, interval: AnalyticsParams['interval']) {
+  const day = new Date(`${date.slice(0, 10)}T00:00:00Z`);
+  if (interval === 'month') day.setUTCDate(1);
+  if (interval === 'week')
+    day.setUTCDate(day.getUTCDate() - ((day.getUTCDay() + 6) % 7));
+  return day.toISOString().slice(0, 10);
+}
+
+/** The events counted by tag, by entry and by interval. */
+function countEvents(
+  events: Event[],
+  links: TagTextEntry[],
+  interval: AnalyticsParams['interval']
+) {
+  const tagCounts = new Map<string, number>();
+  const entryCounts = new Map<string, number>();
+  const timeline = new Map<string, number>();
+  for (const event of events) {
+    if (event.entry) count(entryCounts, event.entry);
+    const tagIds = event.tag
+      ? [event.tag]
+      : links
+          .filter(link => link.relationships.text_entry.data.id === event.entry)
+          .map(link => link.relationships.tag.data.id);
+    for (const id of tagIds) count(tagCounts, id);
+    count(timeline, bucketOf(event.date, interval));
+  }
+  return {tagCounts, entryCounts, timeline};
+}
+
+/** The ten most counted, then by name and id. */
+const ranked = (counts: Map<string, number>, names: Map<string, string>) =>
+  [...counts]
+    .map(([id, count]) => ({id, name: names.get(id) ?? id, count}))
+    .sort(
+      (a, b) =>
+        b.count - a.count ||
+        (a.name < b.name ? -1 : a.name > b.name ? 1 : 0) ||
+        Number(a.id) - Number(b.id)
+    )
+    .slice(0, 10);
+
+/** The first day counted: `from`, or with `all`, the earliest event's. */
+const firstDay = (params: AnalyticsParams, events: Event[]) =>
+  params.from === 'all'
+    ? events.reduce(
+        (first, event) =>
+          event.date.slice(0, 10) < first ? event.date.slice(0, 10) : first,
+        params.to
+      )
+    : params.from;
+
 /** Stateful browser fixture for the aggregate API; production aggregates in D1. */
 export function mockAnalytics(
   params: AnalyticsParams,
@@ -16,95 +143,19 @@ export function mockAnalytics(
   allLinks: TagTextEntry[],
   reuses: TextEntryReused[]
 ): AnalyticsDocument {
-  const tags = allTags.filter(row => !row.attributes.is_deleted);
-  const entries = allEntries.filter(row => !row.attributes.is_deleted);
-  const links = allLinks.filter(
-    row =>
-      !row.attributes.is_deleted &&
-      tags.some(tag => tag.id === row.relationships.tag.data.id) &&
-      entries.some(entry => entry.id === row.relationships.text_entry.data.id)
+  const live = liveRows(allTags, allEntries, allLinks);
+  const events = eventsOf(params, live, reuses);
+  const {tagCounts, entryCounts, timeline} = countEvents(
+    events,
+    live.links,
+    params.interval
   );
-  type Event = {date: string; entry?: string; tag?: string};
-  const sources: Record<AnalyticsParams['activity'], Event[]> = {
-    created: entries.map(row => ({
-      date: row.attributes.date_created,
-      entry: row.id,
-    })),
-    tags_created: tags.map(row => ({
-      date: row.attributes.date_created,
-      tag: row.id,
-    })),
-    tagged: links.map(row => ({
-      date: row.attributes.date_created,
-      entry: row.relationships.text_entry.data.id,
-      tag: row.relationships.tag.data.id,
-    })),
-    reused: reuses
-      .filter(row =>
-        entries.some(entry => entry.id === row.relationships.text_entry.data.id)
-      )
-      .map(row => ({
-        date: row.attributes.date_created,
-        entry: row.relationships.text_entry.data.id,
-      })),
-  };
-  const events = sources[params.activity].filter(
-    row =>
-      (params.from === 'all' || row.date.slice(0, 10) >= params.from) &&
-      row.date.slice(0, 10) <= params.to &&
-      (!params.tag ||
-        (row.tag
-          ? row.tag === params.tag
-          : links.some(
-              link =>
-                link.relationships.tag.data.id === params.tag &&
-                link.relationships.text_entry.data.id === row.entry
-            )))
-  );
-  const tagCounts = new Map<string, number>();
-  const entryCounts = new Map<string, number>();
-  const timeline = new Map<string, number>();
-  const count = (map: Map<string, number>, key: string) =>
-    map.set(key, (map.get(key) ?? 0) + 1);
-  for (const event of events) {
-    if (event.entry) count(entryCounts, event.entry);
-    const tagIds = event.tag
-      ? [event.tag]
-      : links
-          .filter(link => link.relationships.text_entry.data.id === event.entry)
-          .map(link => link.relationships.tag.data.id);
-    for (const id of tagIds) count(tagCounts, id);
-    const date = new Date(`${event.date.slice(0, 10)}T00:00:00Z`);
-    if (params.interval === 'month') date.setUTCDate(1);
-    if (params.interval === 'week')
-      date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7));
-    count(timeline, date.toISOString().slice(0, 10));
-  }
-  const ranked = (counts: Map<string, number>, names: Map<string, string>) =>
-    [...counts]
-      .map(([id, count]) => ({id, name: names.get(id) ?? id, count}))
-      .sort(
-        (a, b) =>
-          b.count - a.count ||
-          (a.name < b.name ? -1 : a.name > b.name ? 1 : 0) ||
-          Number(a.id) - Number(b.id)
-      )
-      .slice(0, 10);
   return {
     data: {
       version,
       activity: params.activity,
       interval: params.interval,
-      from:
-        params.from === 'all'
-          ? events.reduce(
-              (first, event) =>
-                event.date.slice(0, 10) < first
-                  ? event.date.slice(0, 10)
-                  : first,
-              params.to
-            )
-          : params.from,
+      from: firstDay(params, events),
       to: params.to,
       total: events.length,
       entries: entryCounts.size,
@@ -114,11 +165,11 @@ export function mockAnalytics(
         .sort((a, b) => a.date.localeCompare(b.date)),
       top_tags: ranked(
         tagCounts,
-        new Map(tags.map(tag => [tag.id, tag.attributes.name]))
+        new Map(live.tags.map(tag => [tag.id, tag.attributes.name]))
       ),
       top_entries: ranked(
         entryCounts,
-        new Map(entries.map(entry => [entry.id, entry.attributes.subject]))
+        new Map(live.entries.map(entry => [entry.id, entry.attributes.subject]))
       ),
     },
   };

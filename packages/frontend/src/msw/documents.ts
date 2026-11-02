@@ -8,6 +8,7 @@ import {
   parseDateTime,
   type TagListDocument,
 } from '@commandsnippets/api-shared';
+import {testUser} from './fixtures';
 
 type Pagination = Pick<TagListDocument, 'links' | 'meta'>;
 
@@ -41,6 +42,15 @@ export function pagination(
 export function onePage(url: string, count: number): Pagination {
   return pagination(url, 1, 1, count);
 }
+
+/** A one-page list document of `data`, for the request to `url`. */
+export const listDocument = <T>(url: string, data: T[]) => ({
+  ...onePage(url, data.length),
+  data,
+});
+
+/** The document of `data`, a resource of the signed-in test user's. */
+export const withUser = <T>(data: T) => ({data, included: [testUser]});
 
 /** The current time as the API renders timestamps (naive UTC, microseconds). */
 export function now(): string {
