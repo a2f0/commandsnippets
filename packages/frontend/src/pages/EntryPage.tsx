@@ -30,54 +30,46 @@ interface EntryDetailProps {
   syncStatus: {failed: boolean; retry: () => void};
 }
 
-/** The entry: its subject, body, info and (its owner's) reuses. */
-const EntryDetail = ({
-  entry,
-  owner,
-  session,
-  publicOnly,
-  syncStatus,
-}: EntryDetailProps) => {
+/** The entry's tags, each a link to the tag's list. */
+const TagLinks = ({entryId, owner}: {entryId: string; owner: string}) => {
+  const {t} = useTypedTranslation('entries');
+  const tags = useEntryTags(entryId);
+  if (tags === undefined) return null;
+  if (tags.length === 0) return t('infoNoTags');
+  return (
+    <Box
+      component="span"
+      sx={{display: 'inline-flex', flexWrap: 'wrap', gap: 1}}
+    >
+      {tags.map(tag => (
+        <Chip
+          key={tag.id}
+          component={Link}
+          to={`/${encodeURIComponent(owner)}/${encodeURIComponent(tag.attributes.name)}`}
+          label={tag.attributes.name}
+          size="small"
+          variant="outlined"
+          clickable
+        />
+      ))}
+    </Box>
+  );
+};
+
+type InfoRow = [key: string, label: string, value: React.ReactNode];
+
+/** The entry's info, a row each: its key (`entryInfo<key>`), label and value. */
+function useInfoRows(
+  entry: TextEntry,
+  owner: string,
+  publicOnly: boolean
+): InfoRow[] {
   const {t, i18n} = useTypedTranslation('entries');
-  const tags = useEntryTags(entry.id);
-  const [copied, setCopied] = useState(false);
   const {id} = entry;
-  const {subject, body, is_public, reused_count, date_created, date_updated} =
+  const {body, is_public, reused_count, date_created, date_updated} =
     entry.attributes;
-
-  useEffect(() => {
-    if (!copied) {
-      return undefined;
-    }
-    const timer = setTimeout(() => setCopied(false), COPIED_MS);
-    return () => clearTimeout(timer);
-  }, [copied]);
-
-  // Each a link to the tag's list.
-  const tagLinks =
-    tags === undefined ? null : tags.length === 0 ? (
-      t('infoNoTags')
-    ) : (
-      <Box
-        component="span"
-        sx={{display: 'inline-flex', flexWrap: 'wrap', gap: 1}}
-      >
-        {tags.map(tag => (
-          <Chip
-            key={tag.id}
-            component={Link}
-            to={`/${encodeURIComponent(owner)}/${encodeURIComponent(tag.attributes.name)}`}
-            label={tag.attributes.name}
-            size="small"
-            variant="outlined"
-            clickable
-          />
-        ))}
-      </Box>
-    );
-
-  const rows: Array<[key: string, label: string, value: React.ReactNode]> = [
-    ['Tags', t('infoTags'), tagLinks],
+  return [
+    ['Tags', t('infoTags'), <TagLinks key="tags" entryId={id} owner={owner} />],
     [
       'Visibility',
       t('infoVisibility'),
@@ -95,7 +87,7 @@ const EntryDetail = ({
             'Reused',
             t('infoReused'),
             t('infoTimes', {count: reused_count}),
-          ] as [string, string, React.ReactNode],
+          ] satisfies InfoRow,
         ]),
     ['Created', t('infoCreated'), formatTimestamp(date_created, i18n.language)],
     ['Updated', t('infoUpdated'), formatTimestamp(date_updated, i18n.language)],
@@ -109,7 +101,119 @@ const EntryDetail = ({
     ],
     ['Id', t('infoId'), isLocalId(id) ? t('infoNotSent') : id],
   ];
+}
 
+const InfoList = ({rows}: {rows: readonly InfoRow[]}) => (
+  <Box
+    component="dl"
+    sx={{
+      display: 'grid',
+      gridTemplateColumns: 'max-content minmax(0, 1fr)',
+      columnGap: 2,
+      rowGap: 2,
+      m: 0,
+      p: 2.5,
+      border: 1,
+      borderColor: 'divider',
+      fontSize: 14,
+    }}
+  >
+    {rows.map(([key, label, value]) => (
+      <React.Fragment key={key}>
+        <Box component="dt" sx={{color: 'text.secondary'}}>
+          {label}
+        </Box>
+        <Box
+          component="dd"
+          id={`entryInfo${key}`}
+          sx={{m: 0, overflowWrap: 'anywhere'}}
+        >
+          {value}
+        </Box>
+      </React.Fragment>
+    ))}
+  </Box>
+);
+
+/** The entry's body, with Copy (a reuse), which shows it copied a moment. */
+const BodyPanel = ({
+  entry,
+  session,
+}: {
+  entry: TextEntry;
+  session: SyncSession | null;
+}) => {
+  const {t} = useTypedTranslation('entries');
+  const [copied, setCopied] = useState(false);
+  const {body} = entry.attributes;
+
+  useEffect(() => {
+    if (!copied) {
+      return undefined;
+    }
+    const timer = setTimeout(() => setCopied(false), COPIED_MS);
+    return () => clearTimeout(timer);
+  }, [copied]);
+
+  return (
+    <Box sx={{border: 1, borderColor: 'divider', minWidth: 0}}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          px: 2,
+          py: 1,
+          borderBottom: 1,
+          borderColor: 'divider',
+          bgcolor: 'action.hover',
+        }}
+      >
+        <Typography variant="subtitle2">{t('infoBody')}</Typography>
+        <Button
+          id="entryCopy"
+          variant="outlined"
+          size="small"
+          startIcon={copied ? <Check /> : <FileCopySharp />}
+          onClick={() => {
+            copyEntry(session, entry.id, body);
+            setCopied(true);
+          }}
+        >
+          {copied ? t('infoCopied') : t('infoCopy')}
+        </Button>
+      </Box>
+      <Box
+        component="pre"
+        id="entryBody"
+        aria-label={t('infoBody')}
+        sx={{
+          m: 0,
+          p: 2.5,
+          minHeight: 120,
+          fontFamily: 'monospace',
+          fontSize: 14,
+          lineHeight: 1.7,
+          whiteSpace: 'pre-wrap',
+          overflowWrap: 'anywhere',
+        }}
+      >
+        {body}
+      </Box>
+    </Box>
+  );
+};
+
+/** The entry: its subject, body, info and (its owner's) reuses. */
+const EntryDetail = ({
+  entry,
+  owner,
+  session,
+  publicOnly,
+  syncStatus,
+}: EntryDetailProps) => {
+  const {t} = useTypedTranslation('entries');
+  const rows = useInfoRows(entry, owner, publicOnly);
   return (
     <>
       <Typography variant="overline" sx={{color: 'text.secondary'}}>
@@ -121,7 +225,7 @@ const EntryDetail = ({
         component="h1"
         sx={{mb: 2, overflowWrap: 'anywhere'}}
       >
-        {subject}
+        {entry.attributes.subject}
       </Typography>
       <Box
         sx={{
@@ -131,86 +235,14 @@ const EntryDetail = ({
           alignItems: 'start',
         }}
       >
-        <Box sx={{border: 1, borderColor: 'divider', minWidth: 0}}>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              px: 2,
-              py: 1,
-              borderBottom: 1,
-              borderColor: 'divider',
-              bgcolor: 'action.hover',
-            }}
-          >
-            <Typography variant="subtitle2">{t('infoBody')}</Typography>
-            <Button
-              id="entryCopy"
-              variant="outlined"
-              size="small"
-              startIcon={copied ? <Check /> : <FileCopySharp />}
-              onClick={() => {
-                copyEntry(session, id, body);
-                setCopied(true);
-              }}
-            >
-              {copied ? t('infoCopied') : t('infoCopy')}
-            </Button>
-          </Box>
-          <Box
-            component="pre"
-            id="entryBody"
-            aria-label={t('infoBody')}
-            sx={{
-              m: 0,
-              p: 2.5,
-              minHeight: 120,
-              fontFamily: 'monospace',
-              fontSize: 14,
-              lineHeight: 1.7,
-              whiteSpace: 'pre-wrap',
-              overflowWrap: 'anywhere',
-            }}
-          >
-            {body}
-          </Box>
-        </Box>
-        <Box
-          component="dl"
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: 'max-content minmax(0, 1fr)',
-            columnGap: 2,
-            rowGap: 2,
-            m: 0,
-            p: 2.5,
-            border: 1,
-            borderColor: 'divider',
-            fontSize: 14,
-          }}
-        >
-          {rows.map(([key, label, value]) => (
-            <React.Fragment key={key}>
-              <Box component="dt" sx={{color: 'text.secondary'}}>
-                {label}
-              </Box>
-              <Box
-                component="dd"
-                id={`entryInfo${key}`}
-                sx={{m: 0, overflowWrap: 'anywhere'}}
-              >
-                {value}
-              </Box>
-            </React.Fragment>
-          ))}
-        </Box>
+        <BodyPanel entry={entry} session={session} />
+        <InfoList rows={rows} />
       </Box>
       {!publicOnly && session !== null && (
         <ReuseHistory
           session={session}
-          entryId={id}
-          count={reused_count}
+          entryId={entry.id}
+          count={entry.attributes.reused_count}
           initialSync={syncStatus}
         />
       )}
