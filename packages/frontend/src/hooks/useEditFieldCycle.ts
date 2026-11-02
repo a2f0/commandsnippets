@@ -1,6 +1,7 @@
 import {type RefObject, useEffect} from 'react';
 import {activeEntryEditField, activeTagEditField, appMode} from '../lib/shared';
 import {type AppState, useAppConfig} from '../lib/state/appState';
+import {useDocumentKeydown} from './useDocumentKeydown';
 
 /** An editor's fields, of which the app state holds the active one. */
 export interface IEditFields<Field> {
@@ -56,30 +57,23 @@ export function useEditFieldCycle<Field>(
   }
 ): void {
   const appConfig = useAppConfig();
-  // Read as the editor renders, so it renders again when either changes;
-  // the listener and the focus read the state as it is when they run.
+  // Read as the editor renders, so it renders again when it changes; the
+  // listener and the focus read the state as it is when they run.
   const active = fields.active(appConfig);
-  const mode = appConfig.appMode;
 
-  useEffect(() => {
-    const keyListener = (event: KeyboardEvent) => {
-      if (event.code !== 'Tab' || appConfig.appMode !== fields.mode) {
-        return;
-      }
-      const {order} = fields;
-      const next =
-        order[(order.indexOf(fields.active(appConfig)) + 1) % order.length];
-      if (next !== undefined) {
-        fields.setActive(appConfig, next);
-      }
-      event.preventDefault();
-      event.stopPropagation();
-    };
-    document.addEventListener('keydown', keyListener, false);
-    return () => {
-      document.removeEventListener('keydown', keyListener, false);
-    };
-  }, [active, mode]);
+  useDocumentKeydown(event => {
+    if (event.code !== 'Tab' || appConfig.appMode !== fields.mode) {
+      return;
+    }
+    const {order} = fields;
+    const next =
+      order[(order.indexOf(fields.active(appConfig)) + 1) % order.length];
+    if (next !== undefined) {
+      fields.setActive(appConfig, next);
+    }
+    event.preventDefault();
+    event.stopPropagation();
+  });
 
   useEffect(() => {
     const field = fields.active(appConfig);

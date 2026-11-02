@@ -1,6 +1,7 @@
 import Grid from '@mui/material/Grid';
 import type React from 'react';
-import {useEffect, useEffectEvent, useState} from 'react';
+import {useState} from 'react';
+import {useDocumentKeydown} from '../../hooks/useDocumentKeydown';
 import {StyledTagButton} from './StyledTagButton';
 import {StyledTagFormContainer} from './StyledTagFormContainer';
 import {StyledTextFieldTags} from './StyledTextFieldTags';
@@ -30,22 +31,11 @@ export const TagForm = ({
   cancelRef,
 }: ITagFormProps) => {
   const [name, setName] = useState<string>(initialName);
-  const cancelOnEscape = useEffectEvent((event: KeyboardEvent) => {
+  useDocumentKeydown(event => {
     if (event.code === 'Escape') {
       onCancel();
     }
   });
-
-  useEffect(() => {
-    const escFunction = (event: KeyboardEvent) => {
-      cancelOnEscape(event);
-    };
-    document.addEventListener('keydown', escFunction, false);
-
-    return () => {
-      document.removeEventListener('keydown', escFunction, false);
-    };
-  }, []);
 
   return (
     <StyledTagFormContainer id={ids.form}>

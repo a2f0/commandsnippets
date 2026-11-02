@@ -6,7 +6,7 @@
 import {act, fireEvent, screen, waitFor} from '@testing-library/react';
 import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
-import {VIRTUALIZE_FROM} from '../../src/components/entries/EntryList';
+import {VIRTUALIZE_FROM} from '../../src/components/entries/useVirtualRows';
 import {syncSession} from '../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {API, serveMockApi, server} from '../util/msw';

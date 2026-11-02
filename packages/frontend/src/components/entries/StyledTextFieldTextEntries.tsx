@@ -2,6 +2,7 @@ import {TextField} from '@mui/material';
 import React, {useCallback, useEffect} from 'react';
 import {activeSearch} from '../../lib/shared';
 import {useAppConfig} from '../../lib/state/appState';
+import {outlinedFieldSx} from '../../theme/sx';
 
 interface IStyledTextFieldProps {
   id: string;
@@ -54,17 +55,7 @@ const StyledTextFieldTextEntries = ({
         ml: 0.5,
         width: 250,
         padding: 0,
-        '& .MuiOutlinedInput-root': {
-          '& fieldset': {
-            borderColor: theme => theme.palette.text.secondary,
-          },
-          '&:hover fieldset': {
-            borderColor: theme => theme.palette.text.primary,
-          },
-          '&.Mui-focused fieldset': {
-            borderColor: theme => theme.palette.text.primary,
-          },
-        },
+        ...outlinedFieldSx,
       }}
     />
   );

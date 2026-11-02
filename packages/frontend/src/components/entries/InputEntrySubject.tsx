@@ -4,8 +4,9 @@ import {useTheme} from '@mui/material/styles';
 import React, {useEffect, useRef, useState} from 'react';
 import {activeEntryEditField} from '../../lib/shared';
 import {useAppConfig} from '../../lib/state/appState';
+import {outlinedFieldSx} from '../../theme/sx';
 
-export interface IProps {
+interface IProps {
   handleChangeParent: (value: string) => void;
   placeholder: string;
   valueParent: string;
@@ -54,17 +55,7 @@ const InputEntrySubject = ({
         maxWidth: `calc(100% - (${theme.drawer.width}px))`,
         marginLeft: 0,
         marginBottom: '4px',
-        '& .MuiOutlinedInput-root': {
-          '& fieldset': {
-            borderColor: theme => theme.palette.text.secondary,
-          },
-          '&:hover fieldset': {
-            borderColor: theme => theme.palette.text.primary,
-          },
-          '&.Mui-focused fieldset': {
-            borderColor: theme => theme.palette.text.primary,
-          },
-        },
+        ...outlinedFieldSx,
       }}
       type="text"
       slotProps={{

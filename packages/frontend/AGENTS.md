@@ -374,7 +374,8 @@ clear is not recorded when it ends.
   itself). Staging builds alias `react-dom/client` to `react-dom/profiling`
   (`vite.config.ts`), since Profilers do nothing in React's production build.
 - **Interactions**: a tag click (or Enter in the tag list, or All/Untagged
-  Entries) calls `beginInteraction`; `EntryList` calls `listShown` once it
+  Entries) calls `beginInteraction`; `EntryList` calls `listShown`
+  (`useShownEntries`) once it
   renders the list asked for with its own rows (the list hooks name what
   their rows are of: a live query answers with the last rows until it reads
   the next), and the interaction ends at the next paint, unless another has begun or another
@@ -487,8 +488,12 @@ writing its type by hand.
   drop-down and item (the context menus use the item too)
 - **Hooks**: `src/hooks/`, among them `useContextMenu` (where a context menu
   was opened, for `ContextMenu`), `useEditFieldCycle` (Tab through an
-  editor's fields) and `useErrorStore` (the errors the error boundary caught,
-  which the HUD's Logs tab lists; `recordError` is the boundary's `onError`)
+  editor's fields), `useDocumentKeydown` (a keydown listener on the page,
+  calling the latest render's handler), `useListKeyboard` (the arrow keys
+  and Enter in the tag and entry lists, in their app mode, leaving a key
+  another listener handled) and `useErrorStore` (the errors the error
+  boundary caught, which the HUD's Logs tab lists; `recordError` is the
+  boundary's `onError`)
 - **Shared styling**: `src/styled/` holds small styled components used across
   features; `src/theme/` the MUI themes, the theme provider, the global
   styles and the shared `sx` objects (`sx.ts`). Outlined buttons take their
@@ -549,11 +554,14 @@ per-row work multiplies (the HUD's Analytics tab times it).
   in state, set again by an effect, which renders every row a second time
   after it mounts.
 - A list's callbacks for its rows stay the same across renders: what they
-  need of the list they read through a ref (`TagList`'s `choosingWith`), not
-  a new closure. A live query reads every row afresh after any write, so the
+  need of the list they read through a ref (`TagList`'s `useHighlightedTag`),
+  not a new closure. A live query reads every row afresh after any write, so the
   entry list keeps the object of each row the read left unchanged
   (`keepUnchanged`, `entries/unchangedRows.ts`), and only the rows a write
   changed render again.
+- `EntryList` reads its rows with `entries/useShownEntries`, renders each
+  with `EntryRow`, and from `VIRTUALIZE_FROM` rows only those in view
+  (`entries/useVirtualRows`).
 - What a row needs of its data comes from its props (the tag's
   `is_public`), not a live query of its own: one query per row is one
   IndexedDB transaction per row.

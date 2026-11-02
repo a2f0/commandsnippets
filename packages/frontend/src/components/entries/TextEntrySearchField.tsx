@@ -1,31 +1,20 @@
-import React, {useCallback, useEffect} from 'react';
+import React from 'react';
 
+import {useDocumentKeydown} from '../../hooks/useDocumentKeydown';
 import {useAppConfig} from '../../lib/state/appState';
 import {StyledTextFieldEntries} from './StyledTextFieldTextEntries';
 
 const TextEntrySearchField = () => {
   const appConfig = useAppConfig();
 
-  const escFunction = useCallback((event: KeyboardEvent) => {
+  useDocumentKeydown(event => {
     if (event.code === 'Escape') {
-      handleClear();
+      appConfig.setEntrySearchString('');
     }
-  }, []);
-
-  useEffect(() => {
-    document.addEventListener('keydown', escFunction, false);
-
-    return () => {
-      document.removeEventListener('keydown', escFunction, false);
-    };
-  }, []);
+  });
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     appConfig.setEntrySearchString(event.currentTarget.value);
-  };
-
-  const handleClear = () => {
-    appConfig.setEntrySearchString('');
   };
 
   return (

@@ -18,3 +18,12 @@ export const menuBarButtonSx: SxProps<Theme> = {
     },
   },
 };
+
+/** The text fields' outline: the text's grays, the darker on hover and focus. */
+export const outlinedFieldSx = {
+  '& .MuiOutlinedInput-root': {
+    '& fieldset': {borderColor: 'text.secondary'},
+    '&:hover fieldset': {borderColor: 'text.primary'},
+    '&.Mui-focused fieldset': {borderColor: 'text.primary'},
+  },
+} as const;
