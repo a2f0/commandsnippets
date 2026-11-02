@@ -12,7 +12,7 @@ import {publicSyncSession, syncSession} from '../../src/lib/sync/session';
 import {setRuntimeEntriesOverride} from '../../src/msw/handlers';
 import {entriesResponse} from '../../test/mocks/entries/entriesResponse';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {serveMockApi, server} from '../util/msw';
+import {recordRequests, serveMockApi} from '../util/msw';
 import {signIn, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
@@ -43,15 +43,10 @@ const signInHere = () => {
 const reuseCounts = () => screen.queryAllByTitle(/^Reused /);
 
 /** The reuses sent from now on. */
-function reusesSent(): string[] {
-  const sent: string[] = [];
-  server.events.on('request:start', ({request}) => {
-    if (new URL(request.url).pathname.endsWith('/entry_reuses')) {
-      sent.push(request.method);
-    }
-  });
-  return sent;
-}
+const reusesSent = () =>
+  recordRequests(({method}, path) =>
+    path.endsWith('/entry_reuses') ? method : undefined
+  );
 
 /** Open entry `subject`'s context menu, and its menu items' names. */
 async function openMenu(subject: string, id: string): Promise<string[]> {

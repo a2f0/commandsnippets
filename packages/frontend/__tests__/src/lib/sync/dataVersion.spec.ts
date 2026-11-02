@@ -7,17 +7,7 @@
 import {DATA_VERSION_HEADER} from '@commandsnippets/api-shared';
 import invariant from 'invariant';
 import {http} from 'msw/http';
-import {setupServer} from 'msw/node';
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {apiClient} from '../../../../src/lib/api/apiClient';
 import {
   CommandsnippetsDatabase,
@@ -28,32 +18,26 @@ import {adoptVersion, heldVersion} from '../../../../src/lib/sync/dataVersion';
 import {enqueue} from '../../../../src/lib/sync/outbox';
 import {ownSyncApi} from '../../../../src/lib/sync/session';
 import {createSyncEngine} from '../../../../src/lib/sync/sync';
-import {handlers, resetMSWState} from '../../../../src/msw/handlers';
-import {API} from '../../../util/msw';
+import {setRuntimeEntriesOverride} from '../../../../src/msw/handlers';
+import {API, recordRequests, serveMockApi, server} from '../../../util/msw';
 import {restoreElsewhere} from '../../../util/restoreElsewhere';
 import {entry, tag} from '../../../util/storeFixtures';
 
 const OWNER = 'test';
 
-const server = setupServer(...handlers);
-
-beforeAll(() => server.listen({onUnhandledFrame: 'error'}));
-afterAll(() => server.close());
+serveMockApi({onUnhandledFrame: 'error'});
 
 let db: CommandsnippetsDatabase;
 let databases = 0;
 beforeEach(() => {
-  resetMSWState();
+  // The mock API's own entries, not the unit tests' (`resetMockApi`).
+  setRuntimeEntriesOverride(null);
   // The handlers announce each request.
   vi.spyOn(console, 'log').mockImplementation(() => {});
   databases += 1;
   db = new CommandsnippetsDatabase(`data-version-spec-${databases}`);
 });
-afterEach(async () => {
-  server.resetHandlers();
-  server.events.removeAllListeners();
-  await db.delete();
-});
+afterEach(() => db.delete());
 
 const engine = () =>
   createSyncEngine(
@@ -70,15 +54,10 @@ const entryIds = async () =>
     .sort();
 
 /** The data version each request to the API named. */
-function versionsNamed(): (string | null)[] {
-  const named: (string | null)[] = [];
-  server.events.on('request:start', ({request}) => {
-    if (!new URL(request.url).pathname.endsWith('/user/')) {
-      named.push(request.headers.get(DATA_VERSION_HEADER));
-    }
-  });
-  return named;
-}
+const versionsNamed = () =>
+  recordRequests(({headers}, path) =>
+    path.endsWith('/user/') ? undefined : headers.get(DATA_VERSION_HEADER)
+  );
 
 /**
  * Hold the first `method` request to `path` until released; the handlers

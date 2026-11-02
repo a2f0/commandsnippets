@@ -5,24 +5,13 @@
 import {
   CURSOR_START,
   DATA_VERSION_HEADER,
-  type TagTextEntryCreateDocument,
   tagCursorListDocumentSchema,
   tagTextEntryCursorListDocumentSchema,
   tagTextEntryListDocumentSchema,
   textEntryCursorListDocumentSchema,
   userDocumentSchema,
 } from '@commandsnippets/api-shared';
-import {setupServer} from 'msw/node';
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 
 import {adminSyncApi} from '../../../../src/lib/api/adminApi';
 import {
@@ -39,25 +28,18 @@ import {
   SyncUserError,
 } from '../../../../src/lib/sync/sync';
 import {onePage} from '../../../../src/msw/documents';
-import {
-  handlers,
-  resetMSWState,
-  setRuntimeEntriesOverride,
-} from '../../../../src/msw/handlers';
-import {API} from '../../../util/msw';
+import {setRuntimeEntriesOverride} from '../../../../src/msw/handlers';
+import {JSON_API, tagEntryDocument} from '../../../util/documents';
+import {API, serveMockApi} from '../../../util/msw';
 import {entry} from '../../../util/storeFixtures';
 
-const JSON_API = {'Content-Type': 'application/vnd.api+json'};
-
-const server = setupServer(...handlers);
-
-beforeAll(() => server.listen({onUnhandledFrame: 'error'}));
-afterAll(() => server.close());
+serveMockApi({onUnhandledFrame: 'error'});
 
 let db: CommandsnippetsDatabase;
 let databases = 0;
 beforeEach(() => {
-  resetMSWState();
+  // The mock API's own entries, not the unit tests' (`resetMockApi`).
+  setRuntimeEntriesOverride(null);
   // The handlers announce each request.
   vi.spyOn(console, 'log').mockImplementation(() => {});
   databases += 1;
@@ -131,19 +113,6 @@ async function send(
   });
   expect(response.ok).toBe(true);
 }
-
-const tagEntry = (
-  tagId: string,
-  entryId: string
-): TagTextEntryCreateDocument => ({
-  data: {
-    type: 'TagTextEntryThroughModel',
-    relationships: {
-      tag: {data: {type: 'Tag', id: tagId}},
-      text_entry: {data: {type: 'TextEntry', id: entryId}},
-    },
-  },
-});
 
 const ids = (rows: ReadonlyArray<{id: string}>) =>
   rows.map(({id}) => id).sort();
@@ -497,7 +466,7 @@ describe('syncTag', () => {
     const sync = createSyncEngine(db, pagedApi(2, pages), 'spec');
     await sync.syncAll();
 
-    await send('POST', '/tags_entries', tagEntry('2', '1'));
+    await send('POST', '/tags_entries', tagEntryDocument('2', '1'));
     await send('DELETE', '/tags_entries/2');
     await send('PATCH', '/entries/1', {
       data: {type: 'TextEntry', id: '1', attributes: {subject: 'renamed'}},

@@ -18,7 +18,14 @@ import {
 } from '../../src/lib/state/signOutWarning';
 import {hasQueuedWrites, syncSession} from '../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {API, HOST, offlineForWrites, serveMockApi, server} from '../util/msw';
+import {
+  API,
+  HOST,
+  offlineForWrites,
+  recordRequests,
+  serveMockApi,
+  server,
+} from '../util/msw';
 import {signIn, store, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
@@ -137,15 +144,11 @@ it("never acts on a warning left from another account's sign-out", async () => {
   await waitFor(() =>
     expect(screen.queryByText('Changes not saved yet')).toBeNull()
   );
-  const signOuts: string[] = [];
-  server.events.on('request:start', ({request}) => {
-    if (new URL(request.url).pathname === '/api-token-deauth/') {
-      signOuts.push(request.url);
-    }
-  });
+  const signOuts = recordRequests(({url}, path) =>
+    path === '/api-token-deauth/' ? url : undefined
+  );
   await confirmSignOut({discardQueued: true});
   expect(signOuts).toEqual([]);
-  server.events.removeAllListeners();
 });
 
 it('discards the unsent writes though the session ended as the user signed out', async () => {

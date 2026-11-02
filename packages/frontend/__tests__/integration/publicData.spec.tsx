@@ -6,7 +6,7 @@ import {setEntryPublic, setTagPublic} from '../../src/lib/data/writes';
 import {useAppState} from '../../src/lib/state/appState';
 import {publicSyncSession, syncSession} from '../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
-import {serveMockApi, server} from '../util/msw';
+import {recordRequests, serveMockApi, server} from '../util/msw';
 import {signIn, store} from '../util/signIn';
 import {entry, tag} from '../util/storeFixtures';
 import {renderAppAt} from '../util/TestAppRouter';
@@ -89,10 +89,9 @@ describe('public user pages', () => {
   });
   it('opens the same tag URL for a guest with filtered tags, entries, and read-only controls', async () => {
     await publish();
-    const writes: string[] = [];
-    server.events.on('request:start', ({request}) => {
-      if (request.method !== 'GET') writes.push(request.method);
-    });
+    const writes = recordRequests(({method}) =>
+      method === 'GET' ? undefined : method
+    );
     const {history} = renderAppAt('/test/test-tag-1');
     expect(await screen.findByText('entry-1-subject')).toBeInTheDocument();
     expect(history.location.pathname).toBe('/test/test-tag-1');

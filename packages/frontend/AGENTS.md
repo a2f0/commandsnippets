@@ -717,7 +717,12 @@ console.error('ERROR: Build failed');
   - `TestAppRouter.tsx` - the app in a memory router that follows its
     history; sign in first for a signed-in app
   - `msw.ts` - an `msw/node` server of the mock API (`src/msw/handlers.ts`),
-    with the entries of `test/mocks/entries/entriesResponse.ts`
+    with the entries of `test/mocks/entries/entriesResponse.ts`: a spec
+    serves it with `serveMockApi()` (never a server of its own), overrides a
+    route with `server.use`, and records what it sends with
+    `recordRequests(pick)`
+  - `documents.ts` - request documents and headers specs send the mock API
+    themselves (`JSON_API`, `tagEntryDocument`, `reorderDocument`)
   - `storeFixtures.ts` - builders of tags, entries and junctions, and
     `seed()`, which stores them in the signed-in user's database
   - `apiClientMethods.ts` - the API client's methods, shared by every client

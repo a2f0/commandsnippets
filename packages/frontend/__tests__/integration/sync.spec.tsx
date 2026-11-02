@@ -14,12 +14,12 @@ import {tagCursorKey} from '../../src/lib/db/database';
 import {STORAGE_KEY} from '../../src/lib/state/appState';
 import {syncSession} from '../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
+import {JSON_API} from '../util/documents';
 import {API, serveMockApi, server} from '../util/msw';
 import {signIn, store, TEST_USER} from '../util/signIn';
 import {entry, junction, seed, tag} from '../util/storeFixtures';
 import {renderAppAt} from '../util/TestAppRouter';
 
-const JSON_API = {'Content-Type': 'application/vnd.api+json'};
 /** Another device's writes name the data version it holds: the first. */
 const ELSEWHERE = {[DATA_VERSION_HEADER]: '1'};
 

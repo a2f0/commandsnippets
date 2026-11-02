@@ -17,7 +17,6 @@ import {
   restoreResultSchema,
   type TagListDocument,
   type TagTextEntry,
-  type TagTextEntryCreateDocument,
   type TagUpdateDocument,
   type TextEntryListDocument,
   type TextEntryUpdateDocument,
@@ -32,24 +31,19 @@ import {
   textEntryListDocumentSchema,
 } from '@commandsnippets/api-shared';
 import invariant from 'invariant';
-import {setupServer} from 'msw/node';
-import {afterAll, beforeAll, beforeEach, describe, expect, it} from 'vitest';
+import {beforeEach, describe, expect, it} from 'vitest';
 
-import {
-  handlers,
-  resetMSWState,
-  setRuntimeEntriesOverride,
-} from '../../../src/msw/handlers';
+import {setRuntimeEntriesOverride} from '../../../src/msw/handlers';
 import {adminUsers} from '../../../src/msw/state';
 import {manyEntriesResponse} from '../../../test/mocks/entries/manyEntriesResponse';
-import {API} from '../../util/msw';
+import {
+  JSON_API,
+  reorderDocument,
+  tagEntryDocument,
+} from '../../util/documents';
+import {API, serveMockApi} from '../../util/msw';
 
-const JSON_API = {'Content-Type': 'application/vnd.api+json'};
-
-const server = setupServer(...handlers);
-
-beforeAll(() => server.listen({onUnhandledFrame: 'error'}));
-afterAll(() => server.close());
+serveMockApi({onUnhandledFrame: 'error'});
 /**
  * The data version the writes `send` makes name (`X-Data-Version`), as the
  * app's name the one their copy of the data is of: the first, until a
@@ -58,7 +52,8 @@ afterAll(() => server.close());
 let named: number | undefined;
 
 beforeEach(() => {
-  resetMSWState();
+  // The mock API's own entries, not the unit tests' (`resetMockApi`).
+  setRuntimeEntriesOverride(null);
   named = 1;
 });
 
@@ -112,18 +107,6 @@ const editEntry = (
   id: string,
   attributes: NonNullable<TextEntryUpdateDocument['data']['attributes']>
 ): TextEntryUpdateDocument => ({data: {type: 'TextEntry', id, attributes}});
-const tagEntry = (
-  tagId: string,
-  entryId: string
-): TagTextEntryCreateDocument => ({
-  data: {
-    type: 'TagTextEntryThroughModel',
-    relationships: {
-      tag: {data: {type: 'Tag', id: tagId}},
-      text_entry: {data: {type: 'TextEntry', id: entryId}},
-    },
-  },
-});
 
 /** An error document of one error. */
 const oneError = (
@@ -403,7 +386,7 @@ describe('POST /tags/reorder and /tags_entries/reorder', () => {
     type: 'Tag' | 'TagTextEntryThroughModel',
     top: string,
     bottom: string
-  ) => send('POST', path, {data: {type, attributes: {top, bottom}}});
+  ) => send('POST', path, reorderDocument(type, top, bottom));
   const ranks = (rows: Array<{id: string; attributes: {order: number}}>) =>
     [...rows]
       .sort((a, b) => a.attributes.order - b.attributes.order)
@@ -447,12 +430,10 @@ describe('POST /tags/reorder and /tags_entries/reorder', () => {
 
   it('make a reorder the client names once, as the API does', async () => {
     const named = (top: string, bottom: string, writeId: string) =>
-      send(
-        'POST',
-        '/tags/reorder',
-        {data: {type: 'Tag', attributes: {top, bottom}}},
-        {...JSON_API, [CLIENT_WRITE_ID_HEADER]: writeId}
-      );
+      send('POST', '/tags/reorder', reorderDocument('Tag', top, bottom), {
+        ...JSON_API,
+        [CLIENT_WRITE_ID_HEADER]: writeId,
+      });
     await named('4', '2', 'move-1');
     await reorder('/tags/reorder', 'Tag', '2', '4');
     expect(ranks((await getTags()).data)).toEqual(['1', '2', '4', '3']);
@@ -574,7 +555,7 @@ describe('POST /tags_entries', () => {
     const {status, json} = await send(
       'POST',
       '/tags_entries',
-      tagEntry('2', '1')
+      tagEntryDocument('2', '1')
     );
     expect(status).toBe(201);
     const {data: junction, included} = tagTextEntryDocumentSchema.parse(json);
@@ -640,16 +621,28 @@ describe('POST /tags_entries', () => {
   });
 
   it('answers with the junction there is, changing nothing', async () => {
-    const first = await send('POST', '/tags_entries', tagEntry('2', '1'));
+    const first = await send(
+      'POST',
+      '/tags_entries',
+      tagEntryDocument('2', '1')
+    );
     const [tags, entries] = [await getTags(), await getEntries()];
-    const again = await send('POST', '/tags_entries', tagEntry('2', '1'));
+    const again = await send(
+      'POST',
+      '/tags_entries',
+      tagEntryDocument('2', '1')
+    );
     expect(again.status).toBe(200);
     expect(again.json).toEqual(first.json);
     expect(await getTags()).toEqual(tags);
     expect(await getEntries()).toEqual(entries);
 
     // Entry 1 is in tag 1 already, as junction 1.
-    const {json} = await send('POST', '/tags_entries', tagEntry('1', '1'));
+    const {json} = await send(
+      'POST',
+      '/tags_entries',
+      tagEntryDocument('1', '1')
+    );
     expect(tagTextEntryDocumentSchema.parse(json).data.id).toBe('1');
   });
 
@@ -659,7 +652,7 @@ describe('POST /tags_entries', () => {
       const {json} = await send(
         'POST',
         '/tags_entries',
-        tagEntry('3', entryId)
+        tagEntryDocument('3', entryId)
       );
       ranks.push(tagTextEntryDocumentSchema.parse(json).data.attributes.order);
     }
@@ -701,7 +694,7 @@ describe('POST /tags_entries', () => {
     const {status, json} = await send(
       'POST',
       '/tags_entries',
-      tagEntry('4', entry.id)
+      tagEntryDocument('4', entry.id)
     );
     expect(status).toBe(201);
     const {data} = tagTextEntryDocumentSchema.parse(json);
@@ -731,7 +724,11 @@ describe('DELETE /tags_entries/:id', () => {
   });
 
   it('untags the entry, and updates the counts, the linkage and the revisions', async () => {
-    const {json} = await send('POST', '/tags_entries', tagEntry('2', '1'));
+    const {json} = await send(
+      'POST',
+      '/tags_entries',
+      tagEntryDocument('2', '1')
+    );
     const junction = tagTextEntryDocumentSchema.parse(json).data;
     const [tagsBefore, entriesBefore] = [await getTags(), await getEntries()];
 
@@ -778,7 +775,11 @@ describe('DELETE /tags_entries/:id', () => {
   });
 
   it('keeps the deleted junction, which tagging the pair again restores', async () => {
-    const tagged = await send('POST', '/tags_entries', tagEntry('3', '2'));
+    const tagged = await send(
+      'POST',
+      '/tags_entries',
+      tagEntryDocument('3', '2')
+    );
     expect(tagged.status).toBe(201);
     const first = tagTextEntryDocumentSchema.parse(tagged.json).data;
     expect((await send('DELETE', `/tags_entries/${first.id}`)).status).toBe(
@@ -794,13 +795,21 @@ describe('DELETE /tags_entries/:id', () => {
       }),
     ]);
     // Restored, not made: 200, as the API answers.
-    const restored = await send('POST', '/tags_entries', tagEntry('3', '2'));
+    const restored = await send(
+      'POST',
+      '/tags_entries',
+      tagEntryDocument('3', '2')
+    );
     expect(restored.status).toBe(200);
     const again = tagTextEntryDocumentSchema.parse(restored.json).data;
     expect(again.id).toBe(first.id);
     expect(again.attributes.is_deleted).toBe(false);
     // A new junction still gets an id no junction had.
-    const made = await send('POST', '/tags_entries', tagEntry('4', '2'));
+    const made = await send(
+      'POST',
+      '/tags_entries',
+      tagEntryDocument('4', '2')
+    );
     expect(made.status).toBe(201);
     const other = tagTextEntryDocumentSchema.parse(made.json).data;
     expect(Number(other.id)).toBeGreaterThan(Number(first.id));
