@@ -4,15 +4,23 @@ let tracker: Tracker | undefined;
 
 /** Imports are inert; only the deployed browser bootstrap starts collection. */
 export function initClickTracking(): Tracker | undefined {
-  if (!import.meta.env.PROD || typeof window === 'undefined') return;
+  if (!import.meta.env.PROD || typeof window === 'undefined') {
+    return;
+  }
   const environment = import.meta.env.MODE;
-  if (environment !== 'production' && environment !== 'staging') return;
+  if (environment !== 'production' && environment !== 'staging') {
+    return;
+  }
   const origin =
     environment === 'production'
       ? 'https://app.commandsnippets.com'
       : 'https://app-staging.commandsnippets.com';
-  if (location.origin !== origin) return;
-  if (tracker) return tracker;
+  if (location.origin !== origin) {
+    return;
+  }
+  if (tracker) {
+    return tracker;
+  }
 
   tracker = createTracker({
     site: 'commandsnippets',

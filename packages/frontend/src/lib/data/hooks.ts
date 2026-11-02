@@ -79,8 +79,12 @@ export function useSession(): SyncSession | null {
   const context = useOwner();
   const owner = context?.owner;
   useSyncExternalStore(subscribeSessions, sessionsEndedCount);
-  if (owner === undefined) return null;
-  if (context?.publicOnly) return publicSyncSession(owner);
+  if (owner === undefined) {
+    return null;
+  }
+  if (context?.publicOnly) {
+    return publicSyncSession(owner);
+  }
   return username === null ? null : syncSession(username, owner);
 }
 

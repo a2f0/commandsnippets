@@ -27,7 +27,7 @@ import type {
   TagTextEntry,
   TextEntry,
 } from '@commandsnippets/api-shared/responses';
-import type {Table} from 'dexie';
+import {Dexie, type Table} from 'dexie';
 import type * as z from 'zod/mini';
 import {UserMismatchError} from '../api/errors';
 import type {QueuedWrite, RowKey, Stored} from '../db/database';
@@ -99,7 +99,7 @@ export function flushFailed(session: SyncSession, error: unknown): void {
   // another account, whose queue it is now.
   if (
     error instanceof AccountChangedError ||
-    (error instanceof Error && error.name === 'DatabaseClosedError')
+    (error instanceof Error && error.name === Dexie.errnames.DatabaseClosed)
   ) {
     return;
   }

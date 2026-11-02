@@ -28,16 +28,6 @@ export enum activeTagEditField {
   cancel = 3,
 }
 
-export function getSelection() {
-  let selection: Selection | null = null;
-  if (window.getSelection) {
-    selection = window.getSelection();
-  } else if (window.document.getSelection) {
-    selection = window.document.getSelection();
-  }
-  return selection;
-}
-
 export interface IMouse {
   mouseX: number | null;
   mouseY: number | null;
