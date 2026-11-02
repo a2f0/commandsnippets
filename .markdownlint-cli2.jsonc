@@ -1,0 +1,13 @@
+{
+  // Markdown that git tracks, apart from the skills agent-tool manages
+  // (bun run agents:check verifies those).
+  "gitignore": true,
+  "ignores": ["**/node_modules/**", ".agents/skills/**", ".claude/skills/**"],
+  "config": {
+    "default": true,
+    "MD013": {
+      "code_blocks": false,
+      "tables": false
+    }
+  }
+}

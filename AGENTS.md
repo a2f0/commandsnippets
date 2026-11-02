@@ -3,7 +3,7 @@
 Monorepo for the Command Snippets app.
 
 | Path | What |
-|---|---|
+| --- | --- |
 | `packages/frontend/` | React web client; bun workspace (Vite and Vitest on Node) |
 | `packages/backend-v2/` | Cloudflare Workers API; bun workspace |
 | `packages/api-shared/` | The API contract: zod schemas and types shared by the API and its clients; bun workspace |
@@ -48,6 +48,8 @@ Monorepo for the Command Snippets app.
     files, exports or dependencies. Delete dead code rather than ignore it;
     configure only what a tool loads by name.
   - ls-lint (`.ls-lint.yml`): frontend file and directory names.
+  - markdownlint (`.markdownlint-cli2.jsonc`): every Markdown file, at the
+    root; and no committed binary files (`agent-tool checks binaries`).
   - Every manifest pins exact versions (`scripts/checks/exactPins.test.ts`;
     see [dependency maintenance](docs/dependencies.md)).
 - Validate root tooling with `bun run check`, which records Biome, shell lint,

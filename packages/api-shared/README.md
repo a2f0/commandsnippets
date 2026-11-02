@@ -17,7 +17,7 @@ API (see [zod/mini](#zodmini)).
 a bundler drops any module whose exports go unused:
 
 | Import | What | Who |
-|---|---|---|
+| --- | --- | --- |
 | `@commandsnippets/api-shared` | all of it | the API |
 | `@commandsnippets/api-shared/responses` | response documents, resources and error documents: schemas and types; resource type names | clients, to parse |
 | `@commandsnippets/api-shared/requests` | request documents, fields, filters and collection queries: schemas, messages and types | the API; clients, for types |
@@ -39,7 +39,7 @@ not the request validators beside it.
 ## Layout
 
 | Path | What |
-|---|---|
+| --- | --- |
 | `src/index.ts`, `src/responses.ts`, `src/requests.ts` | the entry points (above): re-exports |
 | `src/messages.ts` | `MESSAGES` and `CODES`: the DRF-style error texts and codes, byte for byte |
 | `src/issues.ts` | how a schema failure carries an API error (`fail`, `errorMeta`) |

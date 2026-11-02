@@ -16,14 +16,15 @@ files every package shares (the root `package.json`, `bunfig.toml` and
 `bun.lock`), or to the root `biome.json` and `knip.config.ts` every
 package's lint reads exercise every lane.
 
-The gate always checks managed skill and permission-rule drift and lints the
-actual PR title with commitlint, including on documentation-only PRs. It
+The gate always checks managed skill and permission-rule drift, rejects
+committed binary files (`agent-tool checks binaries`), and lints the actual PR
+title with commitlint, including on documentation-only PRs. It
 evaluates the local `scripts/checks/ciGate.json` policy through
 `agent-tool ci gate`; path-to-lane classification remains repository-owned.
 
 | Lane | Workflow | Scope |
-|---|---|---|
-| `tooling` | inline in `ci.yml` | `scripts/`, `packages/frontend/scripts/`, `terraform/scripts/*.ts` (root typecheck), managed skills and permission rules, tooling config |
+| --- | --- | --- |
+| `tooling` | inline in `ci.yml` | `scripts/`, `packages/frontend/scripts/`, `terraform/scripts/*.ts` (root typecheck), managed skills and permission rules, tooling config, Markdown (root lint) |
 | `backend-v2` | `backend-v2.yml` (Backend v2 CI) | `packages/backend-v2/`, `packages/api-shared/` |
 | `api-shared` | `api-shared.yml` (API Shared CI) | `packages/api-shared/` |
 | `frontend` | `frontend.yml` (Frontend CI) | `packages/frontend/`, `packages/api-shared/`, app test scripts, `assets/brand/`, `agent-tool.json`, `.ls-lint.yml` |
@@ -86,25 +87,25 @@ changes take effect. `bun run hooks:check` reports missing or stale copies.
 
 - `commit-msg` rejects attribution using `agent-tool commits check --message-file`
   and lints the unchanged message with the full local commitlint configuration.
-- `pre-push` validates every pushed branch destination using
-  `agent-tool branch check --pre-push`, rejects unsigned/bad signatures and
-  `Co-authored-by` trailers with `agent-tool commits check --range`, and runs the
-  checks below. Trust checks exclude history already reachable through the named
-  push remote, so integrating its fetched base does not re-check upstream commits.
-  New branches retain the local-main range fallback; pushes to a URL/path retain
-  the original range without remote-name filtering. Path selection still uses the
-  full diff, including base integration: the hook classifies it with CI's
-  policy (`bun scripts/checks/ciChanges.ts --range <range>`, one per pushed
-  ref) and runs the local checks of every lane that applies except
-  `frontend`, whose suites are left to CI. Those checks run against the
-  worktree, so the hook first requires the pushed commit to be the checked-out
-  `HEAD`, with no uncommitted tracked changes and no untracked files under the
-  checked paths. The `api-shared` checks start with the workspace install,
-  then `backend-v2` runs against api-shared through its workspace link. A
-  change that runs every lane in CI (a workflow or the setup action, the CI
-  policy, `.mise.toml`, the workspace install files or the root lint configs)
-  runs every local check. It refuses to run when the installed copy is stale. Per-check timings are logged under
-  `.git/commandsnippets/pushGateTimings.tsv`
+- `pre-push` validates every pushed branch destination using `agent-tool branch
+  check --pre-push`, rejects unsigned/bad signatures and `Co-authored-by`
+  trailers with `agent-tool commits check --range`, and runs the checks below.
+  Trust checks exclude history already reachable through the named push remote,
+  so integrating its fetched base does not re-check upstream commits. New
+  branches retain the local-main range fallback; pushes to a URL/path retain the
+  original range without remote-name filtering. Path selection still uses the
+  full diff, including base integration: the hook classifies it with CI's policy
+  (`bun scripts/checks/ciChanges.ts --range <range>`, one per pushed ref) and
+  runs the local checks of every lane that applies except `frontend`, whose
+  suites are left to CI. Those checks run against the worktree, so the hook
+  first requires the pushed commit to be the checked-out `HEAD`, with no
+  uncommitted tracked changes and no untracked files under the checked paths.
+  The `api-shared` checks start with the workspace install, then `backend-v2`
+  runs against api-shared through its workspace link. A change that runs every
+  lane in CI (a workflow or the setup action, the CI policy, `.mise.toml`, the
+  workspace install files or the root lint configs) runs every local check. It
+  refuses to run when the installed copy is stale. Per-check timings are logged
+  under `.git/commandsnippets/pushGateTimings.tsv`
   (`scripts/git/showPushGateTimings.sh`).
 
 A co-author trailer that reaches `pre-push` is rejected; reword the commit and

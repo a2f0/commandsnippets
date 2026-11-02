@@ -228,8 +228,8 @@ describe('pre-push', () => {
 
   test('skips area checks for pushes outside every checked area', () => {
     const repo = hookRepo();
-    writeFileSync(path.join(repo, 'README.md'), 'readme\n');
-    commitAll(repo, 'docs: add readme');
+    writeFileSync(path.join(repo, 'NOTICE'), 'notice\n');
+    commitAll(repo, 'docs: add notice');
     const result = prePush(repo);
     expect(result.exitCode).toBe(0);
     expect(result.stdout).not.toContain('LANE:tooling');

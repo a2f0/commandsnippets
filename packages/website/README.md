@@ -4,17 +4,17 @@ The public site (Astro, static HTML): the home page (what the app does, with
 an HTML sketch of it: `src/components/AppPreview.astro`), the about page, and
 the privacy policy, terms of service and contact page. This package is
 available on the web at <https://commandsnippets.com>. Tearleads, LLC is
-the operator; support@tearleads.com handles support and privacy requests.
+the operator; <support@tearleads.com> handles support and privacy requests.
 Its copy states only what the app does today.
 Signing in happens in the web app (`../frontend`); the website only links to it,
 per build mode
 (`src/lib/appUrl.ts`):
 
-| Mode         | App                                     |
-| ------------ | --------------------------------------- |
-| `production` | https://app.commandsnippets.com         |
-| `staging`    | https://app-staging.commandsnippets.com |
-| development  | http://localhost:8085                   |
+| Mode         | App                                       |
+| ------------ | ----------------------------------------- |
+| `production` | <https://app.commandsnippets.com>         |
+| `staging`    | <https://app-staging.commandsnippets.com> |
+| development  | <http://localhost:8085>                   |
 
 ```shell
 bun install
@@ -51,12 +51,12 @@ so crawlers see the noindex), a robots `noindex` meta on every page, and a
 `_headers` that sends `X-Robots-Tag: noindex, nofollow` with every file. The
 Worker's own responses get that header from staging's `X_ROBOTS_TAG` var.
 
-All pages may be indexed in production, including
-privacy, terms and contact. The legal pages share `src/layouts/Legal.astro`
-for their individual revision dates and section navigation. Keep their disclosures in
-sync with authentication, storage, sharing, deletion and analytics behavior;
-update their date when policy content changes. `test/site.test.ts` checks
-published page metadata, section links and the sitemap.
+All pages may be indexed in production, including privacy, terms and contact.
+The legal pages share `src/layouts/Legal.astro` for their individual revision
+dates and section navigation. Keep their disclosures in sync with
+authentication, storage, sharing, deletion and analytics behavior; update their
+date when policy content changes. `test/site.test.ts` checks published page
+metadata, section links and the sitemap.
 
 ## Old app links
 

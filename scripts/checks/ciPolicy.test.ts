@@ -159,8 +159,19 @@ describe('ciScopes', () => {
     });
   });
 
+  test('Markdown runs the tooling lane, which lints it', () => {
+    for (const path of [
+      'README.md',
+      'docs/ci-merge-gate.md',
+      'packages/frontend/AGENTS.md',
+      '.markdownlint-cli2.jsonc',
+    ]) {
+      expect(ciScopes([path])).toMatchObject({tooling: true, website: false});
+    }
+  });
+
   test('skips every lane for unrelated paths', () => {
-    expect(ciScopes(['README.md', 'docs/ci-merge-gate.md'])).toEqual({
+    expect(ciScopes(['NOTICE', 'docs/diagram.svg'])).toEqual({
       tooling: false,
       frontend: false,
       backendV2: false,

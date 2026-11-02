@@ -6,13 +6,14 @@ workerd, [D1](https://developers.cloudflare.com/d1/) (SQLite) through
 manager and script runner. Production serves it at
 <https://api.commandsnippets.com>.
 
-It replaced the Django backend (retired, and since removed from this repository). Routes, JSON:API documents,
-cookies, tokens, timestamps and error messages follow Django's wherever clients
-rely on them, but it is not a drop-in replacement: the original collection routes are owner-only,
-staging has its own cookie names, and staff get an admin API (see
-[Differences from the Django backend](#differences-from-the-django-backend)).
-The web client must be a build that knows these. It is web-only: the API endpoints and CORS origins that served the retired Electron
-and Capacitor apps are gone.
+It replaced the Django backend (retired, and since removed from this
+repository). Routes, JSON:API documents, cookies, tokens, timestamps and error
+messages follow Django's wherever clients rely on them, but it is not a drop-in
+replacement: the original collection routes are owner-only, staging has its own
+cookie names, and staff get an admin API (see [Differences from the Django
+backend](#differences-from-the-django-backend)). The web client must be a build
+that knows these. It is web-only: the API endpoints and CORS origins that served
+the retired Electron and Capacitor apps are gone.
 
 ## Layout
 
@@ -100,6 +101,7 @@ bun run lint             # Biome and knip; bun run fix writes Biome's fixes
 ```
 
 CI runs both coverage gates:
+
 - `test:coverage` (`vitest.config.ts`): 98% of lines and statements in `src/`.
 - `test:scripts` (`bunfig.toml`): 98% of lines and 95% of functions in
   `scripts/`; `src/` counts only toward the vitest gate.
@@ -129,6 +131,7 @@ custom migration (`bunx drizzle-kit generate --custom --name <name>`).
 | `/api/v1/admin/...`                                         | [Admin API](#admin-api) (staff)                                                     |
 
 Request headers (api-shared's `messages.ts` names each):
+
 - `X-Data-Version`: the data version a client's copy is of. A read naming
   none is of the active one; a write must name one (see
   [Data versions](#data-versions)).
@@ -168,11 +171,11 @@ Deliberate changes, by area. The admin API is new; see
 - **Some usernames are reserved.** Usernames are the web app's first path
   segment (`/:user/:tag`), so its own top-level routes, listed in
   `src/services/reserved-usernames.json` (`admin`, `oauth`), are treated as
-  taken in any letter case, and a new account gets the usual `-<digits>`
-  suffix instead. The frontend's tests check its routes against the list.
-  `0006_rename_reserved_usernames.sql` renamed any existing account with one
-  to `<name>-<id>` (staging and production had none). Reserving another name takes a migration too (see
-  [Operations](#operations)).
+  taken in any letter case, and a new account gets the usual `-<digits>` suffix
+  instead. The frontend's tests check its routes against the list.
+  `0006_rename_reserved_usernames.sql` renamed any existing account with one to
+  `<name>-<id>` (staging and production had none). Reserving another name takes
+  a migration too (see [Operations](#operations)).
 - **Web only.** `/api/v1/integrated-oauth/` (native Google sign-in), the
   Electron GitHub OAuth app (`clientType: 'electron'`, now ignored) with its
   `SameSite=None` cookies, and the Electron and Capacitor CORS origins are gone.
@@ -289,15 +292,16 @@ client stores. Creating a tag of a name the user has, or tagging an entry
 already in the tag, still records the time (no revision advances), so an
 older delete or untag does not undo it. Reorders apply in arrival order.
 
-A queued tag or entry create carries a `client_id` (the client's local id):
-a create naming one the user's tags (or entries) already have answers with
-that row, whatever it is called by then, so one retried after a lost answer
-is made once (junctions are found by their pair already): a tag keeps the
-`client_id` of the create that made it, and `tags_tagclientid` those of the
-creates answered with it (of a name the user had). Tags and entries render
-the `client_id` of the create that made them, so a client whose create's
-answer was lost recognizes the row when it syncs it. Untagging answers with the junction, and untagging one already untagged
-changes nothing, so a retried untag is answered as the first was.
+A queued tag or entry create carries a `client_id` (the client's local id): a
+create naming one the user's tags (or entries) already have answers with that
+row, whatever it is called by then, so one retried after a lost answer is made
+once (junctions are found by their pair already): a tag keeps the `client_id` of
+the create that made it, and `tags_tagclientid` those of the creates answered
+with it (of a name the user had). Tags and entries render the `client_id` of the
+create that made them, so a client whose create's answer was lost recognizes the
+row when it syncs it. Untagging answers with the junction, and untagging one
+already untagged changes nothing, so a retried untag is answered as the first
+was.
 
 ## Public user data
 
@@ -330,6 +334,7 @@ Version 1 is the data an account starts with (a trigger makes it for every
 new account); a restore makes the next and makes it active, keeping the one
 before as it was. Numbers are never reused (`users_user.last_version`), so a
 client's copy of one version is never taken for another's.
+
 - **Scoping.** Every list, lookup, relationship check and include is of
   one version (`src/resources/dataVersions.ts`'s `versionOf`, the viewset,
   `related.ts`, the serializers' loaders): the requester's active one for
@@ -404,6 +409,7 @@ since D1 caps a bound value at 2 MB.
 
 An admin API replaces Django admin. `/api/v1/admin` is for `is_staff` users
 only (403 for everyone else):
+
 - `GET /users` lists every account, with the live entry and tag counts of
   its active data version.
   Filters: `filter[is_active]`, `filter[is_staff]`, `filter[username]`
@@ -506,20 +512,20 @@ older builds read (an attribute their schemas require). The `API-Version`
 response header is this package's version, so a request shows which build
 answered.
 
-Migrations run before the deploy, so a migration must work with the Worker
-that is still running. Removing a column takes two releases:
-first stop reading it (drop it from `src/db/schema.ts`, but not from the
-database), then drop it in a later migration. Every request loads the user
-row, so dropping a `users_user` column the running Worker still selects fails
-every request until the new code is live. `is_superuser` went this way
-(`0005`), `date_restored` (`0020`), and Django's `first_name`, `last_name` and
-`reused_date` (`0022`). A column the Worker only writes, never reads, can go in
-one release, at the cost of the writes in between: `authtoken_token.created`
-(`0022`).
-`scripts/checks/migrations.test.ts` checks that migrations after `0003` (the schema
-production's data was imported into) keep every row, never rebuild `users_user` (which cascades to all user data), and
-leave the database matching `src/db/schema.ts`. Between the two releases, list
-the column in its `PENDING_DROPS`.
+Migrations run before the deploy, so a migration must work with the Worker that
+is still running. Removing a column takes two releases: first stop reading it
+(drop it from `src/db/schema.ts`, but not from the database), then drop it in a
+later migration. Every request loads the user row, so dropping a `users_user`
+column the running Worker still selects fails every request until the new code
+is live. `is_superuser` went this way (`0005`), `date_restored` (`0020`), and
+Django's `first_name`, `last_name` and `reused_date` (`0022`). A column the
+Worker only writes, never reads, can go in one release, at the cost of the
+writes in between: `authtoken_token.created` (`0022`).
+`scripts/checks/migrations.test.ts` checks that migrations after `0003` (the
+schema production's data was imported into) keep every row, never rebuild
+`users_user` (which cascades to all user data), and leave the database matching
+`src/db/schema.ts`. Between the two releases, list the column in its
+`PENDING_DROPS`.
 
 The Worker's hostname is a custom domain in `wrangler.jsonc`, attached by
 `wrangler deploy`: `api-staging.commandsnippets.com` for staging and

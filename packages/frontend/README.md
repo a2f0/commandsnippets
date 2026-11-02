@@ -122,12 +122,12 @@ bun run clean                # remove build/
 
 ## Icons
 
-The favicons, the Apple touch icon and the PWA manifest icons are rendered
-into `public/` from the repository's brand sources (`../../assets/brand/`)
-by `bun run images`, the pinned agent-tool's `images build` with the
-settings in `../../agent-tool.json`. The dev, test-server and build scripts
-run it first, and the outputs are gitignored; the workspace install provides
-the root's agent-tool it uses. The app imports the logo and shared text-selection styles
+The favicons, the Apple touch icon and the PWA manifest icons are rendered into
+`public/` from the repository's brand sources (`../../assets/brand/`) by `bun
+run images`, the pinned agent-tool's `images build` with the settings in
+`../../agent-tool.json`. The dev, test-server and build scripts run it first,
+and the outputs are gitignored; the workspace install provides the root's
+agent-tool it uses. The app imports the logo and shared text-selection styles
 from `../../assets/brand/` directly.
 
 ## Deploying
@@ -208,7 +208,8 @@ bun run ci
 bun run ci-headless
 ```
 
-Start the testing server (on different port than normal development server), and then run tests manually in a separate command:
+Start the testing server (on different port than normal development server), and
+then run tests manually in a separate command:
 
 ```shell
 bun run server-test

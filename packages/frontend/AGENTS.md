@@ -28,13 +28,15 @@ change code:
 - Run E2E specs through `../../scripts/testing/runWebdriverTests.sh` (the
   suite, headless, as CI does) or `scripts/testing/runSpecHeadless.sh
   <spec-file>`; `bun run server-test` serves the app with the API mocked on
-  http://localhost:8081.
+  <http://localhost:8081>.
 
 ## Architecture
 
 ### State
+
 The user's data (tags, entries, junctions) is in IndexedDB, synced with the
 API; everything else the app keeps is a zustand store.
+
 - **App state**: `src/lib/state/appState.ts`, a zustand store (`useAppState`)
   of who is signed in, their preferences and what the UI is doing. The
   signed-in user and their preferences (theme, sort orders, tag counts) are
@@ -57,24 +59,23 @@ API; everything else the app keeps is a zustand store.
   `useAppState.getState()`. `resetApplicationState()` signs out here: every
   setting back to its default; `signOut()` ends the API's session first (the
   logout menus).
-- **Signing out deletes the user's data**: the store deletes a user's
-  IndexedDB database whenever `loggedInUser` leaves them, however it
-  happens (the menu, the cookie gone, a session the API ended, another
-  sign-in; `endSyncSession`), unless writes are still queued in it (the
-  session expired offline, say): it is kept, queue and all, and the user's
-  next sign-in here sends them (`discardQueued` deletes it all the same).
-  `signedOutDataCleanedUp()` settles once that is done. The logout menus
-  sign out through `requestSignOut` (`src/lib/state/signOutWarning.ts`):
-  the queue is sent first (waiting `signOutTiming.flushWaitMs` at most), and writes
-  still unsent bring up a warning (`SignOutWarning`): stay, sign out
-  keeping them on this device, or discard them
-  (`signOut({discardQueued: true})`). Kept data is bound
-  to the account's id (`bindOwner` in `src/lib/sync/accountBinding.ts`,
-  before any flush or sync; `claimData` at sign-in): another account that takes a deleted account's name never
-  sees its data nor sends its queue. Writes hold the
+- **Signing out deletes the user's data**: the store deletes a user's IndexedDB
+  database whenever `loggedInUser` leaves them, however it happens (the menu,
+  the cookie gone, a session the API ended, another sign-in; `endSyncSession`),
+  unless writes are still queued in it (the session expired offline, say): it is
+  kept, queue and all, and the user's next sign-in here sends them
+  (`discardQueued` deletes it all the same). `signedOutDataCleanedUp()` settles
+  once that is done. The logout menus sign out through `requestSignOut`
+  (`src/lib/state/signOutWarning.ts`): the queue is sent first (waiting
+  `signOutTiming.flushWaitMs` at most), and writes still unsent bring up a
+  warning (`SignOutWarning`): stay, sign out keeping them on this device, or
+  discard them (`signOut({discardQueued: true})`). Kept data is bound to the
+  account's id (`bindOwner` in `src/lib/sync/accountBinding.ts`, before any
+  flush or sync; `claimData` at sign-in): another account that takes a deleted
+  account's name never sees its data nor sends its queue. Writes hold the
   database's Web Lock shared and the cleanup holds it exclusively
-  (`withDataLock`), so a write another tab makes meanwhile is never
-  deleted unsent.
+  (`withDataLock`), so a write another tab makes meanwhile is never deleted
+  unsent.
 - **The user's data**: `src/lib/db/database.ts`, a Dexie database per
   environment and signed-in user (`commandsnippets-<environment>-<username>`)
   of tags, entries and junctions (deleted ones too) as api-shared's
@@ -86,15 +87,15 @@ API; everything else the app keeps is a zustand store.
   with a session per owner (`syncSession(username, owner)`: its sync, and
   `readOnly` for another user's); sessions end when another tab deletes or
   upgrades the database, and the next opens it anew.
-- **Another user's data (staff)**: on another user's page (`/:user`), staff
-  read that user's full data (`useOwner` in `src/lib/data/hooks.ts`). It syncs through the admin API's read-only
-  routes (`adminSyncApi`, `GET /admin/users/:id/tags` ...) into the signed-in
-  user's database under that user's name, and signing out deletes it with
-  the rest. The page is read-only: a badge in the menu bar
-  (`ReadOnlyBadge`), no New Tag or New Entry, no tag or list context menus,
-  only Copy and Get Info on an entry's, no drag and drop (`useReadOnly`), and a
-  read-only session's writes throw `ReadOnlyError` before anything is sent.
-  The admin users table opens it (View data).
+- **Another user's data (staff)**: on another user's page (`/:user`), staff read
+  that user's full data (`useOwner` in `src/lib/data/hooks.ts`). It syncs
+  through the admin API's read-only routes (`adminSyncApi`, `GET
+  /admin/users/:id/tags` ...) into the signed-in user's database under that
+  user's name, and signing out deletes it with the rest. The page is read-only:
+  a badge in the menu bar (`ReadOnlyBadge`), no New Tag or New Entry, no tag or
+  list context menus, only Copy and Get Info on an entry's, no drag and drop
+  (`useReadOnly`), and a read-only session's writes throw `ReadOnlyError` before
+  anything is sent. The admin users table opens it (View data).
 - **Public user pages**: guests and non-staff visitors use the same
   `/:user/:tag` and `/:user?entries=all` routes, read-only. Tags and entries
   default to private; owners toggle each in its context menu. An entry must
@@ -223,30 +224,29 @@ API; everything else the app keeps is a zustand store.
   the database (a sign-out there), `useSession` renders again with the next
   session.
 - **The sync**: `src/lib/sync/sync.ts`, keyset reads (`page[after]`,
-  api-shared's `cursor.ts`) from the stored cursors, one sync at a time (a
-  Web Lock across tabs), so each response is stored in the order it was
-  read. `syncAll` reads the tags, then the entries with their junctions,
-  after the master cursors `tags` and `entries` (from the start on a fresh
-  sign-in), storing each page with its cursor in one transaction, so a sync
-  resumes where one stopped. Pages hold 100 rows (`SYNC_PAGE_SIZE`), the
-  API's maximum (its default is 50). On a first collection load,
-  `getEntryCount` reads the numbered list's count with a one-row request,
-  including deleted rows just like the cursor reads. The entry cursor's
-  `initialLoad` (`src/lib/sync/initialLoad.ts`) keeps the completed page count, total and completion flag
-  with each page; `InitialLoadProgress` shows the current page and a bar
-  until loading finishes, or an interruption with a retry. A failed count
-  uses an indeterminate bar and still loads all pages. Older cursors without
-  this marker continue syncing without a first-load indicator. When the
-  entries are read to the end, every tag
-  gets a cursor of its own (`tag:<id>`: the newest junction revision when the
-  sync began, and the tag's revision). `syncTag` reads one tag's junctions
-  (`GET /tags_entries?filter[tag.id]=`, deleted ones too: entries that left
-  it) after its cursor, from the start without one; a tag sync asked for
-  while the collection syncs runs between two of its pages. A tag is synced
-  while its cursor holds its revision (`isTagSynced`). Each sync first checks
-  the API reads the owner's data (`SyncApi.getOwner`: `GET /user/` for the
-  signed-in user's own, the admin API's user for another's), and refuses a
-  page with anyone else's rows (a stale tab after someone else signed in).
+  api-shared's `cursor.ts`) from the stored cursors, one sync at a time (a Web
+  Lock across tabs), so each response is stored in the order it was read.
+  `syncAll` reads the tags, then the entries with their junctions, after the
+  master cursors `tags` and `entries` (from the start on a fresh sign-in),
+  storing each page with its cursor in one transaction, so a sync resumes where
+  one stopped. Pages hold 100 rows (`SYNC_PAGE_SIZE`), the API's maximum (its
+  default is 50). On a first collection load, `getEntryCount` reads the numbered
+  list's count with a one-row request, including deleted rows just like the
+  cursor reads. The entry cursor's `initialLoad` (`src/lib/sync/initialLoad.ts`)
+  keeps the completed page count, total and completion flag with each page;
+  `InitialLoadProgress` shows the current page and a bar until loading finishes,
+  or an interruption with a retry. A failed count uses an indeterminate bar and
+  still loads all pages. Older cursors without this marker continue syncing
+  without a first-load indicator. When the entries are read to the end, every
+  tag gets a cursor of its own (`tag:<id>`: the newest junction revision when
+  the sync began, and the tag's revision). `syncTag` reads one tag's junctions
+  (`GET /tags_entries?filter[tag.id]=`, deleted ones too: entries that left it)
+  after its cursor, from the start without one; a tag sync asked for while the
+  collection syncs runs between two of its pages. A tag is synced while its
+  cursor holds its revision (`isTagSynced`). Each sync first checks the API
+  reads the owner's data (`SyncApi.getOwner`: `GET /user/` for the signed-in
+  user's own, the admin API's user for another's), and refuses a page with
+  anyone else's rows (a stale tab after someone else signed in).
 - **What a sync stores**: `src/lib/sync/store.ts`: each resource unless a
   write to it is still queued (the user's write stands until it reaches the
   API), or the database holds a newer revision of it (revisions compare
@@ -261,13 +261,13 @@ API; everything else the app keeps is a zustand store.
   (`src/lib/api/fetchWithAuth.ts`) calls `handleUnauthorized`
   (`src/lib/auth/authUtils.ts`) on a 401, and on a 403 whose first JSON:API
   error `code` (`src/lib/api/errorDocument.ts`) is `not_authenticated` or
-  `authentication_failed` or that has no code; other 403s
-  (`permission_denied`, `origin_not_allowed`) keep the session, and so does
-  any OK response, whatever its body. `appState.ts` registers the handler:
-  `resetApplicationState`, when the request was sent as the user still
-  signed in (a late answer to a session the tab has left changes nothing). `authUtils` must not import the
-  store: the store imports the sync, which imports the API client, so that
-  would be an import cycle.
+  `authentication_failed` or that has no code; other 403s (`permission_denied`,
+  `origin_not_allowed`) keep the session, and so does any OK response, whatever
+  its body. `appState.ts` registers the handler: `resetApplicationState`, when
+  the request was sent as the user still signed in (a late answer to a session
+  the tab has left changes nothing). `authUtils` must not import the store: the
+  store imports the sync, which imports the API client, so that would be an
+  import cycle.
 - **Data versions**: every tag, entry, tagging and reuse belongs to one of
   the user's data versions, and their reads and writes are of the active
   one (the API's `data_version`). `src/lib/sync/dataVersion.ts` holds which
@@ -297,18 +297,18 @@ API; everything else the app keeps is a zustand store.
     active version (`GET /user/backup`) as
     `commandsnippets-backup-<username>-<YYYY-MM-DD>.json`; a backup of any
     other account is refused (`BackupAccountError`).
-  - File > Restore Backup (`RestoreBackup.tsx`, `RestoreBackupDialog.tsx`)
-    reads a backup file (any account's: data moves between accounts) and
-    checks it (`readBackupFile`), then warns: the backup becomes the user's
-    data on every device, as a new version, the current data kept as the
-    version before, and changes not yet sent from other devices are
-    discarded. The warning is for the user who chose the file, and the
-    account their data is bound to and the version it is held at then
-    (`restoreTarget`): another signing in meanwhile closes it, and data
-    bound to another account since is not restored (`BackupAccountError`).
-    Only the confirmation sends it (`POST /user/restore`, over the version
-    warned about: another made active since, though a sync here took it up,
-    is a 409); this copy then takes up the new version and syncs it. The API's reason for refusing a backup is shown
+  - File > Restore Backup (`RestoreBackup.tsx`, `RestoreBackupDialog.tsx`) reads
+    a backup file (any account's: data moves between accounts) and checks it
+    (`readBackupFile`), then warns: the backup becomes the user's data on every
+    device, as a new version, the current data kept as the version before, and
+    changes not yet sent from other devices are discarded. The warning is for
+    the user who chose the file, and the account their data is bound to and the
+    version it is held at then (`restoreTarget`): another signing in meanwhile
+    closes it, and data bound to another account since is not restored
+    (`BackupAccountError`). Only the confirmation sends it (`POST
+    /user/restore`, over the version warned about: another made active since,
+    though a sync here took it up, is a 409); this copy then takes up the new
+    version and syncs it. The API's reason for refusing a backup is shown
     (`ApiRequestError.detail`).
   - File > Data Versions (`DataVersions.tsx`, `DataVersionsDialog.tsx`)
     lists the versions, newest first, with their origin and counts; one not
@@ -320,13 +320,15 @@ API; everything else the app keeps is a zustand store.
     none of them (they would read as that user's data).
 
 ### Timings (the HUD)
-While the `hud` feature flag is on (everywhere but production by default),
-the app times its work for the HUD's Analytics tab
-(`src/lib/metrics/timings.ts`, in memory: the latest 2000 timings and 20
-interactions; with the flag off, as in production, it records nothing,
-copies no response body, and has no HUD). A change of the signed-in user clears them (`appState.ts`), as it
-does the user's data, since interactions name tags; work begun before a
-clear is not recorded when it ends.
+
+While the `hud` feature flag is on (everywhere but production by default), the
+app times its work for the HUD's Analytics tab (`src/lib/metrics/timings.ts`, in
+memory: the latest 2000 timings and 20 interactions; with the flag off, as in
+production, it records nothing, copies no response body, and has no HUD). A
+change of the signed-in user clears them (`appState.ts`), as it does the user's
+data, since interactions name tags; work begun before a clear is not recorded
+when it ends.
+
 - **What is timed**, by kind: `network`, every `fetchApi` (method and
   path, ids as `:id`; to the end of the body, read from a clone, with status
   and size); `idb`, the lists' live queries (`lib/data/hooks.ts`, by hook
@@ -339,13 +341,12 @@ clear is not recorded when it ends.
   (`vite.config.ts`), since Profilers do nothing in React's production build.
 - **Interactions**: a tag click (or Enter in the tag list, or All/Untagged
   Entries) calls `beginInteraction`; `EntryList` calls `listShown`
-  (`useShownEntries`) once it
-  renders the list asked for with its own rows (the list hooks name what
-  their rows are of: a live query answers with the last rows until it reads
-  the next), and the interaction ends at the next paint, unless another has begun or another
-list is shown by then. Its timings
-  (`timingsOf`) are those from the click to the paint, and the work that
-  follows on until the app idles 100 ms.
+  (`useShownEntries`) once it renders the list asked for with its own rows (the
+  list hooks name what their rows are of: a live query answers with the last
+  rows until it reads the next), and the interaction ends at the next paint,
+  unless another has begun or another list is shown by then. Its timings
+  (`timingsOf`) are those from the click to the paint, and the work that follows
+  on until the app idles 100 ms.
 - **The tab** (`src/components/bottomBar/analytics/`): the interaction's
   click-to-paint time, how long each kind was busy before the paint, and a
   waterfall of its timings; then every timing in a window (log-scale
@@ -353,8 +354,10 @@ list is shown by then. Its timings
   HUD fills the window but for a 16px margin.
 
 ### Feature flags
+
 Features that are not on everywhere are gated by a feature flag, never by an
 inline check of the environment (`environment !== 'production'`).
+
 - **The registry**: `src/lib/featureFlags/flags.ts` names every flag
   (`FEATURE_FLAG_NAMES`) and the environments it is on in by default
   (`FEATURE_FLAGS`): `hud` (the HUD and its timings), `languageSwitcher` and
@@ -377,11 +380,13 @@ inline check of the environment (`environment !== 'production'`).
   checks rather than leaving a flag on in every environment.
 
 ### API
+
 The API's contract is `@commandsnippets/api-shared` (`packages/api-shared`, a
 workspace dependency; see the README's "The API contract"): zod schemas for
 every request and response document, the error `CODES`, and the types
 inferred from them. Take anything that crosses the wire from it rather than
 writing its type by hand.
+
 - `src/lib/api/apiClient.ts` - the JSON:API client for tags, entries and
   auth. Every request sends the auth cookie (`credentials: 'include'`), its
   body is api-shared's request document (`TagCreateDocument`, ...), and every
@@ -422,6 +427,7 @@ writing its type by hand.
   fails on one).
 
 ### Source layout
+
 - **App shell** (the root of `src/`): `index.tsx` (the entry point),
   `AppRouter.tsx`, `App.tsx` (the providers), `Routes.tsx` and
   `routePaths.ts`
@@ -486,9 +492,11 @@ writing its type by hand.
   (reordering), i18next (`src/i18n/`)
 
 ### Routing
+
 The app's own router, `src/lib/router/` (no React Router: its hooks render
 every component that calls them on any change of the URL, `React.memo` or
 not, so a tag switch rendered every tag and entry row and the whole page).
+
 - `route.ts`: `routeOf(pathname)`, the page (`admin`, `githubOAuth`,
   `googleOAuth`, `user`, `entry`, `root`, `none`), a user's page's `user`
   and `tag`, and an entry's page's `user` and `entryId` (`entryPath` makes
@@ -507,8 +515,10 @@ not, so a tag switch rendered every tag and entry row and the whole page).
   sends elsewhere) and `Link` (for MUI's `component` prop).
 
 ### Rendering long lists
+
 A tag switch mounts a list's rows, and the tag list holds every tag, so
 per-row work multiplies (the HUD's Analytics tab times it).
+
 - Rows (`Tag`, `Entry`) are `React.memo`, and render again only for what
   they show: narrow store selectors (`useAppState(state => state.x === id)`),
   route values (`useRouteParam`), stable callbacks.
@@ -531,12 +541,14 @@ per-row work multiplies (the HUD's Analytics tab times it).
   IndexedDB transaction per row.
 
 ### Top-level routes
+
 - A new top-level route in `src/routePaths.ts` must be a reserved username in
   the API too (usernames are the first path segment): see backend-v2's
   [reserved usernames](../backend-v2/README.md#access-and-auth);
   `__tests__/src/routePaths.spec.ts` checks it
 
 ### Testing Setup
+
 - **Mock Service Worker (MSW)**: `src/msw/` mocks the API in the browser. Only
   test mode (`bun run server-test`) starts it, from `src/index.tsx`; see
   `src/msw/README.md`. The service worker is `public/mockServiceWorker.js`.
@@ -589,6 +601,7 @@ per-row work multiplies (the HUD's Analytics tab times it).
 ## Development Guidelines
 
 ### Committing and Pull Requests
+
 - Follow the root `AGENTS.md`: conventional commits with a header of 50
   characters or fewer, signed commits with no `Co-authored-by` trailers, and
   the `ship-pr` skill to commit, review, open, squash-merge and reset.
@@ -597,6 +610,7 @@ per-row work multiplies (the HUD's Analytics tab times it).
 - Only commit when explicitly asked to in the current message.
 
 ### File Naming
+
 - Component files are PascalCase (`EntryList.tsx`); every other file is
   camelCase (`fetchWithAuth.ts`).
 - Directories are camelCase too (`bottomBar/`, `menuItems/`).
@@ -605,6 +619,7 @@ per-row work multiplies (the HUD's Analytics tab times it).
   module declarations in `test/` are kebab-case.
 
 ### Linting & Formatting
+
 - Run `bun run lint` to check changes
 - Use `bun run fix` (`biome check --write .`) to fix issues
 - Never add linting or formatting exceptions in code
@@ -614,6 +629,7 @@ per-row work multiplies (the HUD's Analytics tab times it).
   (`noRestrictedImports`)
 
 ### Dependencies
+
 - Follow [dependency maintenance](../../docs/dependencies.md): exact pins,
   `bun run agent-tool bun add <name>@<version> --exact --cwd packages/frontend`
   (or `bun update` / `bun remove` through `agent-tool bun`), and the root
@@ -631,11 +647,15 @@ per-row work multiplies (the HUD's Analytics tab times it).
   (`__tests__/infra/devServer.spec.ts`).
 
 ### TypeScript
+
 - Always run `bun run compile` after making changes to ensure TypeScript
   compiles (not a bare `tsc -b`, which can reuse stale output; see the
   README's Code Quality)
 - Never use `any` as a type, or `as` for type assertion
-- **Use invariant for strict null checks**: When working with potentially null DOM elements or values that should exist but may be null according to TypeScript, use the `invariant` library for runtime assertions:
+- **Use invariant for strict null checks**: When working with potentially null
+  DOM elements or values that should exist but may be null according to
+  TypeScript, use the `invariant` library for runtime assertions:
+
   ```typescript
   import invariant from 'invariant';
 
@@ -648,21 +668,30 @@ per-row work multiplies (the HUD's Analytics tab times it).
   invariant(element, 'element should exist');
   const styles = window.getComputedStyle(element);
   ```
-- This approach provides better error messages and satisfies TypeScript's strict null checks without unsafe type assertions
+
+- This approach provides better error messages and satisfies TypeScript's strict
+  null checks without unsafe type assertions
 
 ### Package Manager
+
 - Always use `bun` for the JavaScript package manager
 
 ### Language
+
 - Always write code in TypeScript, never JavaScript
 
 ### Console Output & Logging
-- **Never use colored emojis** (🚀🔨📱✅❌⚠️🔍📁🧪📊🔄) in console output, error messages, or logging
-- Use clear ASCII text prefixes instead: `OK:`, `ERROR:`, `WARNING:`, `SUCCESS:`, `PASS:`, `FAIL:`
-- Unicode characters for expression are acceptable (e.g., →, ×, ✓ as text), but avoid colorful emoji characters
+
+- **Never use colored emojis** (🚀🔨📱✅❌⚠️🔍📁🧪📊🔄) in console output, error messages,
+  or logging
+- Use clear ASCII text prefixes instead: `OK:`, `ERROR:`, `WARNING:`,
+  `SUCCESS:`, `PASS:`, `FAIL:`
+- Unicode characters for expression are acceptable (e.g., →, ×, ✓ as text), but
+  avoid colorful emoji characters
 - Keep output professional and terminal-friendly
 
 **Example:**
+
 ```typescript
 // DO NOT:
 console.log('✅ Build completed successfully');
@@ -674,6 +703,7 @@ console.error('ERROR: Build failed');
 ```
 
 ### Testing
+
 - After changing E2E specs or `test/mocks/`, run the unit tests too
   (`../../scripts/testing/runUnitTests.sh`): some unit specs import those mocks.
 - Unit tests are Vitest specs in `__tests__/`. Helpers in `__tests__/util/`:

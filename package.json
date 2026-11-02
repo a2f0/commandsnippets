@@ -9,10 +9,12 @@
   ],
   "scripts": {
     "hooks:install": "agent-tool hooks install --apply",
-    "lint": "biome check biome.json commitlint.config.mts knip.config.ts package.json scripts terraform/scripts tsconfig.base.json tsconfig.scripts.json && bun run lint:knip",
+    "lint": "biome check biome.json commitlint.config.mts knip.config.ts package.json scripts terraform/scripts tsconfig.base.json tsconfig.scripts.json && bun run lint:knip && bun run lint:markdown && bun run lint:binary-files",
     "lint:knip": "knip --workspace .",
     "lint:files": "ls-lint",
-    "fix": "biome check --write biome.json commitlint.config.mts knip.config.ts package.json scripts terraform/scripts tsconfig.base.json tsconfig.scripts.json",
+    "lint:markdown": "markdownlint-cli2 '**/*.md'",
+    "lint:binary-files": "agent-tool checks binaries --all",
+    "fix": "biome check --write biome.json commitlint.config.mts knip.config.ts package.json scripts terraform/scripts tsconfig.base.json tsconfig.scripts.json && markdownlint-cli2 --fix '**/*.md'",
     "lint:branch-name": "agent-tool branch check",
     "lint:shell": "shellcheck --shell=sh scripts/git/showPushGateTimings.sh scripts/git/hooks/commit-msg scripts/git/hooks/pre-push scripts/lib/stepTimings.sh scripts/testing/*.sh packages/frontend/scripts/testing/*.sh",
     "test:agent-tool": "bun run agents:check",
@@ -39,6 +41,7 @@
     "@tsconfig/strictest": "2.0.8",
     "@types/bun": "1.4.3",
     "knip": "6.44.1",
+    "markdownlint-cli2": "0.24.0",
     "typescript": "7.0.2"
   },
   "overrides": {
