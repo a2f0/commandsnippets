@@ -118,6 +118,21 @@ const robotsHeaders = (indexable: boolean): Plugin => {
   };
 };
 
+const devServer = {
+  port: 8085,
+  host: true, // Listen on all network interfaces
+  hmr: true,
+  // What the dev server may serve outside this package (relative to it):
+  // the API contract it links, the workspace's package store, and the
+  // repository's brand sources (the logo and shared selection styles).
+  // Never the whole workspace, which holds other packages' secrets
+  // (backend-v2's .dev.vars) and the .secrets link.
+  fs: {
+    allow: DEV_SERVER_ALLOW,
+    deny: DEV_SERVER_DENY,
+  },
+};
+
 const pwa = VitePWA({
   devOptions: {
     enabled: false,
@@ -233,20 +248,7 @@ export default defineConfig(({command, mode}) => {
       // created a cycle with the shared timings chunk, which held runtime
       // helpers the vendor code called before they were initialized.
     },
-    server: {
-      port: 8085,
-      host: true, // Listen on all network interfaces
-      hmr: true,
-      // What the dev server may serve outside this package (relative to it):
-      // the API contract it links, the workspace's package store, and the
-      // repository's brand sources (the logo and shared selection styles).
-      // Never the whole workspace, which holds other packages' secrets
-      // (backend-v2's .dev.vars) and the .secrets link.
-      fs: {
-        allow: DEV_SERVER_ALLOW,
-        deny: DEV_SERVER_DENY,
-      },
-    },
+    server: devServer,
     test: {
       globals: true,
       environment: 'jsdom',
