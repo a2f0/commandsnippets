@@ -465,7 +465,7 @@ writing its type by hand.
   and `AnalyticsPage.tsx` (`/:user/activity/...`), `AdminPage.tsx`
   (`/admin`) and `SignInPage.tsx` (`/` when signed out). `Routes.tsx` loads
   the admin and analytics pages with `React.lazy` (most visitors never open
-  them), as `BottomBar` does the HUD's Analytics tab.
+  them), as `HudMenu` does the HUD's Analytics tab.
 - **Components**: `src/components/<feature>/`: `entries/` and `tags/` (the
   lists, their context menus and styled fields, and the editors:
   `EntryNew`/`EntryEdit` render `EntryForm`, `TagNew`/`TagEdit` render

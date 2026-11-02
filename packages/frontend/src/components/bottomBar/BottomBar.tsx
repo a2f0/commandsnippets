@@ -1,100 +1,15 @@
-import FullscreenIcon from '@mui/icons-material/Fullscreen';
-import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
-import {Box, Button, IconButton, Menu, Tab, Tabs} from '@mui/material';
-import React, {Suspense, useCallback, useMemo, useState} from 'react';
-import {useErrorStore} from '../../hooks/useErrorStore';
-import {useWindowSize} from '../../hooks/useWindowSize';
-import {useTypedTranslation} from '../../i18n/hooks';
+import {Box} from '@mui/material';
+import React from 'react';
 import {useFeatureFlag} from '../../lib/featureFlags/featureFlags';
 import {TextEntrySearchField} from '../entries/TextEntrySearchField';
 import {LanguageSwitcher} from '../LanguageSwitcher';
 import {TagSearch} from '../tags/TagSearch';
+import {HudMenu} from './HudMenu';
 import {Mode} from './Mode';
 
-// The Analytics tab's charts load when the tab is first shown: only
-// pages with the `hud` flag on (not production by default) have a HUD, so the app's own bundle leaves them out.
-const TimingAnalytics = React.lazy(() =>
-  import('./analytics/TimingAnalytics').then(module => ({
-    default: module.TimingAnalytics,
-  }))
-);
-
-/** How far the expanded HUD keeps from the window's edges, in px. */
-const EXPANDED_MARGIN = 16;
-
-/** How many logs the expanded Logs tab lists, newest first. */
-const RECENT_LOGS = 20;
-
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-const CustomTabPanel = React.memo((props: TabPanelProps) => {
-  const {children, value, index, ...other} = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`hud-tabpanel-${index}`}
-      aria-labelledby={`hud-tab-${index}`}
-      style={{
-        height: '100%',
-        backgroundColor: 'transparent',
-      }}
-      {...other}
-    >
-      {value === index && <Box sx={{p: 2}}>{children}</Box>}
-    </div>
-  );
-});
-
-CustomTabPanel.displayName = 'CustomTabPanel';
-
-const a11yProps = (index: number) => ({
-  id: `hud-tab-${index}`,
-  'aria-controls': `hud-tabpanel-${index}`,
-});
-
 const BottomBar = () => {
-  const {t} = useTypedTranslation('menu');
   const showHud = useFeatureFlag('hud');
   const showLanguageSwitcher = useFeatureFlag('languageSwitcher');
-  const {width: windowWidth, height: windowHeight} = useWindowSize();
-  const logs = useErrorStore(state => state.logs);
-  const errorCount = useErrorStore(state => state.errors.length);
-  const recentLogs = useMemo(
-    () =>
-      [...logs]
-        .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-        .slice(0, RECENT_LOGS),
-    [logs]
-  );
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedTab, setSelectedTab] = useState(0);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const open = Boolean(anchorEl);
-
-  const handleClick = useCallback((event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  }, []);
-
-  const handleClose = useCallback(() => {
-    setAnchorEl(null);
-  }, []);
-
-  const handleTabChange = useCallback(
-    (_event: React.SyntheticEvent, newValue: number) => {
-      setSelectedTab(newValue);
-    },
-    []
-  );
-
-  const toggleExpanded = useCallback(() => {
-    setIsExpanded(prev => !prev);
-  }, []);
 
   return (
     <Box
@@ -109,240 +24,18 @@ const BottomBar = () => {
     >
       <Box
         data-testid="bottom-bar-left-container"
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1,
-        }}
+        sx={{display: 'flex', alignItems: 'center', gap: 1}}
       >
         <TagSearch />
         <TextEntrySearchField />
       </Box>
       <Box
         data-testid="bottom-bar-right-container"
-        sx={{
-          display: 'flex',
-          alignItems: 'flex-end',
-          gap: 1,
-        }}
+        sx={{display: 'flex', alignItems: 'flex-end', gap: 1}}
       >
         {showLanguageSwitcher && <LanguageSwitcher />}
         <Mode />
-        {showHud && (
-          <>
-            <Button
-              onClick={handleClick}
-              aria-label={t('openHudMenu')}
-              aria-haspopup="true"
-              aria-controls={open ? 'hud-menu' : undefined}
-              aria-expanded={open}
-              sx={{
-                color: 'text.primary',
-                fontFamily: 'monospace',
-                fontSize: 'caption.fontSize',
-                lineHeight: 'caption.lineHeight',
-                textTransform: 'none',
-                minWidth: 'unset',
-                padding: 0,
-                '&:hover': {
-                  backgroundColor: 'transparent',
-                  textDecoration: 'underline',
-                },
-              }}
-            >
-              [{t('hud')}]
-            </Button>
-            <Menu
-              id="hud-menu"
-              anchorEl={anchorEl}
-              open={open}
-              onClose={handleClose}
-              anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'left',
-              }}
-              transformOrigin={{
-                vertical: 'bottom',
-                horizontal: 'left',
-              }}
-              slotProps={{
-                paper: {
-                  sx: {
-                    // Expanded, nearly the whole window: room for the
-                    // timing charts.
-                    width: isExpanded
-                      ? Math.max(600, windowWidth - 2 * EXPANDED_MARGIN)
-                      : 600,
-                    height: isExpanded
-                      ? Math.max(400, windowHeight - 2 * EXPANDED_MARGIN)
-                      : 400,
-                    maxWidth: `calc(100vw - ${2 * EXPANDED_MARGIN}px)`,
-                    maxHeight: `calc(100vh - ${2 * EXPANDED_MARGIN}px)`,
-                    overflow: 'hidden',
-                    position: 'relative',
-                  },
-                },
-                transition: {
-                  timeout: 0,
-                },
-              }}
-            >
-              <Box
-                sx={{
-                  p: 1,
-                  border: 1,
-                  borderColor: 'divider',
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  position: 'relative',
-                }}
-              >
-                {/* Expand/Collapse button in top-right corner */}
-                <IconButton
-                  onClick={toggleExpanded}
-                  size="small"
-                  sx={{
-                    position: 'absolute',
-                    top: 4,
-                    right: 4,
-                    zIndex: 1,
-                    backgroundColor: 'background.paper',
-                    '&:hover': {
-                      backgroundColor: 'action.hover',
-                    },
-                  }}
-                  aria-label={isExpanded ? t('collapseHud') : t('expandHud')}
-                >
-                  {isExpanded ? <FullscreenExitIcon /> : <FullscreenIcon />}
-                </IconButton>
-                <Tabs
-                  value={selectedTab}
-                  onChange={handleTabChange}
-                  aria-label="HUD navigation tabs"
-                  sx={{
-                    minHeight: 'unset',
-                    borderBottom: 1,
-                    borderColor: 'divider',
-                    '& .MuiTab-root': {
-                      minHeight: 'unset',
-                      padding: '8px 16px',
-                      fontSize: 'caption.fontSize',
-                      fontFamily: 'monospace',
-                      color: 'text.secondary',
-                      textTransform: 'none',
-                      minWidth: 'unset',
-                      transition: 'none',
-                      '&.Mui-selected': {
-                        color: 'text.primary',
-                      },
-                    },
-                    '& .MuiTabs-indicator': {
-                      transition: 'none',
-                    },
-                  }}
-                >
-                  <Tab label={t('logs')} {...a11yProps(0)} />
-                  <Tab label={t('analytics')} {...a11yProps(1)} />
-                </Tabs>
-                <Box sx={{flex: 1, overflow: 'auto', height: '100%'}}>
-                  <CustomTabPanel value={selectedTab} index={0}>
-                    <Box sx={{color: 'text.secondary'}}>
-                      {isExpanded ? (
-                        <Box
-                          sx={{
-                            mt: 2,
-                            fontFamily: 'monospace',
-                            fontSize: '0.875rem',
-                            overflow: 'auto',
-                            backgroundColor: 'background.default',
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            borderRadius: 1,
-                            p: 1,
-                          }}
-                        >
-                          {recentLogs.map(log => (
-                            <Box
-                              key={log.id}
-                              sx={{
-                                mb: 0.5,
-                                color:
-                                  log.level === 'ERROR'
-                                    ? 'error.main'
-                                    : log.level === 'WARN'
-                                      ? 'warning.main'
-                                      : log.level === 'DEBUG'
-                                        ? 'text.disabled'
-                                        : 'text.primary',
-                              }}
-                            >
-                              <span>
-                                [{log.timestamp.toLocaleTimeString()}]{' '}
-                                {log.level}: {log.message}
-                              </span>
-                              {log.details && (
-                                <Box component="details" sx={{marginLeft: 2.5}}>
-                                  <Box
-                                    component="summary"
-                                    sx={{
-                                      cursor: 'pointer',
-                                      fontSize: '0.75rem',
-                                      opacity: 0.8,
-                                    }}
-                                  >
-                                    {t('details')}
-                                  </Box>
-                                  <Box
-                                    component="pre"
-                                    sx={{
-                                      fontSize: '0.75rem',
-                                      margin: '5px 0',
-                                      whiteSpace: 'pre-wrap',
-                                      wordBreak: 'break-word',
-                                    }}
-                                  >
-                                    {log.details}
-                                  </Box>
-                                </Box>
-                              )}
-                            </Box>
-                          ))}
-                          {logs.length === 0 && (
-                            <Box
-                              sx={{color: 'text.disabled', fontStyle: 'italic'}}
-                            >
-                              {t('noLogsAvailable')}
-                            </Box>
-                          )}
-                        </Box>
-                      ) : (
-                        <Box
-                          sx={{
-                            mt: 1,
-                            fontSize: '0.875rem',
-                            color: 'text.disabled',
-                          }}
-                        >
-                          {logs.length === 0
-                            ? t('noLogsAvailable')
-                            : t('logEntry', {count: logs.length})}
-                          {errorCount > 0 &&
-                            ` • ${t('errorCaptured', {count: errorCount})}`}
-                        </Box>
-                      )}
-                    </Box>
-                  </CustomTabPanel>
-                  <CustomTabPanel value={selectedTab} index={1}>
-                    <Suspense fallback={null}>
-                      <TimingAnalytics />
-                    </Suspense>
-                  </CustomTabPanel>
-                </Box>
-              </Box>
-            </Menu>
-          </>
-        )}
+        {showHud && <HudMenu />}
       </Box>
     </Box>
   );
