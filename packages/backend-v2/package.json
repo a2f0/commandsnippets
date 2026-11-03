@@ -3,7 +3,7 @@
   "version": "0.2.40",
   "license": "UNLICENSED",
   "private": true,
-  "packageManager": "bun@1.4.3",
+  "packageManager": "bun@1.4.4",
   "type": "module",
   "scripts": {
     "postinstall": "wrangler types",
@@ -25,18 +25,18 @@
   "dependencies": {
     "@commandsnippets/api-shared": "workspace:*",
     "drizzle-orm": "0.45.4",
-    "hono": "4.13.13",
+    "hono": "4.13.16",
     "zod": "4.6.7"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.4",
     "@cloudflare/vitest-plugin": "1.4.6",
-    "@types/bun": "1.4.3",
-    "@types/node": "26.6.5",
-    "@vitest/coverage-istanbul": "5.0.5",
+    "@types/bun": "1.4.4",
+    "@types/node": "26.6.6",
+    "@vitest/coverage-istanbul": "5.1.0",
     "drizzle-kit": "0.31.11",
     "typescript": "7.0.2",
-    "vitest": "5.0.5",
+    "vitest": "5.1.0",
     "wrangler": "4.151.3"
   }
 }
