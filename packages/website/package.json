@@ -1,7 +1,7 @@
 {
   "name": "commandsnippets-website",
   "private": true,
-  "packageManager": "bun@1.4.3",
+  "packageManager": "bun@1.4.4",
   "license": "UNLICENSED",
   "type": "module",
   "scripts": {
@@ -20,13 +20,13 @@
     "deploy:production": "bun run build:production && wrangler deploy --env production"
   },
   "dependencies": {
-    "@a2f0/ct-client": "0.1.5",
-    "astro": "7.4.2"
+    "@a2f0/ct-client": "0.1.6",
+    "astro": "7.4.5"
   },
   "devDependencies": {
     "@astrojs/check": "0.9.12",
     "@biomejs/biome": "2.6.4",
-    "@types/bun": "1.4.3",
+    "@types/bun": "1.4.4",
     "typescript": "6.0.3",
     "wrangler": "4.151.3"
   }

@@ -22,7 +22,7 @@ Consumers reference api-shared as `workspace:*`, a link to its directory, so its
 edits need no reinstall. Preserve minimum release age and verify that unrelated
 package identities did not change.
 
-The root `.mise.toml` pins Bun 1.4.3 and Node 24.22.1 for development and CI.
+The root `.mise.toml` pins Bun 1.4.4 and Node 26.13.0 for development and CI.
 Keep its Bun pin and every package's `packageManager` declaration together. Keep
 its Node pin, frontend `engines.node` and Node types compatible. Terraform
 retains its specialized setup. Every manifest (the root and each package) pins
@@ -74,30 +74,52 @@ Puppeteer and serialize-javascript overrides, which the frontend needs and the
 root `package.json` declares, until their documented regression and audit
 conditions allow removal.
 
+The upstream [Braces advisory](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm)
+and [http-cache-semantics advisory](https://github.com/advisories/GHSA-ch52-4w7c-c8xp)
+were withdrawn. Their still-present package versions do not make those withdrawn
+reports active constraints; check upstream status before restoring either entry.
+
 Known constrained transitive dependencies include:
 
-- The frontend's micromatch and chokidar graph includes Braces 3.0.3;
-  [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm)
-  has no verified published fixed version. The patterns are repository tooling
-  inputs; retain the constrained graph until its owner offers a supported fix.
 - Drizzle Kit's legacy `@esbuild-kit/core-utils` graph still includes esbuild
   0.18.20, affected by
   [GHSA-67mh-4wv8-2f99](https://github.com/advisories/GHSA-67mh-4wv8-2f99).
   It is development tooling; do not expose its development server to untrusted
-  websites or force an unsupported esbuild major beneath it.
-- Updating http-cache-semantics from 4.2.0 to 4.3.0 does not establish that
-  [GHSA-ch52-4w7c-c8xp](https://github.com/advisories/GHSA-ch52-4w7c-c8xp)
-  is fixed. Its shared Set-Cookie and proxy-revalidate cases remain storable
-  with a zero lifetime, yet accept `max-stale`. Astro's remote-image client
-  uses `storable()` and `timeToLive()`, expires those responses immediately,
-  and does not pass `max-stale`; these library cases do not establish website
-  exposure. Keep the upstream advisory unresolved and check actual callers
-  rather than inferring remediation solely from its version range.
+  websites or force an unsupported esbuild major beneath it. Revisit when
+  Drizzle Kit removes or updates that legacy integration.
+- The held Cloudflare test/CLI group pins vulnerable Zod and Undici versions:
+  plugin 1.4.6 uses Zod 4.6.5
+  ([GHSA-mrhx-c7xc-m3w5](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5)),
+  and Miniflare pins Undici 7.29.1, affected by advisories including
+  [GHSA-xjj6-f33q-929c](https://github.com/advisories/GHSA-xjj6-f33q-929c).
+  Application contracts use the separate fixed Zod 4.6.7. Revisit the coupled
+  Cloudflare upgrade after complete remote identity and artifact previews;
+  require Zod at least 4.6.6 and Undici at least 7.30.1 and rerun backend
+  coverage, local Worker/browser checks and the complete audit. Do not infer
+  that an updated shared Undici resolution fixes Miniflare's exact nested pin.
+- markdownlint pins RE2JS 2.8.6, affected by
+  [GHSA-gg6h-894w-4m9c](https://github.com/advisories/GHSA-gg6h-894w-4m9c),
+  and its math extension limits KaTeX to the vulnerable 0.16 line
+  ([GHSA-238p-pmpm-9mq7](https://github.com/advisories/GHSA-238p-pmpm-9mq7)).
+  Revisit when the linter supports RE2JS 2.8.7 and KaTeX 0.18.2 or newer;
+  validate the repository Markdown corpus rather than force those dependencies
+  independently. Avoid processing untrusted Markdown with the affected tooling.
+- WebdriverIO, Mocha, the video reporter and Workbox constrain Glob/Minimatch
+  below the fixes for
+  [GHSA-3g3m-2fjr-6pw4](https://github.com/advisories/GHSA-3g3m-2fjr-6pw4)
+  and [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249).
+  Revisit supported owner releases that accept Glob 14.0.2 and Minimatch 11.0.1,
+  then run the browser/video and production PWA integrations. These consumers
+  use repository-controlled file patterns; do not force incompatible majors.
+- Workbox's Rollup resolver includes deepmerge 4.3.1, with no published fix for
+  [GHSA-gcqx-w48m-w2h4](https://github.com/advisories/GHSA-gcqx-w48m-w2h4).
+  Revisit a supported resolver fix and validate the service-worker build;
+  do not treat a current direct dependency as evidence of a clean graph.
 
-Source-map-js 1.2.2's
-[release](https://github.com/7rulnik/source-map-js/releases/tag/v1.2.2)
-fixes malicious indexed source-map denial of service. Refresh an older
-resolution within its owner's supported range with Bun, then rerun the audit.
+For already-resolved transitives whose owners permit the fixed versions,
+`bun update <transitive-name>...` refreshes their lockfile resolutions without
+adding direct dependencies. Inspect every remaining nested resolution and
+manifest diff: exact owner pins remain fixed even when the shared copy updates.
 Report unavailable registry audits and release metadata as coverage limits,
 separately from any known unresolved advisories.
 
