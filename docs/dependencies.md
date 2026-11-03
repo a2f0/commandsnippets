@@ -74,6 +74,11 @@ Puppeteer and serialize-javascript overrides, which the frontend needs and the
 root `package.json` declares, until their documented regression and audit
 conditions allow removal.
 
+The upstream [Braces advisory](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm)
+and [http-cache-semantics advisory](https://github.com/advisories/GHSA-ch52-4w7c-c8xp)
+were withdrawn. Their still-present package versions do not make those withdrawn
+reports active constraints; check upstream status before restoring either entry.
+
 Known constrained transitive dependencies include:
 
 - Drizzle Kit's legacy `@esbuild-kit/core-utils` graph still includes esbuild
