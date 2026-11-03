@@ -18,6 +18,10 @@ ls:
     .tsx: pascalcase | regex:index
     .md: regex:README
 
+  # Package docs beside the README and AGENTS.md.
+  packages/frontend/docs:
+    .md: camelcase
+
   # Specs are named for what they test: a component's PascalCase, a
   # module's or a flow's camelCase.
   packages/frontend/__tests__:

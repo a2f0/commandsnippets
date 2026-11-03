@@ -4,8 +4,8 @@ A command snippet tool for computer programmers and system administrators. It's
 a tagging system that allows for user-defined ordering of both Tag and Entry
 objects. The user's data is kept in IndexedDB (Dexie), synced with the API,
 and the rest of the app's state in a zustand store saved in `localStorage`
-(see `AGENTS.md`). This package is available on the web at
-<https://app.commandsnippets.com>.
+(see [architecture](docs/architecture.md#state)). This package is available
+on the web at <https://app.commandsnippets.com>.
 
 ## Development
 
@@ -59,8 +59,8 @@ Bun reads only there:
 API's contract as [zod](https://zod.dev) schemas. The API client types its
 requests with it and parses every response it returns with it: a response
 that does not fit fails the call, and never reaches the app's state or signs
-anyone out (AGENTS.md, "API"). It is TypeScript source, which this package
-compiles and bundles with its own code:
+anyone out ([architecture](docs/architecture.md#api)). It is TypeScript
+source, which this package compiles and bundles with its own code:
 
 - **Import the smaller entries:** `src/lib/api/` imports the response
   schemas from `@commandsnippets/api-shared/responses`, `CODES` from
