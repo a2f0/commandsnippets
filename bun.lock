@@ -5,7 +5,7 @@
     "": {
       "name": "commandsnippets",
       "devDependencies": {
-        "@a2f0/agent-tool": "0.1.30",
+        "@a2f0/agent-tool": "0.1.31",
         "@biomejs/biome": "2.6.4",
         "@commitlint/cli": "21.2.4",
         "@commitlint/config-conventional": "21.2.4",
@@ -152,7 +152,7 @@
     "serialize-javascript": "7.1.4",
   },
   "packages": {
-    "@a2f0/agent-tool": ["@a2f0/agent-tool@0.1.30", "", { "dependencies": { "@resvg/resvg-wasm": "2.6.2" }, "bin": { "agent-tool": "src/index.ts" } }, "sha512-nuXL8cSqhq9P80xWxCl0eSMchvgDyb/xfGNclqzcdbocQWF2r3dFDzV9UXV1RD/Q0bBJlmYvf4L9o/MK4lYlWQ=="],
+    "@a2f0/agent-tool": ["@a2f0/agent-tool@0.1.31", "", { "dependencies": { "@resvg/resvg-wasm": "2.6.2" }, "bin": { "agent-tool": "src/index.ts" } }, "sha512-KrkeKPlyU0z9ROBU+HP/rAK//jRLCnzvjYH412REIoeZvnjq+vjSo41HsQGjPJ1RXVO30RPFHfCkK1IhU0rncQ=="],
 
     "@a2f0/ct-client": ["@a2f0/ct-client@0.1.6", "", {}, "sha512-DlDg2DKCilbrX5jIh3D+jctG66+xwpjnead8L4YY3jnIVFZ4fOBHbpJk7yY9KFBcuhNAy9UhvbgmHJgI97dI4w=="],
 
