@@ -54,7 +54,7 @@
     },
     "packages/frontend": {
       "name": "commandsnippets-frontend",
-      "version": "0.7.190",
+      "version": "0.7.191",
       "dependencies": {
         "@a2f0/ct-client": "0.1.6",
         "@commandsnippets/api-shared": "workspace:*",
