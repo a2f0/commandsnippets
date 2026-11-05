@@ -1,6 +1,5 @@
 import type {AnalyticsParams} from '@commandsnippets/api-shared/requests';
 import {
-  type Analytics,
   analyticsActivitySchema,
   analyticsIntervalSchema,
   isAnalyticsRange,
@@ -8,9 +7,10 @@ import {
 import Refresh from '@mui/icons-material/Refresh';
 import {Alert, Box, Button, Typography} from '@mui/material';
 import {useLiveQuery} from 'dexie-react-hooks';
-import {useEffect, useMemo, useState} from 'react';
+import {useEffect, useMemo, useReducer, useRef, useState} from 'react';
 import {ActivityCharts} from '../components/analytics/ActivityCharts';
 import {AnalyticsFilters} from '../components/analytics/AnalyticsFilters';
+import {transitionAnalyticsRead} from '../components/analytics/analyticsRead';
 import {recentRange} from '../components/analytics/buckets';
 import {DetailPage} from '../components/DetailPage';
 import {useCookieLogout} from '../hooks/useCookieLogout';
@@ -37,16 +37,21 @@ const Results = ({
   onTag: (id: string) => void;
 }) => {
   const {t} = useTypedTranslation('analytics');
-  const [data, setData] = useState<Analytics | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [read, dispatch] = useReducer(transitionAnalyticsRead, {
+    status: 'loading',
+    request: 0,
+  });
+  const reads = useRef(0);
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     const controller = new AbortController();
-    setFailed(false);
-    setData(null);
+    reads.current += 1;
+    const request = reads.current;
+    dispatch({type: 'start', request});
     void readAnalytics(session, params, controller.signal)
-      .then(result => {
-        if (!controller.signal.aborted) setData(result);
+      .then(data => {
+        if (!controller.signal.aborted)
+          dispatch({type: 'succeed', request, data});
       })
       .catch((error: unknown) => {
         if (!controller.signal.aborted) {
@@ -56,7 +61,7 @@ const Results = ({
           )
             void leaveForeignSession(session.username);
           else console.warn('WARNING: analytics could not be read:', error);
-          setFailed(true);
+          dispatch({type: 'fail', request});
         }
       });
     const reconnect = () => setAttempt(value => value + 1);
@@ -71,13 +76,13 @@ const Results = ({
       <Box sx={{display: 'flex', justifyContent: 'flex-end'}}>
         <Button
           startIcon={<Refresh />}
-          disabled={!data && !failed}
+          disabled={read.status === 'loading'}
           onClick={() => setAttempt(value => value + 1)}
         >
           {t('refresh')}
         </Button>
       </Box>
-      {failed ? (
+      {read.status === 'failed' ? (
         <Alert
           severity="warning"
           action={
@@ -91,8 +96,8 @@ const Results = ({
         >
           {t('failed')}
         </Alert>
-      ) : data ? (
-        <ActivityCharts data={data} owner={session.owner} onTag={onTag} />
+      ) : read.status === 'loaded' ? (
+        <ActivityCharts data={read.data} owner={session.owner} onTag={onTag} />
       ) : (
         <Typography role="status" sx={{py: 6, textAlign: 'center'}}>
           {t('loading')}

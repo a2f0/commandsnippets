@@ -65,6 +65,11 @@ touches before making it, and keep them current. The rules most changes meet:
   username in the API ([reserved usernames](../backend-v2/README.md#access-and-auth)).
 - Mocks follow the API contract: add a `contract.spec.ts` exchange for every
   new MSW route, and type mock documents with api-shared's types.
+- A read or flow with several modes is a union on `status`, changed only by
+  one pure `transition…(state, event)` tested by its table, with a request
+  number so only the current read finishes (`useReuseHistory.ts`,
+  `components/analytics/analyticsRead.ts`); derive booleans from it rather
+  than holding `loading`/`failed` flags side by side.
 
 ## Documentation Maintenance
 
