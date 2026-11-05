@@ -52,7 +52,12 @@ jobs:
         run: ../../scripts/testing/runUnitTests.sh
 
   webdriver:
-    runs-on: ubuntu-latest
+    # Pinned: on ubuntu-26.04 (ubuntu-latest since November 2026) every wdio
+    # worker dies before its first spec, at @wdio/local-runner's first
+    # `process.send`, with `write EINVAL`; the same commit, Bun, Node and
+    # lockfile pass on ubuntu-24.04. Return to ubuntu-latest once a run there
+    # passes.
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: packages/frontend
