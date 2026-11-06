@@ -1,3 +1,4 @@
+import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import {useTheme} from '@mui/material/styles';
@@ -27,6 +28,8 @@ export interface IEntryFormProps {
   /** Save what the fields hold. */
   onSave: (subject: string, body: string) => void;
   onCancel: () => void;
+  /** Why the last save failed (none: it did not). */
+  error?: string | null;
 }
 
 /** The subject, body, Save and Cancel of the entry editors. */
@@ -37,6 +40,7 @@ export const EntryForm = ({
   body: initialBody,
   onSave,
   onCancel,
+  error = null,
 }: IEntryFormProps) => {
   const {t} = useTypedTranslation('common');
   const [subject, setSubject] = useState<string>(initialSubject);
@@ -110,6 +114,11 @@ export const EntryForm = ({
           handleChangeParent={setBody}
         />
       </div>
+      {error !== null && (
+        <Alert id={`${id}Error`} severity="error" sx={{mb: '4px'}}>
+          {error}
+        </Alert>
+      )}
       <Button
         ref={saveRef}
         id={`${id}Save`}

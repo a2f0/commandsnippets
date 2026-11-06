@@ -1,10 +1,11 @@
 import {ThemeProvider} from '@mui/material/styles';
-import {fireEvent, render, screen} from '@testing-library/react';
+import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import invariant from 'invariant';
 import {I18nextProvider} from 'react-i18next';
 import {vi} from 'vitest';
 import {EntryEdit} from '../../../../src/components/entries/EntryEdit';
 import {i18n} from '../../../../src/i18n/i18n';
+import {InvalidWriteError} from '../../../../src/lib/data/writes';
 import {darkTheme} from '../../../../src/theme/themes';
 import {signIn} from '../../../util/signIn';
 import {entry} from '../../../util/storeFixtures';
@@ -27,14 +28,14 @@ afterEach(() => {
 const object = entry('1', {subject: 'the subject', body: 'the body'});
 
 /** The editor of `object`, which `onCancel` leaves open. */
-function renderEditor(onCancel = vi.fn()) {
+function renderEditor(onCancel = vi.fn(), onSave = vi.fn()) {
   render(
     <I18nextProvider i18n={i18n}>
       <ThemeProvider theme={darkTheme}>
         <EntryEdit
           id="edit"
           object={object}
-          handleSaveParent={vi.fn()}
+          handleSaveParent={onSave}
           handleCancelEditParent={onCancel}
         />
       </ThemeProvider>
@@ -79,6 +80,28 @@ describe('EntryEdit', () => {
       'the subject',
       'the body'
     );
+  });
+
+  it('stays open with the edit and says why when the save fails', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    updateEntry.mockRejectedValueOnce(
+      new InvalidWriteError('subject: Too big')
+    );
+    const onSave = vi.fn();
+    renderEditor(vi.fn(), onSave);
+    fireEvent.change(byId('editSubject'), {target: {value: 'new subject'}});
+
+    fireEvent.click(screen.getByText('Save'));
+
+    await waitFor(() =>
+      expect(byId('editError')).toHaveTextContent('Not saved: subject: Too big')
+    );
+    expect(onSave).not.toHaveBeenCalled();
+    expect(byId('editSubject')).toHaveValue('new subject');
+    // Saved on the next try: the message goes.
+    fireEvent.click(screen.getByText('Save'));
+    await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
+    expect(document.getElementById('editError')).toBeNull();
   });
 
   it('scrolls its Save button into view when it opens out of view', () => {

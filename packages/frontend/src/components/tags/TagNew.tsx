@@ -1,5 +1,6 @@
 import React, {useEffect, useRef} from 'react';
 import {tagEditFields, useEditFieldCycle} from '../../hooks/useEditFieldCycle';
+import {useSaveError} from '../../hooks/useSaveError';
 import {useSession} from '../../lib/data/hooks';
 import {createTag} from '../../lib/data/writes';
 import {activeTagEditField} from '../../lib/shared';
@@ -16,6 +17,7 @@ const TagNew = ({id}: IProps) => {
   const inputSaveRef = useRef<HTMLButtonElement>(null);
   const inputCancelRef = useRef<HTMLButtonElement>(null);
   const inputTagNameRef = useRef<HTMLInputElement>(null);
+  const saveError = useSaveError('create tag');
 
   useEditFieldCycle(tagEditFields, {
     save: inputSaveRef,
@@ -45,13 +47,12 @@ const TagNew = ({id}: IProps) => {
     if (session === null) {
       return;
     }
+    saveError.clear();
     createTag(session, tagName)
       .then(() => {
         appConfig.setTagNew(null);
       })
-      .catch((error: unknown) => {
-        console.error('Failed to create tag:', error);
-      });
+      .catch(saveError.failed);
   };
 
   return (
@@ -65,6 +66,7 @@ const TagNew = ({id}: IProps) => {
       name=""
       onSave={handleSave}
       onCancel={handleCancel}
+      error={saveError.error}
       nameRef={inputTagNameRef}
       saveRef={inputSaveRef}
       cancelRef={inputCancelRef}

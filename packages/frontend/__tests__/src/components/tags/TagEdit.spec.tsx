@@ -1,8 +1,11 @@
 import {ThemeProvider} from '@mui/material/styles';
 import {act, fireEvent, render, waitFor} from '@testing-library/react';
 import invariant from 'invariant';
+import {I18nextProvider} from 'react-i18next';
 import {vi} from 'vitest';
 import {TagEdit} from '../../../../src/components/tags/TagEdit';
+import {i18n} from '../../../../src/i18n/i18n';
+import {InvalidWriteError} from '../../../../src/lib/data/writes';
 import {darkTheme} from '../../../../src/theme/themes';
 import {signIn} from '../../../util/signIn';
 import {tag} from '../../../util/storeFixtures';
@@ -23,13 +26,15 @@ function renderEditor() {
   const onSave = vi.fn();
   const onCancel = vi.fn();
   render(
-    <ThemeProvider theme={darkTheme}>
-      <TagEdit
-        object={object}
-        handleSaveParent={onSave}
-        handleCancelEditParent={onCancel}
-      />
-    </ThemeProvider>
+    <I18nextProvider i18n={i18n}>
+      <ThemeProvider theme={darkTheme}>
+        <TagEdit
+          object={object}
+          handleSaveParent={onSave}
+          handleCancelEditParent={onCancel}
+        />
+      </ThemeProvider>
+    </I18nextProvider>
   );
   return {onSave, onCancel};
 }
@@ -73,6 +78,25 @@ describe('TagEdit', () => {
 
     expect(renameTag).toHaveBeenCalledOnce();
     expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it('stays open with the name and says why when the save fails', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    renameTag.mockRejectedValueOnce(
+      new InvalidWriteError('name: taken is taken')
+    );
+    const {onSave} = renderEditor();
+    fireEvent.change(byId('tagEditTagName2'), {target: {value: 'taken'}});
+
+    fireEvent.click(byId('tagEditSave2'));
+
+    await waitFor(() =>
+      expect(byId('tagEdit2Error')).toHaveTextContent(
+        'Not saved: name: taken is taken'
+      )
+    );
+    expect(onSave).not.toHaveBeenCalled();
+    expect(byId('tagEditTagName2')).toHaveValue('taken');
   });
 
   it.each([

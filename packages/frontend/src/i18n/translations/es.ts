@@ -89,6 +89,7 @@ export const es: I18NextTranslations = {
     serviceOperator: 'Command Snippets es operado por Tearleads, LLC.',
     makePublic: 'Hacer pública',
     makePrivate: 'Hacer privada',
+    saveFailed: 'No guardado: {{message}}',
   },
   menu: {
     file: 'Archivo',
