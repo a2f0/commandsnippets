@@ -2,6 +2,7 @@
  * A new entry, saved from the entry list's editor: stored in the user's
  * IndexedDB database and listed at once, in the tag shown when there is one.
  */
+import {TEXT_ENTRY_SUBJECT_MAX_LENGTH} from '@commandsnippets/api-shared';
 import {act, fireEvent, screen, waitFor} from '@testing-library/react';
 import invariant from 'invariant';
 import {vi} from 'vitest';
@@ -88,5 +89,46 @@ describe('A new entry', () => {
       expect((await storedEntry('tagged-subject')).entry.id).toBe(entryId)
     );
     expect((await storedEntry('tagged-subject')).tags).toEqual(['1']);
+  });
+
+  it('saved twice before it is stored (a double click) is stored once', async () => {
+    renderAppAt('/test?entries=untagged');
+    await screen.findByText('test-tag-1');
+
+    await saveNewEntry('twice-subject');
+    fireEvent.click(byId('textEntryNewTopSave'));
+
+    expect(await screen.findByText('twice-subject')).toBeInTheDocument();
+    await waitFor(() => expect(store.entryNew).toBeNull());
+    const {db} = syncSession(TEST_USER);
+    const stored = await db.entries
+      .filter(row => row.attributes.subject === 'twice-subject')
+      .count();
+    expect(stored).toBe(1);
+  });
+
+  it('that failed to save stays open, and saves once corrected', async () => {
+    renderAppAt('/test?entries=untagged');
+    await screen.findByText('test-tag-1');
+    const failed = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    // Longer than a subject may be: refused before anything is stored.
+    await saveNewEntry('x'.repeat(TEXT_ENTRY_SUBJECT_MAX_LENGTH + 1));
+
+    await waitFor(() =>
+      expect(failed).toHaveBeenCalledWith(
+        'Failed to create entry:',
+        expect.anything()
+      )
+    );
+    expect(store.entryNew).toBe('textEntry-top');
+    fireEvent.change(byId('textEntryNewTopSubject'), {
+      target: {value: 'corrected-subject'},
+    });
+    fireEvent.click(byId('textEntryNewTopSave'));
+
+    expect(await screen.findByText('corrected-subject')).toBeInTheDocument();
+    await waitFor(() => expect(store.entryNew).toBeNull());
+    expect((await storedEntry('corrected-subject')).entry).toBeDefined();
   });
 });
