@@ -1,4 +1,5 @@
 import React from 'react';
+import {useSaveError} from '../../hooks/useSaveError';
 import type {ITextEntryJsonApi} from '../../lib/api/responses/types';
 import {useSession} from '../../lib/data/hooks';
 import {updateEntry} from '../../lib/data/writes';
@@ -19,16 +20,16 @@ const EntryEdit = ({
   id,
 }: IEntryEdit) => {
   const session = useSession();
+  const saveError = useSaveError('update entry');
 
   const handleSave = (subject: string, body: string) => {
     if (session === null) {
       return;
     }
+    saveError.clear();
     updateEntry(session, object.id, subject, body)
       .then(() => handleSaveParent())
-      .catch((error: unknown) => {
-        console.error('Failed to update entry:', error);
-      });
+      .catch(saveError.failed);
   };
 
   return (
@@ -39,6 +40,7 @@ const EntryEdit = ({
       body={object.attributes.body}
       onSave={handleSave}
       onCancel={handleCancelEditParent}
+      error={saveError.error}
     />
   );
 };

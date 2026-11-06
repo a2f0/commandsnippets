@@ -1,4 +1,5 @@
 import React, {useRef} from 'react';
+import {useSaveError} from '../../hooks/useSaveError';
 import {useSession} from '../../lib/data/hooks';
 import {createEntry} from '../../lib/data/writes';
 import {useAppConfig} from '../../lib/state/appState';
@@ -16,19 +17,19 @@ const EntryNew = ({id, tagId}: IEntryNewProps) => {
   // One save at a time: another click (or Enter) before the entry is stored
   // and the form closes would store a second entry.
   const saving = useRef(false);
+  const saveError = useSaveError('create entry');
 
   const handleSave = (subject: string, body: string) => {
     if (session === null || saving.current) {
       return;
     }
     saving.current = true;
+    saveError.clear();
     createEntry(session, subject, body, tagId)
       .then(() => {
         appConfig.setEntryNew(null);
       })
-      .catch((error: unknown) => {
-        console.error('Failed to create entry:', error);
-      })
+      .catch(saveError.failed)
       .finally(() => {
         saving.current = false;
       });
@@ -46,6 +47,7 @@ const EntryNew = ({id, tagId}: IEntryNewProps) => {
       body=""
       onSave={handleSave}
       onCancel={handleCancel}
+      error={saveError.error}
     />
   );
 };

@@ -1,8 +1,11 @@
 import {ThemeProvider} from '@mui/material/styles';
 import {act, fireEvent, render, waitFor} from '@testing-library/react';
 import invariant from 'invariant';
+import {I18nextProvider} from 'react-i18next';
 import {vi} from 'vitest';
 import {TagNew} from '../../../../src/components/tags/TagNew';
+import {i18n} from '../../../../src/i18n/i18n';
+import {InvalidWriteError} from '../../../../src/lib/data/writes';
 import {activeTagEditField, appMode} from '../../../../src/lib/shared';
 import {darkTheme} from '../../../../src/theme/themes';
 import {signIn, store} from '../../../util/signIn';
@@ -28,9 +31,11 @@ afterEach(() => createTag.mockReset());
 
 function renderForm() {
   return render(
-    <ThemeProvider theme={darkTheme}>
-      <TagNew id="tagNewTop" />
-    </ThemeProvider>
+    <I18nextProvider i18n={i18n}>
+      <ThemeProvider theme={darkTheme}>
+        <TagNew id="tagNewTop" />
+      </ThemeProvider>
+    </I18nextProvider>
   );
 }
 
@@ -96,6 +101,23 @@ describe('TagNew', () => {
       'fresh'
     );
     await waitFor(() => expect(store.tagNew).toBeNull());
+  });
+
+  it('stays open with the name and says why when the save fails', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    createTag.mockRejectedValueOnce(new InvalidWriteError('name: Too big'));
+    renderForm();
+    fireEvent.change(byId('tagNewTopTextField'), {target: {value: 'fresh'}});
+
+    fireEvent.click(byId('tagNewTopSave'));
+
+    await waitFor(() =>
+      expect(byId('tagNewTopError')).toHaveTextContent(
+        'Not saved: name: Too big'
+      )
+    );
+    expect(store.tagNew).toBe('top');
+    expect(byId('tagNewTopTextField')).toHaveValue('fresh');
   });
 
   it.each([

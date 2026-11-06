@@ -122,6 +122,11 @@ describe('A new entry', () => {
       )
     );
     expect(store.entryNew).toBe('textEntry-top');
+    // It says why, and keeps what was typed.
+    expect(byId('textEntryNewTopError')).toHaveTextContent(/^Not saved: /);
+    expect(byId('textEntryNewTopBody')).toHaveValue(
+      `${'x'.repeat(TEXT_ENTRY_SUBJECT_MAX_LENGTH + 1)} body`
+    );
     fireEvent.change(byId('textEntryNewTopSubject'), {
       target: {value: 'corrected-subject'},
     });
