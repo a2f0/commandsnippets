@@ -84,6 +84,7 @@ export const en = {
     serviceOperator: 'Command Snippets is operated by Tearleads, LLC.',
     makePublic: 'Make public',
     makePrivate: 'Make private',
+    saveFailed: 'Not saved: {{message}}',
   },
   menu: {
     file: 'File',

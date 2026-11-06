@@ -1,4 +1,5 @@
 import React from 'react';
+import {useSaveError} from '../../hooks/useSaveError';
 import type {ITagJsonApi} from '../../lib/api/responses/types';
 import {useSession} from '../../lib/data/hooks';
 import {renameTag} from '../../lib/data/writes';
@@ -17,20 +18,20 @@ const TagEdit = ({
   object,
 }: ITagEdit) => {
   const session = useSession();
+  const saveError = useSaveError('update tag');
 
   const handleSave = (tagName: string) => {
     if (session === null) {
       return;
     }
+    saveError.clear();
     renameTag(session, object.id, tagName)
       .then(renamed => {
         if (renamed !== null) {
           handleSaveParent(renamed);
         }
       })
-      .catch((error: unknown) => {
-        console.error('Unexpected error updating tag:', error);
-      });
+      .catch(saveError.failed);
   };
 
   return (
@@ -44,6 +45,7 @@ const TagEdit = ({
       name={object.attributes.name}
       onSave={handleSave}
       onCancel={handleCancelEditParent}
+      error={saveError.error}
     />
   );
 };

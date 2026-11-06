@@ -1,3 +1,4 @@
+import Alert from '@mui/material/Alert';
 import Grid from '@mui/material/Grid';
 import type React from 'react';
 import {useState} from 'react';
@@ -18,6 +19,8 @@ interface ITagFormProps {
   nameRef?: React.Ref<HTMLInputElement>;
   saveRef?: React.Ref<HTMLButtonElement>;
   cancelRef?: React.Ref<HTMLButtonElement>;
+  /** Why the last save failed (none: it did not). */
+  error?: string | null;
 }
 
 /** The name field, Save and Cancel of a new tag's form and a tag's editor. */
@@ -29,6 +32,7 @@ export const TagForm = ({
   nameRef,
   saveRef,
   cancelRef,
+  error = null,
 }: ITagFormProps) => {
   const [name, setName] = useState<string>(initialName);
   useDocumentKeydown(event => {
@@ -47,6 +51,11 @@ export const TagForm = ({
           setName(event.target.value);
         }}
       />
+      {error !== null && (
+        <Alert id={`${ids.form}Error`} severity="error" sx={{mt: '4px'}}>
+          {error}
+        </Alert>
+      )}
       <Grid container spacing={0}>
         <Grid sx={{paddingRight: '1px'}} size={{xs: 6}}>
           <StyledTagButton
