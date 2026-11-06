@@ -119,6 +119,8 @@ export const en = {
     restoringText: 'Replacing your data. Keep this page open until it is done.',
     restoreDoneTitle: 'Backup restored',
     restoreDoneText: "Your data is now the backup's, as version {{version}}.",
+    restoreDoneNotShown:
+      'This page could not show it yet. Reload the page to see it; there is no need to restore again.',
     restoreFailedTitle: 'Restore failed',
     restoreFailedText:
       'The backup could not be restored. Check your connection and try again.',
@@ -148,6 +150,8 @@ export const en = {
     dataVersionsLoading: 'Loading…',
     dataVersionsFailed:
       'Something went wrong. Check your connection and try again.',
+    dataVersionsMadeNotShown:
+      'Done, but this page could not show the result. Reload the page to see it; there is no need to do it again.',
     hud: 'HUD',
     logs: 'Logs',
     analytics: 'Analytics',

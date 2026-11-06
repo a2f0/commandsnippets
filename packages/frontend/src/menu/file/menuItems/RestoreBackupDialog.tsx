@@ -35,7 +35,8 @@ export type RestoreStep =
       current: {tags: number; entries: number};
     }
   | {step: 'restoring'}
-  | {step: 'done'; result: RestoreResult}
+  /** `shown`: false when this page could not take the restored data up. */
+  | {step: 'done'; result: RestoreResult; shown: boolean}
   /** `detail`: why the API refused the backup, when it said. */
   | {step: 'failed'; detail: string | undefined};
 
@@ -160,6 +161,11 @@ function useStepContent(
             <DialogContentText sx={{...counts, mt: 2}}>
               {t('restoreCounts', view.result)}
             </DialogContentText>
+            {!view.shown && (
+              <DialogContentText id="restoreBackupReload" sx={{mt: 2}}>
+                {t('restoreDoneNotShown')}
+              </DialogContentText>
+            )}
           </>
         ),
         actions: dismiss,

@@ -179,12 +179,47 @@ export async function restoreTarget(username: string): Promise<RestoreTarget> {
 }
 
 /**
+ * A change the API made that this copy of the data could not take up
+ * (`SyncEngine.adopt` failed). The change is done: it must not be asked for
+ * again, and reloading the page shows it here.
+ */
+export class NotAdoptedError extends Error {
+  constructor(cause: unknown) {
+    super('The change was made, but this copy of the data did not take it up', {
+      cause,
+    });
+    this.name = 'NotAdoptedError';
+  }
+}
+
+/** A restore the API made (`result`: its answer) not taken up here. */
+export class RestoreNotAdoptedError extends NotAdoptedError {
+  readonly result: RestoreResult;
+
+  constructor(result: RestoreResult, cause: unknown) {
+    super(cause);
+    this.name = 'RestoreNotAdoptedError';
+    this.result = result;
+  }
+}
+
+/**
  * Hold this copy of the data at the data version `version`, made active
  * from here, in turn with its syncs (`SyncEngine.adopt`), and sync it. A
- * sync that fails now is the page's to retry.
+ * sync that fails now is the page's to retry; a failed adopt is
+ * `notAdopted(cause)`.
  */
-async function adopt(sync: SyncEngine, version: number): Promise<void> {
-  await sync.adopt(version);
+async function adopt(
+  sync: SyncEngine,
+  version: number,
+  notAdopted: (cause: unknown) => NotAdoptedError = cause =>
+    new NotAdoptedError(cause)
+): Promise<void> {
+  try {
+    await sync.adopt(version);
+  } catch (error: unknown) {
+    throw notAdopted(error);
+  }
   await sync.syncAll().catch((error: unknown) => {
     console.warn('WARNING: sync after a data version switch failed:', error);
   });
@@ -199,7 +234,8 @@ async function adopt(sync: SyncEngine, version: number): Promise<void> {
  * or a switch elsewhere, which a sync here may have taken up). Then this
  * copy is held at the new version, and synced. Throws when the queue cannot
  * be sent or the restore fails (`ApiRequestError`, with the API's `detail`
- * when it refused the backup).
+ * when it refused the backup); restored, but not taken up here, it throws
+ * `RestoreNotAdoptedError` with the API's answer.
  */
 export async function restoreBackup(
   username: string,
@@ -215,7 +251,11 @@ export async function restoreBackup(
   const result = await bound.api
     .forVersion(target.version)
     .restoreBackup(backup);
-  await adopt(bound.sync, result.data_version);
+  await adopt(
+    bound.sync,
+    result.data_version,
+    cause => new RestoreNotAdoptedError(result, cause)
+  );
   return result;
 }
 
@@ -233,7 +273,8 @@ export async function listVersions(username: string): Promise<DataVersion[]> {
 /**
  * Make data version `version` `username`'s active one, after sending the
  * writes queued here (to the version they were made against), then hold
- * this copy of the data at it, and sync it.
+ * this copy of the data at it, and sync it (`NotAdoptedError` when the API
+ * switched, but this copy did not follow).
  */
 export async function activateVersion(
   username: string,
