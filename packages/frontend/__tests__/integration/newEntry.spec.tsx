@@ -89,4 +89,20 @@ describe('A new entry', () => {
     );
     expect((await storedEntry('tagged-subject')).tags).toEqual(['1']);
   });
+
+  it('saved twice before it is stored (a double click) is stored once', async () => {
+    renderAppAt('/test?entries=untagged');
+    await screen.findByText('test-tag-1');
+
+    await saveNewEntry('twice-subject');
+    fireEvent.click(byId('textEntryNewTopSave'));
+
+    expect(await screen.findByText('twice-subject')).toBeInTheDocument();
+    await waitFor(() => expect(store.entryNew).toBeNull());
+    const {db} = syncSession(TEST_USER);
+    const stored = await db.entries
+      .filter(row => row.attributes.subject === 'twice-subject')
+      .count();
+    expect(stored).toBe(1);
+  });
 });
