@@ -43,10 +43,19 @@ async function payload<S extends z.ZodMiniType>(
   return result.success ? result.data : undefined;
 }
 
-interface GoogleUserInfo {
-  email?: string;
-  email_verified?: boolean;
-}
+/** Google's token answer (`POST /token`). */
+const googleTokenSchema = z.object({
+  access_token: z.string().check(z.minLength(1)),
+});
+
+/**
+ * Google's userinfo. Its email may be missing (a 400) and only
+ * `email_verified: true` proves it, so both are read as they come.
+ */
+const googleUserSchema = z.object({
+  email: z.optional(z.string()),
+  email_verified: z.optional(z.unknown()),
+});
 
 /**
  * Log in (or sign up) the user for a verified email and set cookies. A
@@ -125,18 +134,21 @@ authRoutes.post('/api/v1/google-login', async c => {
   const {code} = validateFields(loginAttributesSchema, attributes);
   const service = new GoogleOAuthService(c.env);
 
-  const tokenResponse = await service.accessToken(code);
-  if (!tokenResponse.ok) {
+  const token = await payload(
+    await service.accessToken(code),
+    googleTokenSchema
+  );
+  if (token === undefined) {
     return unauthorized(c);
   }
-  const {access_token: accessToken} = (await tokenResponse.json()) as {
-    access_token: string;
-  };
-  const userResponse = await service.user(accessToken);
-  if (!userResponse.ok) {
+  const userInfo = await payload(
+    await service.user(token.access_token),
+    googleUserSchema
+  );
+  if (userInfo === undefined) {
     return unauthorized(c);
   }
-  const {email, email_verified} = (await userResponse.json()) as GoogleUserInfo;
+  const {email, email_verified} = userInfo;
   if (!email) {
     throw validationError(noEmail);
   }
