@@ -165,6 +165,60 @@ describe('Data Versions', () => {
     });
   });
 
+  it('says a delete was made when only the list could not be read again', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    await restoreElsewhere();
+    let listFails = false;
+    server.use(
+      // The mock API deletes it (nothing answered here), then lists fail.
+      http.delete(`${API}/user/data_versions/:version`, () => {
+        listFails = true;
+      }),
+      http.get(`${API}/user/data_versions`, () =>
+        listFails ? HttpResponse.json({errors: []}, {status: 500}) : undefined
+      )
+    );
+    const user = await openVersions();
+
+    await user.click((await row(1)).getByText('Delete'));
+    await user.click(
+      await screen.findByRole('button', {name: 'Delete version'})
+    );
+
+    expect(
+      await screen.findByText(/^Done, but this page could not show/)
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Something went wrong/)).toBeNull();
+    listFails = false;
+    await user.click(screen.getByRole('button', {name: 'Dismiss'}));
+    await waitFor(() => {
+      expect(document.getElementById('dataVersion-1')).toBeNull();
+      expect(document.getElementById('dataVersion-2')).not.toBeNull();
+    });
+  });
+
+  it('says a switch was made when this copy could not follow it', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    await restoreElsewhere();
+    const user = await openVersions();
+    vi.spyOn(syncSession(TEST_USER).sync, 'adopt').mockRejectedValueOnce(
+      new Error('the database is closing')
+    );
+
+    await user.click((await row(1)).getByText('Switch to'));
+    await user.click(await screen.findByRole('button', {name: 'Switch'}));
+
+    expect(
+      await screen.findByText(/^Done, but this page could not show/)
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Something went wrong/)).toBeNull();
+    await user.click(screen.getByRole('button', {name: 'Dismiss'}));
+    // The API did switch.
+    expect(
+      await (await row(1)).findByText('Version 1 · Active')
+    ).toBeInTheDocument();
+  });
+
   it('says why the API refused', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     await restoreElsewhere();

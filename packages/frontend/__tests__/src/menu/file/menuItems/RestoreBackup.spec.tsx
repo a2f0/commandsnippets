@@ -229,6 +229,26 @@ describe('Restore Backup', () => {
     );
   });
 
+  it('says the backup was restored when this copy could not take it up', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    await renderEntries();
+    const requests = restoreRequests();
+    vi.spyOn(syncSession(TEST_USER).sync, 'adopt').mockRejectedValueOnce(
+      new Error('the database is closing')
+    );
+    const user = await chooseFile(fileOf(backup));
+
+    await user.click(
+      await screen.findByRole('button', {name: 'Restore backup'})
+    );
+
+    expect(await screen.findByText('Backup restored')).toBeInTheDocument();
+    expect(screen.getByText('Tags: 1 · Entries: 2')).toBeInTheDocument();
+    expect(screen.getByText(/Reload the page to see it/)).toBeInTheDocument();
+    expect(screen.queryByText('Restore failed')).toBeNull();
+    expect(requests).toHaveLength(1);
+  });
+
   it('sends the writes queued here first', async () => {
     await renderEntries();
     const session = syncSession(TEST_USER);

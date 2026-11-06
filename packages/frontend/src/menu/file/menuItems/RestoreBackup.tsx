@@ -5,6 +5,7 @@ import {useTypedTranslation} from '../../../i18n/hooks';
 import {ApiRequestError} from '../../../lib/api/errors';
 import {
   liveCounts,
+  RestoreNotAdoptedError,
   type RestoreTarget,
   readBackupFile,
   restoreBackup,
@@ -89,8 +90,14 @@ const RestoreBackup = ({onClose}: IProps) => {
     }
     setState({step: 'restoring'});
     restoreBackup(username, target, backup)
-      .then(result => setState({step: 'done', result}))
+      .then(result => setState({step: 'done', result, shown: true}))
       .catch((error: unknown) => {
+        if (error instanceof RestoreNotAdoptedError) {
+          // Restored: only this page is behind. Never offer it again.
+          console.error('ERROR: restored, but not taken up here:', error);
+          setState({step: 'done', result: error.result, shown: false});
+          return;
+        }
         console.error('ERROR: backup restore failed:', error);
         setState({
           step: 'failed',
