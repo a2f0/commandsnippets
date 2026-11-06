@@ -179,42 +179,50 @@ export async function restoreTarget(username: string): Promise<RestoreTarget> {
 }
 
 /**
- * A change the API made (`made`: its answer) that this copy of the data
- * could not take up (`SyncEngine.adopt` failed). The change is done: it must
- * not be asked for again, and reloading the page shows it here.
+ * A change the API made that this copy of the data could not take up
+ * (`SyncEngine.adopt` failed). The change is done: it must not be asked for
+ * again, and reloading the page shows it here.
  */
-export class NotAdoptedError<T> extends Error {
-  readonly made: T;
-
-  constructor(made: T, cause: unknown) {
+export class NotAdoptedError extends Error {
+  constructor(cause: unknown) {
     super('The change was made, but this copy of the data did not take it up', {
       cause,
     });
     this.name = 'NotAdoptedError';
-    this.made = made;
+  }
+}
+
+/** A restore the API made (`result`: its answer) not taken up here. */
+export class RestoreNotAdoptedError extends NotAdoptedError {
+  readonly result: RestoreResult;
+
+  constructor(result: RestoreResult, cause: unknown) {
+    super(cause);
+    this.name = 'RestoreNotAdoptedError';
+    this.result = result;
   }
 }
 
 /**
  * Hold this copy of the data at the data version `version`, made active
- * from here (`made`: the API's answer), in turn with its syncs
- * (`SyncEngine.adopt`), and sync it. A sync that fails now is the page's to
- * retry; a failed adopt is a `NotAdoptedError`.
+ * from here, in turn with its syncs (`SyncEngine.adopt`), and sync it. A
+ * sync that fails now is the page's to retry; a failed adopt is
+ * `notAdopted(cause)`.
  */
-async function adopt<T>(
+async function adopt(
   sync: SyncEngine,
   version: number,
-  made: T
-): Promise<T> {
+  notAdopted: (cause: unknown) => NotAdoptedError = cause =>
+    new NotAdoptedError(cause)
+): Promise<void> {
   try {
     await sync.adopt(version);
   } catch (error: unknown) {
-    throw new NotAdoptedError(made, error);
+    throw notAdopted(error);
   }
   await sync.syncAll().catch((error: unknown) => {
     console.warn('WARNING: sync after a data version switch failed:', error);
   });
-  return made;
 }
 
 /**
@@ -227,7 +235,7 @@ async function adopt<T>(
  * copy is held at the new version, and synced. Throws when the queue cannot
  * be sent or the restore fails (`ApiRequestError`, with the API's `detail`
  * when it refused the backup); restored, but not taken up here, it throws
- * `NotAdoptedError` with the API's answer.
+ * `RestoreNotAdoptedError` with the API's answer.
  */
 export async function restoreBackup(
   username: string,
@@ -243,7 +251,12 @@ export async function restoreBackup(
   const result = await bound.api
     .forVersion(target.version)
     .restoreBackup(backup);
-  return adopt(bound.sync, result.data_version, result);
+  await adopt(
+    bound.sync,
+    result.data_version,
+    cause => new RestoreNotAdoptedError(result, cause)
+  );
+  return result;
 }
 
 /** `username`'s data versions, newest first, as their account. */
@@ -272,7 +285,7 @@ export async function activateVersion(
     'Failed to switch data versions'
   );
   await api.activateDataVersion(version);
-  await adopt(sync, version, undefined);
+  await adopt(sync, version);
 }
 
 /** Delete `username`'s data version `version` (one not active). */
