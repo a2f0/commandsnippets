@@ -11,6 +11,7 @@ import {
   expectAuthCookies,
   GOOGLE_TOKEN_URL,
   GOOGLE_USERINFO_URL,
+  type MockRoute,
   mockFetch,
 } from '../support/auth';
 
@@ -132,6 +133,60 @@ describe('GoogleLoginFailures', () => {
     );
     expect(response.status).toBe(401);
   });
+
+  it.each([
+    [
+      'a token answer that is not JSON',
+      [
+        {
+          method: 'POST',
+          url: GOOGLE_TOKEN_URL,
+          body: '<html>busy</html>',
+          contentType: 'text/html',
+        },
+      ],
+    ],
+    [
+      'a token answer without an access token',
+      [{method: 'POST', url: GOOGLE_TOKEN_URL, body: {token_type: 'Bearer'}}],
+    ],
+    [
+      'userinfo that is not JSON',
+      [
+        {method: 'POST', url: GOOGLE_TOKEN_URL, body: {access_token: 'token'}},
+        {
+          method: 'GET',
+          url: GOOGLE_USERINFO_URL,
+          body: 'oops',
+          contentType: 'text/plain',
+        },
+      ],
+    ],
+    [
+      'userinfo whose email is not a string',
+      [
+        {method: 'POST', url: GOOGLE_TOKEN_URL, body: {access_token: 'token'}},
+        {
+          method: 'GET',
+          url: GOOGLE_USERINFO_URL,
+          body: {email: 42, email_verified: true},
+        },
+      ],
+    ],
+  ] satisfies Array<[string, MockRoute[]]>)(
+    'returns 401 on %s',
+    async (_, routes) => {
+      const calls = mockFetch(routes);
+      const response = await new ApiClient().post(
+        '/api/v1/google-login/',
+        payload
+      );
+      expect(response.status).toBe(401);
+      expect(await json(response)).toEqual({errors: []});
+      // Nothing is asked of Google with a token it did not give.
+      expect(calls.length).toBe(routes.length);
+    }
+  );
 
   it('requires a code', async () => {
     const response = await new ApiClient().post('/api/v1/google-login/', {
