@@ -126,6 +126,8 @@ export const es: I18NextTranslations = {
     restoreDoneTitle: 'Copia de seguridad restaurada',
     restoreDoneText:
       'Tus datos son ahora los de la copia de seguridad, como versión {{version}}.',
+    restoreDoneNotShown:
+      'Esta página aún no pudo mostrarlo. Recarga la página para verlo; no hace falta restaurar de nuevo.',
     restoreFailedTitle: 'No se pudo restaurar',
     restoreFailedText:
       'No se pudo restaurar la copia de seguridad. Comprueba tu conexión e inténtalo de nuevo.',
@@ -155,6 +157,8 @@ export const es: I18NextTranslations = {
     dataVersionsLoading: 'Cargando…',
     dataVersionsFailed:
       'Algo salió mal. Comprueba tu conexión e inténtalo de nuevo.',
+    dataVersionsMadeNotShown:
+      'Hecho, pero esta página no pudo mostrar el resultado. Recarga la página para verlo; no hace falta hacerlo de nuevo.',
     hud: 'HUD',
     logs: 'Registros',
     analytics: 'Analíticas',

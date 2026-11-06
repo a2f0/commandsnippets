@@ -179,15 +179,42 @@ export async function restoreTarget(username: string): Promise<RestoreTarget> {
 }
 
 /**
- * Hold this copy of the data at the data version `version`, made active
- * from here, in turn with its syncs (`SyncEngine.adopt`), and sync it. A
- * sync that fails now is the page's to retry.
+ * A change the API made (`made`: its answer) that this copy of the data
+ * could not take up (`SyncEngine.adopt` failed). The change is done: it must
+ * not be asked for again, and reloading the page shows it here.
  */
-async function adopt(sync: SyncEngine, version: number): Promise<void> {
-  await sync.adopt(version);
+export class NotAdoptedError<T> extends Error {
+  readonly made: T;
+
+  constructor(made: T, cause: unknown) {
+    super('The change was made, but this copy of the data did not take it up', {
+      cause,
+    });
+    this.name = 'NotAdoptedError';
+    this.made = made;
+  }
+}
+
+/**
+ * Hold this copy of the data at the data version `version`, made active
+ * from here (`made`: the API's answer), in turn with its syncs
+ * (`SyncEngine.adopt`), and sync it. A sync that fails now is the page's to
+ * retry; a failed adopt is a `NotAdoptedError`.
+ */
+async function adopt<T>(
+  sync: SyncEngine,
+  version: number,
+  made: T
+): Promise<T> {
+  try {
+    await sync.adopt(version);
+  } catch (error: unknown) {
+    throw new NotAdoptedError(made, error);
+  }
   await sync.syncAll().catch((error: unknown) => {
     console.warn('WARNING: sync after a data version switch failed:', error);
   });
+  return made;
 }
 
 /**
@@ -199,7 +226,8 @@ async function adopt(sync: SyncEngine, version: number): Promise<void> {
  * or a switch elsewhere, which a sync here may have taken up). Then this
  * copy is held at the new version, and synced. Throws when the queue cannot
  * be sent or the restore fails (`ApiRequestError`, with the API's `detail`
- * when it refused the backup).
+ * when it refused the backup); restored, but not taken up here, it throws
+ * `NotAdoptedError` with the API's answer.
  */
 export async function restoreBackup(
   username: string,
@@ -215,8 +243,7 @@ export async function restoreBackup(
   const result = await bound.api
     .forVersion(target.version)
     .restoreBackup(backup);
-  await adopt(bound.sync, result.data_version);
-  return result;
+  return adopt(bound.sync, result.data_version, result);
 }
 
 /** `username`'s data versions, newest first, as their account. */
@@ -233,7 +260,8 @@ export async function listVersions(username: string): Promise<DataVersion[]> {
 /**
  * Make data version `version` `username`'s active one, after sending the
  * writes queued here (to the version they were made against), then hold
- * this copy of the data at it, and sync it.
+ * this copy of the data at it, and sync it (`NotAdoptedError` when the API
+ * switched, but this copy did not follow).
  */
 export async function activateVersion(
   username: string,
@@ -244,7 +272,7 @@ export async function activateVersion(
     'Failed to switch data versions'
   );
   await api.activateDataVersion(version);
-  await adopt(sync, version);
+  await adopt(sync, version, undefined);
 }
 
 /** Delete `username`'s data version `version` (one not active). */

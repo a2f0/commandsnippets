@@ -21,6 +21,7 @@ import {
   deleteVersion,
   exportBackup,
   listVersions,
+  NotAdoptedError,
 } from '../../../lib/data/backup';
 import {formatTimestamp} from '../../../lib/formatTimestamp';
 
@@ -30,6 +31,11 @@ type Step =
   | {step: 'confirmSwitch'; version: number}
   | {step: 'confirmDelete'; version: number}
   | {step: 'working'}
+  /**
+   * The request was made, but this page could not show it (the list could
+   * not be read again, or this copy of the data did not follow a switch).
+   */
+  | {step: 'madeNotShown'}
   /** `detail`: why the API refused, when it said. */
   | {step: 'failed'; detail: string | undefined};
 
@@ -42,6 +48,15 @@ interface IProps {
 
 const counts = {fontFamily: 'monospace', color: 'text.primary'} as const;
 
+/** The step after a request failed with `error`. */
+const failedStep = (error: unknown): Step =>
+  error instanceof NotAdoptedError
+    ? {step: 'madeNotShown'}
+    : {
+        step: 'failed',
+        detail: error instanceof ApiRequestError ? error.detail : undefined,
+      };
+
 const button = (id: string, label: string, onClick: () => void) => (
   <Button id={id} key={id} size="small" variant="outlined" onClick={onClick}>
     {label}
@@ -51,7 +66,8 @@ const button = (id: string, label: string, onClick: () => void) => (
 /**
  * The versions (read again each time the dialog opens), and the step the
  * dialog is at. `run` does a request, then lists the versions again; a
- * failure says so.
+ * failed request says so, and a request made that this page could not show
+ * says it was made.
  */
 function useDataVersions(open: boolean, username: string) {
   const [versions, setVersions] = React.useState<DataVersion[] | null>(null);
@@ -65,18 +81,23 @@ function useDataVersions(open: boolean, username: string) {
   const run = React.useCallback(
     (work: () => Promise<void>) => {
       setStep({step: 'working'});
-      work()
-        .then(async () => {
+      const made = async () => {
+        try {
+          await work();
+        } catch (error: unknown) {
+          console.error('ERROR: data version request failed:', error);
+          setStep(failedStep(error));
+          return;
+        }
+        try {
           await load();
           setStep({step: 'list'});
-        })
-        .catch((error: unknown) => {
-          console.error('ERROR: data version request failed:', error);
-          setStep({
-            step: 'failed',
-            detail: error instanceof ApiRequestError ? error.detail : undefined,
-          });
-        });
+        } catch (error: unknown) {
+          console.error('ERROR: could not list data versions:', error);
+          setStep({step: 'madeNotShown'});
+        }
+      };
+      void made();
     },
     [load]
   );
@@ -200,6 +221,10 @@ function useStepContent(
   const text = (content: React.ReactNode) => (
     <DialogContentText id="dataVersionsText">{content}</DialogContentText>
   );
+  const dismiss = button('dataVersionsDismiss', tCommon('dismiss'), () => {
+    setStep({step: 'list'});
+    load().catch(() => setStep({step: 'failed', detail: undefined}));
+  });
   switch (step.step) {
     case 'confirmSwitch':
       return {
@@ -246,10 +271,13 @@ function useStepContent(
             )}
           </>
         ),
-        actions: button('dataVersionsDismiss', tCommon('dismiss'), () => {
-          setStep({step: 'list'});
-          load().catch(() => setStep({step: 'failed', detail: undefined}));
-        }),
+        actions: dismiss,
+      };
+    case 'madeNotShown':
+      return {
+        title: t('dataVersionsTitle'),
+        body: text(t('dataVersionsMadeNotShown')),
+        actions: dismiss,
       };
     default:
       return {
