@@ -93,6 +93,24 @@ results stay visible, and run interactive tools and servers directly too. Never
 narrow a suite or silence warnings to reduce output. Keep other structured
 decision output visible as well.
 
+## State machines
+
+Make implicit state machines explicit when you write or change code: one closed
+state type (a discriminated union, enum, or sealed type) carrying each state's
+data, typed events, and one pure transition function, with effects run on
+entering a state and async work tagged so only the current request can finish.
+Follow the `explicit-state-machines` skill for what to convert, what to leave
+alone, and how to prove behavior did not change; `agent-tool state-machines`
+lists leads. Reviews flag new implicit machines.
+
+Here the tag is `status` (dialog flows use `step`), and each machine exports one
+pure `transition<Name>(state, event)` next to its hook or component, ending in
+an `assertNever` default and tested with `it.each` transition tables; see
+`components/entries/useReuseHistory.ts` and `components/analytics/analyticsRead.ts`
+in `packages/frontend/src`. Loading states carry a request number. Machines
+cluster in the frontend's data reads, `lib/sync`, and the File menu's restore
+and data-version dialogs (`menu/file/menuItems`).
+
 ## Dependency documentation
 
 Read [dependency maintenance](docs/dependencies.md) before upgrades. Keep reusable
