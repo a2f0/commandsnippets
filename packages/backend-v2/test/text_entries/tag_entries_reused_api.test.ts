@@ -3,9 +3,12 @@ import {
   backupSchema,
 } from '@commandsnippets/api-shared';
 import {beforeEach, describe, expect, it} from 'vitest';
+import {syncClock} from '../../src/db/schema';
+import {formatMicros, isoformat} from '../../src/lib/clock';
 import {
   type Base,
   clientFor,
+  db,
   type Json,
   json,
   refreshEntry,
@@ -416,6 +419,37 @@ describe('EntryReusesApi v2', () => {
     expect(backupSchema.safeParse(backup).success).toBe(true);
     expect(backup.entry_reuses[0].date_created).toBe(made);
   });
+
+  it.each([undefined, 'future-write'])(
+    'clamps a future copy to the write clock and keeps it on retry (%s)',
+    async writeId => {
+      const {user1, user1Client} = base;
+      const entry = await textEntryFactory({user: user1});
+      const send = () =>
+        user1Client.request(
+          'POST',
+          '/api/v1/entry_reuses',
+          reusePayload(entry.id, 'future-copy'),
+          {
+            'Client-Updated': '2999-01-01T00:00:00.123456',
+            ...(writeId === undefined ? {} : {'Client-Write-Id': writeId}),
+          }
+        );
+      const response = await send();
+      expect(response.status).toBe(201);
+      const original = (await json(response)).data;
+      const [clock] = await db().select().from(syncClock);
+      expect(clock?.micros).toBeGreaterThan(0);
+      expect(original.attributes.date_created).toBe(
+        isoformat(formatMicros(clock?.micros ?? 0))
+      );
+      expect(original.attributes.date_created < '2999-01-01').toBe(true);
+      const retry = await send();
+      expect(retry.status).toBe(201);
+      expect((await json(retry)).data).toEqual(original);
+      expect((await refreshEntry(entry.id))?.reused_count).toBe(1);
+    }
+  );
 
   it.each([
     'not-a-time',
