@@ -1,5 +1,10 @@
 import {describe, expect, it} from 'vitest';
-import {entryPath, reusesPath, routeOf} from '../../../../src/lib/router/route';
+import {
+  entryPath,
+  reusesPath,
+  routeOf,
+  tagPath,
+} from '../../../../src/lib/router/route';
 
 describe('routeOf', () => {
   it.each([
@@ -57,6 +62,17 @@ describe('routeOf', () => {
       page: 'reuses',
       user: 'a/b c',
     });
+  });
+
+  it.each([
+    ['oauth/github', 'C#/literal%20'],
+    ['literal%2F', 'ops?x=1#top'],
+    ['café', 'plus+space tag'],
+  ])('round-trips a tag path for %s without query or hash', (user, tag) => {
+    const url = new URL(tagPath(user, tag), 'https://example.com');
+    expect(url.search).toBe('');
+    expect(url.hash).toBe('');
+    expect(routeOf(url.pathname)).toEqual({page: 'user', user, tag});
   });
 
   it("names an entry's page, any id round-tripping", () => {

@@ -7,6 +7,7 @@ import {
   useRouteParam,
   useSearchParam,
 } from '../../lib/router/navigation';
+import {tagPath} from '../../lib/router/route';
 import {useAppState} from '../../lib/state/appState';
 import {TagList} from './TagList';
 
@@ -47,7 +48,7 @@ const TagListWrapper = () => {
       first !== undefined
     ) {
       setTagSelectedID(first.id);
-      navigate(`/${user}/${encodeURIComponent(first.attributes.name)}`);
+      navigate(tagPath(user, first.attributes.name));
     }
   }, [user, tag, entriesList, current, first, setTagSelectedID]);
 

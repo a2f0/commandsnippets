@@ -3,18 +3,25 @@ import {useMounted} from '../../hooks/useMounted';
 import {useSaveError} from '../../hooks/useSaveError';
 import type {ITagJsonApi} from '../../lib/api/responses/types';
 import {useSession} from '../../lib/data/hooks';
+import {isCurrentTagRename} from '../../lib/data/tagRename';
 import {renameTag} from '../../lib/data/writes';
+import {currentPath} from '../../lib/router/navigation';
+import {useAppState} from '../../lib/state/appState';
+import {sessionsEndedCount} from '../../lib/sync/session';
 import {TagForm} from './TagForm';
 
 interface ITagEdit {
   object: ITagJsonApi;
-  /** After the rename is stored, with the renamed tag. */
+  /** Close this editor after its rename is stored, never a replacement. */
   handleSaveParent: (renamed: ITagJsonApi) => void;
+  /** Follow the stored rename even if the editor was closed meanwhile. */
+  handleStoredParent?: (renamed: ITagJsonApi) => void;
   handleCancelEditParent: () => void;
 }
 
 const TagEdit = ({
   handleSaveParent,
+  handleStoredParent,
   handleCancelEditParent,
   object,
 }: ITagEdit) => {
@@ -27,10 +34,29 @@ const TagEdit = ({
       return;
     }
     saveError.clear();
+    const generation = sessionsEndedCount();
+    const path = currentPath();
+    const sameSession = () =>
+      generation === sessionsEndedCount() &&
+      useAppState.getState().loggedInUser === session.username;
     renameTag(session, object.id, tagName)
-      .then(renamed => {
-        if (mounted.current && renamed !== null) {
+      .then(async renamed => {
+        if (renamed === null || !sameSession()) return;
+        if (
+          handleStoredParent !== undefined &&
+          !(await isCurrentTagRename(
+            session,
+            renamed,
+            object.relationships.user.data.id
+          ))
+        )
+          return;
+        if (!sameSession()) return;
+        if (mounted.current) {
           handleSaveParent(renamed);
+        }
+        if (handleStoredParent !== undefined && currentPath() === path) {
+          handleStoredParent(renamed);
         }
       })
       .catch(saveError.failed);

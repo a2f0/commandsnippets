@@ -1,11 +1,32 @@
 import Alert from '@mui/material/Alert';
 import Grid from '@mui/material/Grid';
 import type React from 'react';
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import {useDocumentKeydown} from '../../hooks/useDocumentKeydown';
+import {appMode} from '../../lib/shared';
+import {useAppState} from '../../lib/state/appState';
 import {StyledTagButton} from './StyledTagButton';
 import {StyledTagFormContainer} from './StyledTagFormContainer';
 import {StyledTextFieldTags} from './StyledTextFieldTags';
+
+// The mounted forms own the keyboard mode, not the rows that open them.
+// Closing one must not release another tag editor's (or entry editor's) mode.
+const mountedForms = new Set<object>();
+
+function useTagEditorMode() {
+  useEffect(() => {
+    const owner = {};
+    mountedForms.add(owner);
+    useAppState.getState().setAppMode(appMode.tagEditor);
+    return () => {
+      mountedForms.delete(owner);
+      const state = useAppState.getState();
+      if (mountedForms.size === 0 && state.appMode === appMode.tagEditor) {
+        state.setAppMode(appMode.tagsList);
+      }
+    };
+  }, []);
+}
 
 interface ITagFormProps {
   /** The ids of the form, its name field and its buttons. */
@@ -34,6 +55,7 @@ export const TagForm = ({
   cancelRef,
   error = null,
 }: ITagFormProps) => {
+  useTagEditorMode();
   const [name, setName] = useState<string>(initialName);
   useDocumentKeydown(event => {
     if (event.code === 'Escape') {

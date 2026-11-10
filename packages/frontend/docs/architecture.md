@@ -117,8 +117,13 @@ API; everything else the app keeps is a zustand store.
   one the API would refuse is never queued, and its editor keeps it.
 - **Reuses**: every copy of an entry (its copy icon, a click on its body,
   its menu's Copy, Enter in the list: `copyEntry`) is a reuse
-  (`reuseEntry`): the entry's `reused_count`
-  goes up at once, shown beside its subject (`EntryReuseCount`), and the
+  (`reuseEntry`) only after the clipboard accepts it. Failed clipboard
+  writes count nothing and show no success. Feedback belongs to the newest
+  successful copy in the same account and a still-mounted view; a newer
+  failed attempt does not suppress an older success. Counting uses the
+  captured original session, even for stale feedback, and a failure to count
+  is logged without undoing clipboard success. The entry's `reused_count`
+  goes up locally, shown beside its subject (`EntryReuseCount`), and the
   reuse is queued with a client id of its own (`client_id`), so one retried
   after a lost answer is counted once. Its answer is the entry as counted. A
   read-only page counts nothing. A reuse leaves the entry's revision alone
@@ -466,6 +471,16 @@ writing its type by hand.
 
 ## Routing
 
+Editor completion has two owners. Only the still-mounted editor may close
+its own form; pending writes are not cancelled by closing it. A persisted
+selected-tag rename also corrects its URL, even after Cancel or Escape, but
+only when the original path/query, session generation, username, bound
+account and stored renamed tag still match. `lib/data/tagRename.ts` checks
+the account and stored row without exposing IndexedDB to UI components.
+A replacement draft stays open and remains saveable. `TagForm` owns keyboard
+mode while mounted, releasing it only when no tag form remains and another
+editor has not taken the mode.
+
 The app's own router, `src/lib/router/` (no React Router: its hooks render
 every component that calls them on any change of the URL, `React.memo` or
 not, so a tag switch rendered every tag and entry row and the whole page).
@@ -473,7 +488,10 @@ not, so a tag switch rendered every tag and entry row and the whole page).
 - `route.ts`: `routeOf(pathname)`, the page (`admin`, `githubOAuth`,
   `googleOAuth`, `user`, `entry`, `root`, `none`), a user's page's `user`
   and `tag`, and an entry's page's `user` and `entryId` (`entryPath` makes
-  one), decoded and matched as React Router matched them. A tag named
+  one). `tagPath` encodes both username and tag as separate segments for
+  click, keyboard, first-tag and rename navigation. Parsing splits before
+  decoding, so encoded slashes remain inside their segment and literal
+  percent escapes are decoded once. A tag named
   `entries` is still a tag (`/:user/entries`); `/:user/entries/:id` is the
   entry's page.
 - `navigation.ts`: the URL as an external store. Read it through a selector

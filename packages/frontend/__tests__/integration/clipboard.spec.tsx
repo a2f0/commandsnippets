@@ -163,6 +163,44 @@ it('does not let an older body copy replace a newer keyboard copy', async () => 
   });
 });
 
+it('reports an older successful copy when the newer request fails', async () => {
+  const older = Promise.withResolvers<void>();
+  const newer = Promise.withResolvers<void>();
+  vi.spyOn(navigator.clipboard, 'writeText')
+    .mockReturnValueOnce(older.promise)
+    .mockReturnValueOnce(newer.promise);
+  const failed = vi.spyOn(console, 'error').mockImplementation(() => {});
+  await openSource('body');
+  startCopy('body');
+  act(() => store.setEntrySelectedID('2'));
+  startCopy('keyboard');
+  expect(navigator.clipboard.writeText).toHaveBeenLastCalledWith(
+    'entry-2-body'
+  );
+  await act(async () => {
+    newer.reject(
+      new DOMException('Clipboard permission denied', 'NotAllowedError')
+    );
+    await newer.promise.catch(() => undefined);
+    older.resolve();
+    await older.promise;
+  });
+  expect(failed).toHaveBeenCalledExactlyOnceWith(
+    'Failed to copy the entry:',
+    expect.objectContaining({name: 'NotAllowedError'})
+  );
+  await waitFor(async () => {
+    const entries = await syncSession(TEST_USER).db.entries.bulkGet([
+      [TEST_USER, '1'],
+      [TEST_USER, '2'],
+    ]);
+    expect(entries.map(entry => entry?.attributes.reused_count)).toEqual([
+      1, 0,
+    ]);
+  });
+  expect(store.mostRecentCopyID).toBe('1');
+});
+
 it('still reports a successful copy when recording its reuse fails', async () => {
   vi.spyOn(writes, 'reuseEntry').mockRejectedValueOnce(
     new Error('Storage unavailable')

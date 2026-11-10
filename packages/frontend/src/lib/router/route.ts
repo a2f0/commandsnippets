@@ -39,6 +39,10 @@ export interface Route {
 export const entryPath = (user: string, entryId: string): string =>
   `/${encodeURIComponent(user)}/entries/${encodeURIComponent(entryId)}`;
 
+/** The path of `user`'s tag, preserving each value as one segment. */
+export const tagPath = (user: string, tag: string): string =>
+  `/${encodeURIComponent(user)}/${encodeURIComponent(tag)}`;
+
 export const reusesPath = (user: string): string =>
   `/${encodeURIComponent(user)}/activity/reuses`;
 

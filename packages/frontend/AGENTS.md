@@ -58,6 +58,12 @@ touches before making it, and keep them current. The rules most changes meet:
 - Read the URL through `src/lib/router/` selectors that return a value
   (`useRoute(route => route.page)`, `useRouteParam`), selecting the least a
   component needs; handlers use `currentRoute()` and `navigate()`.
+- Keep editor closing scoped to its mounted instance. A completed write may
+  still need a data-related follow-up: a renamed selected tag follows its new
+  URL only while the original route, session and account still apply. Test
+  both the selected-tag route and a cancelled/reopened draft's next save.
+- Let mounted forms own editor keyboard mode. Closing one must not take it
+  from another editor; test real list shortcuts after Save and Cancel too.
 - Keep list rows cheap: memoized rows with narrow selectors, stable
   callbacks, context menus rendered only while open, and row data from props
   rather than a live query per row.
