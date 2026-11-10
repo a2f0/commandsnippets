@@ -27,7 +27,12 @@ import {
 import type {AppEnv} from '../env';
 import {isoformat, now} from '../lib/clock';
 import {notFound} from '../lib/errors';
-import {findVersionNumber, versionNumber, versionOf} from './dataVersions';
+import {
+  findVersionNumber,
+  versionNumber,
+  versionOf,
+  versionWhere,
+} from './dataVersions';
 
 export const backupRoutes = new Hono<AppEnv>();
 
@@ -49,11 +54,7 @@ function backupVersion(
       );
 }
 
-/**
- * `userId`'s live rows of `version`, in one batch, so one transaction: the
- * rows are read as of one moment, and every tagging's tag and entry is
- * among the tags and entries read.
- */
+/** Build the queries for `userId`'s live rows of `version`. */
 function backupRowQueries(db: Db, userId: number, version: number) {
   const live = (table: typeof tags | typeof textEntries | typeof tagsEntries) =>
     and(
@@ -131,15 +132,17 @@ function backupRowQueries(db: Db, userId: number, version: number) {
   ] as const;
 }
 
-/** Check existence in the rows' transaction, not only before it. */
+/**
+ * Read `userId`'s live rows of `version` in one batch, so one transaction:
+ * every tagging's tag and entry is among the tags and entries read.
+ * Check version existence in that transaction, not only before it.
+ */
 async function readBackupRows(db: Db, userId: number, version: number) {
   const [[found], ...rows] = await db.batch([
     db
       .select({version: dataVersions.version})
       .from(dataVersions)
-      .where(
-        and(eq(dataVersions.user_id, userId), eq(dataVersions.version, version))
-      )
+      .where(versionWhere(userId, version))
       .limit(1),
     ...backupRowQueries(db, userId, version),
   ]);

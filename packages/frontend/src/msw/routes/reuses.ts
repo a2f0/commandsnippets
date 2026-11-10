@@ -1,5 +1,8 @@
 /** `/entry_reuses`: an entry's or the profile's reuses, and recording one. */
 import {
+  CLIENT_UPDATED_HEADER,
+  CODES,
+  parseDateTime,
   type TextEntryReused,
   type TextEntryReusedDocument,
   type TextEntryReusedListDocument,
@@ -7,9 +10,10 @@ import {
   textEntryReusedCreateRelationshipsSchema,
 } from '@commandsnippets/api-shared';
 import {HttpResponse} from 'msw/http';
-import {nextRevision, pagination} from '../documents';
+import {nextRevision, now, pagination} from '../documents';
 import {type EntriesState, ownedByTestUser} from '../fixtures';
 import {
+  apiError,
   type ErrorObject,
   MockApiError,
   parseResource,
@@ -60,25 +64,33 @@ function listReuses({request}: RouteInfo) {
 
 /**
  * A new reuse of entry `entryId` of `state`'s, recorded under `clientId`:
- * the entry's reused_count goes up (as the API's trigger does), its revision
- * stays.
+ * keep the original copy time, capped at now, even before the entry upload.
+ * Legacy requests without a time keep the mock's increasing clock. The
+ * entry's reused_count goes up (as the API's trigger does), its revision stays.
  */
 function newReuse(
   state: EntriesState,
   entryId: string,
-  clientId: string | null
+  clientId: string | null,
+  at: string | null
 ): TextEntryReused {
+  const current = now();
+  const created =
+    at === null
+      ? nextRevision(reuses.map(({reuse}) => reuse.attributes.date_created))
+      : at < current
+        ? at
+        : current;
   const reuse: TextEntryReused = {
     type: 'TextEntryReused',
     id: nextId(
       'TextEntryReused',
       reuses.map(({reuse}) => reuse)
     ),
-    // After every reuse before it, as the API's clock never repeats.
     attributes: {
-      date_created: nextRevision(
-        reuses.map(({reuse}) => reuse.attributes.date_created)
-      ),
+      date_created: created.endsWith('.000000')
+        ? created.slice(0, 19)
+        : created,
     },
     relationships: {
       text_entry: {data: {type: 'TextEntry', id: entryId}},
@@ -124,11 +136,20 @@ async function recordReuse({request}: RouteInfo) {
   if (entryId === undefined) {
     throw new MockApiError(400, errors);
   }
+  const header = request.headers.get(CLIENT_UPDATED_HEADER);
+  const at = header === null ? null : parseDateTime(header);
+  if (header !== null && at === null) {
+    throw apiError(
+      400,
+      CODES.invalid,
+      `${CLIENT_UPDATED_HEADER} is not a datetime.`
+    );
+  }
   const recorded =
     (clientId === undefined
       ? undefined
       : reuses.find(candidate => candidate.clientId === clientId)?.reuse) ??
-    newReuse(state, entryId, clientId ?? null);
+    newReuse(state, entryId, clientId ?? null, at);
   const reusedId = recorded.relationships.text_entry.data.id;
   const include = new URL(request.url).searchParams.get('include');
   const body: TextEntryReusedDocument = {

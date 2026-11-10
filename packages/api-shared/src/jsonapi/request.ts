@@ -2,10 +2,11 @@
  * Request documents: `{data: {type, id?, attributes?, relationships?}}`,
  * checked as django-rest-framework-json-api's parser checked them. The
  * envelope fails at its first error, in this order: no primary data (400),
- * the wrong type (409), a missing (400) or different (409) id where the
- * endpoint has one, then the first relationship whose linkage is malformed
- * (400). Attributes and relationships are then validated as serializer
- * fields, every failing field reported.
+ * the wrong type (409), an id that cannot be converted to a string (400),
+ * a missing (400) or different (409) id where the endpoint has one, then
+ * the first relationship whose linkage is malformed (400). Attributes and
+ * relationships are then validated as serializer fields, every failing field
+ * reported.
  */
 import * as z from 'zod/mini';
 import {DOCUMENT_POINTER, type ErrorMeta, fail, forward} from '../issues';
@@ -115,6 +116,8 @@ export function requestEnvelopeSchema<const T extends string>({
       }
       const id = data['id'] === undefined ? undefined : stringValue(data['id']);
       if (data['id'] !== undefined && id === undefined) {
+        // A malformed primary identifier uses the same identifier-object
+        // diagnostic as linkage, but the envelope's /data pointer and code.
         return fail(ctx, MESSAGES.invalidLinkage, PARSE_ERROR);
       }
       const idIssue = idFailure(id, endpointId, requireId);

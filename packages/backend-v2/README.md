@@ -306,6 +306,12 @@ was.
 A queued reuse records its copy time from `Client-Updated` in `date_created`,
 not its upload time, with the same clock clamping and missing-header fallback.
 Its `client_id` makes retries count once and retain the original copy time.
+Tags and entries still use their server creation time: when an entry is created
+and copied offline, its copy can therefore predate the entry's `date_created`.
+Analytics keeps those meanings: reuse activity belongs to the copy's day,
+creation activity to the entry's upload day. Do not clamp a copy to that upload
+time, which would lose when it happened. Datetimes must normalize to UTC years
+1 through 9999; an out-of-range `Client-Updated` is a 400, not a stored date.
 Copies still leave the entry's edit revision unchanged; incremental entry
 sync does not deliver another device's reuse counts.
 

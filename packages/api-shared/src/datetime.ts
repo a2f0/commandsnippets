@@ -31,7 +31,7 @@ const DATE_TIME =
  * compares chronologically as a string. Accepts `str(datetime)` (space
  * separator), ISO 8601 with `T`, 0-9 fractional digits, and an optional UTC
  * offset (`Z`, `+05:30`, `+0530`, or Postgres's short `+00`). Returns null
- * when the value is not a valid date/time.
+ * when the value is not a valid date/time or UTC falls outside years 1–9999.
  */
 export function parseDateTime(value: string): string | null {
   const match = DATE_TIME.exec(value.trim());
@@ -40,7 +40,7 @@ export function parseDateTime(value: string): string | null {
   }
   const [, date, hh = '00', mm = '00', ss = '00', fraction = '', offset] =
     match;
-  const micros = Number(fraction.padEnd(6, '0').slice(0, 6));
+  const micros = fraction.padEnd(6, '0').slice(0, 6);
   const base = Date.parse(`${date}T${hh}:${mm}:${ss}Z`);
   if (Number.isNaN(base)) {
     return null;
@@ -52,5 +52,11 @@ export function parseDateTime(value: string): string | null {
     offsetMinutes =
       sign * (Number(digits.slice(0, 2)) * 60 + Number(digits.slice(2) || 0));
   }
-  return formatMicros((base - offsetMinutes * 60_000) * 1000 + micros);
+  const utc = new Date(base - offsetMinutes * 60_000);
+  if (utc.getUTCFullYear() < 1 || utc.getUTCFullYear() > 9999) {
+    return null;
+  }
+  // Keep the fraction separate: microseconds at the year bounds exceed the
+  // safe integer range, and adding them can round into an expanded ISO year.
+  return `${utc.toISOString().slice(0, 19)}.${micros}`;
 }
