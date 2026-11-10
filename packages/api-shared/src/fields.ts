@@ -11,6 +11,7 @@
 import * as z from 'zod/mini';
 import {check, fail} from './issues';
 import {CODES, MESSAGES} from './messages';
+import {stringValue} from './records';
 
 // The checks are built in functions, not at the top level: a bundler keeps a
 // top-level read of `MESSAGES.x` (a getter could run), and with it all of
@@ -123,8 +124,8 @@ export function pkField() {
   return z.pipe(
     present(notNull()),
     z.transform((value: unknown, ctx) => {
-      const pk = String(value);
-      if (!/^\d+$/.test(pk) || typeof value === 'boolean') {
+      const pk = stringValue(value);
+      if (pk === undefined || !/^\d+$/.test(pk) || typeof value === 'boolean') {
         const received = typeof value === 'string' ? 'str' : typeof value;
         return fail(ctx, MESSAGES.incorrectPkType(received), {
           code: CODES.incorrectType,
@@ -159,7 +160,12 @@ export function relatedField<const T extends string>(type: T) {
   return z.pipe(
     present(notNull()),
     z.transform((value: unknown, ctx): ToOneLinkage<T> => {
-      const pk = String(value);
+      const pk = stringValue(value);
+      if (pk === undefined) {
+        return fail(ctx, MESSAGES.incorrectPkType(typeof value), {
+          code: CODES.incorrectType,
+        });
+      }
       if (!/^\d+$/.test(pk)) {
         return fail(ctx, MESSAGES.pkDoesNotExist(pk), {
           code: CODES.doesNotExist,

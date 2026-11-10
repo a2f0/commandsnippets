@@ -8,11 +8,11 @@ import {Hono} from 'hono';
 import {requireUser} from '../auth/permissions';
 import {entryReuses, type TextEntryReused} from '../db/schema';
 import type {AppEnv} from '../env';
-import {now} from '../lib/clock';
 import {methodNotAllowed} from '../lib/errors';
 import {parseResource} from '../lib/jsonapi/request';
 import {validateFields} from '../lib/validate';
 import {versionOf} from './dataVersions';
+import {clientUpdated} from './lww';
 import {textEntryResource, textEntryReusedResource} from './owned';
 import {resolveRelated} from './related';
 import {TEXT_ENTRY_REUSED} from './resourceTypes';
@@ -63,6 +63,7 @@ entryReuseRoutes.post('/', async c => {
     textEntryReusedCreateRelationshipsSchema,
     {text_entry: textEntryResource}
   );
+  const at = await clientUpdated(c);
   return createOnce(
     c,
     {...textEntryReusedResource, clientId: entryReuses.client_id},
@@ -75,7 +76,8 @@ entryReuseRoutes.post('/', async c => {
           user_id: user.id,
           version,
           client_id: clientId ?? null,
-          date_created: now(),
+          // Fixed-width UTC only, without the write id's tie-break suffix.
+          date_created: at.slice(0, 26),
         })
         .returning()
   );

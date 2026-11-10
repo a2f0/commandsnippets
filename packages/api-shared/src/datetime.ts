@@ -16,7 +16,9 @@ export function formatMicros(micros: number): string {
   const seconds = new Date(Math.floor(micros / 1000))
     .toISOString()
     .slice(0, 19);
-  const fraction = String(micros % 1_000_000).padStart(6, '0');
+  const fraction = String(
+    ((micros % 1_000_000) + 1_000_000) % 1_000_000
+  ).padStart(6, '0');
   return `${seconds}.${fraction}`;
 }
 

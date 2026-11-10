@@ -10,7 +10,7 @@
 import * as z from 'zod/mini';
 import {DOCUMENT_POINTER, type ErrorMeta, fail, forward} from '../issues';
 import {CODES, MESSAGES} from '../messages';
-import {isRecord} from '../records';
+import {isRecord, stringValue} from '../records';
 
 const PARSE_ERROR: ErrorMeta = {
   code: CODES.parseError,
@@ -76,7 +76,9 @@ function linkages(
     if (linkage === null) {
       ids.push([name, null]);
     } else if (isRecord(linkage) && linkage['id'] !== undefined) {
-      ids.push([name, String(linkage['id'])]);
+      const id = stringValue(linkage['id']);
+      if (id === undefined) return {malformed: name};
+      ids.push([name, id]);
     } else {
       return {malformed: name};
     }
@@ -104,11 +106,17 @@ export function requestEnvelopeSchema<const T extends string>({
       if (data['type'] !== type) {
         return fail(
           ctx,
-          MESSAGES.typeMismatch(String(data['type']), type),
+          MESSAGES.typeMismatch(
+            stringValue(data['type']) ?? typeof data['type'],
+            type
+          ),
           CONFLICT
         );
       }
-      const id = data['id'] === undefined ? undefined : String(data['id']);
+      const id = data['id'] === undefined ? undefined : stringValue(data['id']);
+      if (data['id'] !== undefined && id === undefined) {
+        return fail(ctx, MESSAGES.invalidLinkage, PARSE_ERROR);
+      }
       const idIssue = idFailure(id, endpointId, requireId);
       if (idIssue !== undefined) {
         return fail(ctx, ...idIssue);

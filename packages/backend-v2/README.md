@@ -303,6 +303,12 @@ row when it syncs it. Untagging answers with the junction, and untagging one
 already untagged changes nothing, so a retried untag is answered as the first
 was.
 
+A queued reuse records its copy time from `Client-Updated` in `date_created`,
+not its upload time, with the same clock clamping and missing-header fallback.
+Its `client_id` makes retries count once and retain the original copy time.
+Copies still leave the entry's edit revision unchanged; incremental entry
+sync does not deliver another device's reuse counts.
+
 ## Public user data
 
 `GET /api/v1/users/:username` identifies a data owner without exposing account

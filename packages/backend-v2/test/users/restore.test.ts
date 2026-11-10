@@ -175,6 +175,26 @@ describe('POST /api/v1/user/restore', () => {
     );
   });
 
+  it('round trips pre-epoch creation times through restore and export', async () => {
+    const source = await richUser();
+    const backup = await backupOf(await clientFor(source));
+    const made = '1969-12-31T23:59:59.999999';
+    for (const rows of [
+      backup.tags,
+      backup.entries,
+      backup.tags_entries,
+      backup.entry_reuses,
+    ]) {
+      expect(rows.length).toBeGreaterThan(0);
+      for (const row of rows) row.date_created = made;
+    }
+    expect(backupSchema.safeParse(backup).success).toBe(true);
+    expect((await restore(base.user1Client, backup)).status).toBe(200);
+    expect(contentOf(await backupOf(base.user1Client))).toEqual(
+      contentOf(backup)
+    );
+  });
+
   it('records where the version came from, and moves the public view to it', async () => {
     const source = await richUser();
     const backup = await backupOf(await clientFor(source));

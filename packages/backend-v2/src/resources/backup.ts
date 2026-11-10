@@ -9,6 +9,7 @@ import {
   BACKUP_FORMAT,
   BACKUP_VERSION,
   type Backup,
+  DATA_VERSION,
 } from '@commandsnippets/api-shared';
 import {and, asc, eq} from 'drizzle-orm';
 import {alias} from 'drizzle-orm/sqlite-core';
@@ -16,6 +17,7 @@ import {type Context, Hono} from 'hono';
 import {requireUser} from '../auth/permissions';
 import type {Db} from '../db/client';
 import {
+  dataVersions,
   entryReuses,
   tags,
   tagsEntries,
@@ -24,6 +26,7 @@ import {
 } from '../db/schema';
 import type {AppEnv} from '../env';
 import {isoformat, now} from '../lib/clock';
+import {notFound} from '../lib/errors';
 import {findVersionNumber, versionNumber, versionOf} from './dataVersions';
 
 export const backupRoutes = new Hono<AppEnv>();
@@ -51,14 +54,14 @@ function backupVersion(
  * rows are read as of one moment, and every tagging's tag and entry is
  * among the tags and entries read.
  */
-function readBackupRows(db: Db, userId: number, version: number) {
+function backupRowQueries(db: Db, userId: number, version: number) {
   const live = (table: typeof tags | typeof textEntries | typeof tagsEntries) =>
     and(
       eq(table.user_id, userId),
       eq(table.version, version),
       eq(table.is_deleted, false)
     );
-  return db.batch([
+  return [
     db
       .select({
         id: tags.id,
@@ -125,7 +128,25 @@ function readBackupRows(db: Db, userId: number, version: number) {
         )
       )
       .orderBy(asc(entryReuses.date_created), asc(entryReuses.id)),
+  ] as const;
+}
+
+/** Check existence in the rows' transaction, not only before it. */
+async function readBackupRows(db: Db, userId: number, version: number) {
+  const [[found], ...rows] = await db.batch([
+    db
+      .select({version: dataVersions.version})
+      .from(dataVersions)
+      .where(
+        and(eq(dataVersions.user_id, userId), eq(dataVersions.version, version))
+      )
+      .limit(1),
+    ...backupRowQueries(db, userId, version),
   ]);
+  if (found === undefined) {
+    throw notFound(`No ${DATA_VERSION} matches the given query.`);
+  }
+  return rows;
 }
 
 /** The rows read, as `user`'s backup file. */

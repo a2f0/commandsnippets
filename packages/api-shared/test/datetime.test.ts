@@ -3,6 +3,19 @@ import {readFileSync} from 'node:fs';
 import {formatMicros, parseDateTime} from '../src/datetime';
 
 describe('formatMicros', () => {
+  test.each([
+    [-1, '1969-12-31T23:59:59.999999'],
+    [-1000, '1969-12-31T23:59:59.999000'],
+    [-999999, '1969-12-31T23:59:59.000001'],
+    [-1000000, '1969-12-31T23:59:59.000000'],
+    [-1000001, '1969-12-31T23:59:58.999999'],
+    [0, '1970-01-01T00:00:00.000000'],
+    [1, '1970-01-01T00:00:00.000001'],
+  ])('round trips %i microseconds across the epoch', (micros, expected) => {
+    expect(formatMicros(micros)).toBe(expected);
+    expect(parseDateTime(expected)).toBe(expected);
+  });
+
   test('formats microseconds as fixed-width naive UTC', () => {
     expect(
       formatMicros(Date.UTC(2021, 0, 15, 14, 52, 32) * 1000 + 404803)

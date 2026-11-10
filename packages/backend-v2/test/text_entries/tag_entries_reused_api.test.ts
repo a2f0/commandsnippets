@@ -325,6 +325,60 @@ describe('EntryReusesApi v2', () => {
     ]);
   });
 
+  it.each([undefined, 'offline-copy-write'])(
+    'keeps the queued copy time on retry (write id: %s)',
+    async writeId => {
+      const {user1, user1Client} = base;
+      const entry = await textEntryFactory({user: user1});
+      const made = '2024-05-09T10:11:12.123456';
+      const copy = reusePayload(entry.id, 'offline-copy');
+      const send = (at: string) =>
+        user1Client.request('POST', '/api/v1/entry_reuses', copy, {
+          'Client-Updated': at,
+          ...(writeId === undefined ? {} : {'Client-Write-Id': writeId}),
+        });
+      const first = await send(made);
+      expect(first.status).toBe(201);
+      const original = (await json(first)).data;
+      expect(original.attributes.date_created).toBe(made);
+
+      const retried = await send('2024-05-10T10:11:12.123456');
+      expect(retried.status).toBe(201);
+      expect((await json(retried)).data).toEqual(original);
+      expect(await refreshEntry(entry.id)).toMatchObject({
+        reused_count: 1,
+        date_created: entry.date_created,
+        date_updated: entry.date_updated,
+      });
+      const changes = await json(
+        await user1Client.get(
+          `/api/v1/entries?page[after]=${encodeURIComponent(`${entry.date_updated},${entry.id}`)}&include=`
+        )
+      );
+      // Copies deliberately do not advance edit revisions for incremental sync.
+      expect(changes.data).toEqual([]);
+      const backup = await json(await user1Client.get('/api/v1/user/backup'));
+      expect(backup.entry_reuses).toEqual([
+        {id: original.id, text_entry_id: String(entry.id), date_created: made},
+      ]);
+    }
+  );
+
+  it('refuses a malformed queued copy time without counting it', async () => {
+    const entry = await textEntryFactory({user: base.user1});
+    const response = await base.user1Client.request(
+      'POST',
+      '/api/v1/entry_reuses',
+      reusePayload(entry.id, 'invalid-copy'),
+      {'Client-Updated': 'not-a-time'}
+    );
+    expect(response.status).toBe(400);
+    expect((await json(response)).errors[0].detail).toBe(
+      'Client-Updated is not a datetime.'
+    );
+    expect((await refreshEntry(entry.id))?.reused_count).toBe(0);
+  });
+
   it('counts a reuse retried with its client_id once', async () => {
     const {user1, user1Client} = base;
     const entry = await textEntryFactory({user: user1});
