@@ -103,7 +103,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
       beginInteraction('tag switch', listKey({tag: selected.attributes.name}));
       appConfig.setAppMode(appMode.entriesList);
       appConfig.setActiveSearch(activeSearch.entries);
-      navigate(`/${username}/${selected.attributes.name}`);
+      navigate(`/${username}/${encodeURIComponent(selected.attributes.name)}`);
     },
   });
 

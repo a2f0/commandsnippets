@@ -1,4 +1,5 @@
 import React, {useRef} from 'react';
+import {useMounted} from '../../hooks/useMounted';
 import {useSaveError} from '../../hooks/useSaveError';
 import {useSession} from '../../lib/data/hooks';
 import {createEntry} from '../../lib/data/writes';
@@ -14,6 +15,7 @@ interface IEntryNewProps {
 const EntryNew = ({id, tagId}: IEntryNewProps) => {
   const appConfig = useAppConfig();
   const session = useSession();
+  const mounted = useMounted();
   // One save at a time: another click (or Enter) before the entry is stored
   // and the form closes would store a second entry.
   const saving = useRef(false);
@@ -27,7 +29,7 @@ const EntryNew = ({id, tagId}: IEntryNewProps) => {
     saveError.clear();
     createEntry(session, subject, body, tagId)
       .then(() => {
-        appConfig.setEntryNew(null);
+        if (mounted.current) appConfig.setEntryNew(null);
       })
       .catch(saveError.failed)
       .finally(() => {

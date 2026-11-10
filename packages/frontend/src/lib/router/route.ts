@@ -52,35 +52,36 @@ const STATIC_PAGES: ReadonlyArray<readonly [string, Page]> = [
 ];
 
 /**
- * `pathname` decoded segment by segment, a decoded `/` kept as `%2F` so no
- * segment splits; as it is when it is not valid percent-encoding.
+ * Split before decoding, so an encoded slash stays inside its segment and
+ * a literal `%2F` is never decoded twice. Invalid encoding is left as it is.
  */
-function decodePath(pathname: string): string {
+function decodedSegments(pathname: string): string[] {
+  const segments = pathname.split('/');
   try {
-    return pathname
-      .split('/')
-      .map(segment => decodeURIComponent(segment).replace(/\//g, '%2F'))
-      .join('/');
+    return segments.map(segment => decodeURIComponent(segment));
   } catch {
-    return pathname;
+    return segments;
   }
 }
 
-/** A path segment as a route's value: with its `/`s back. */
-const paramOf = (segment: string) => segment.replace(/%2F/g, '/');
-
 /** The route of the URL path `pathname`. */
 export function routeOf(pathname: string): Route {
-  const path = decodePath(pathname).replace(/\/+$/, '');
+  const path = pathname.replace(/\/+$/, '');
   if (path === '') {
     return {page: 'root'};
   }
-  const lower = path.toLowerCase();
-  const page = STATIC_PAGES.find(([staticPath]) => staticPath === lower)?.[1];
+  const segments = decodedSegments(path);
+  const page = STATIC_PAGES.find(([staticPath]) => {
+    const expected = staticPath.split('/');
+    return (
+      expected.length === segments.length &&
+      expected.every((value, index) => value === segments[index]?.toLowerCase())
+    );
+  })?.[1];
   if (page !== undefined) {
     return {page};
   }
-  const [user, tag, ...rest] = path.split('/').slice(1);
+  const [user, tag, ...rest] = segments.slice(1);
   const [entryId] = rest;
   if (
     user &&
@@ -88,10 +89,10 @@ export function routeOf(pathname: string): Route {
     rest.length === 1 &&
     entryId === 'analytics'
   ) {
-    return {page: 'analytics', user: paramOf(user)};
+    return {page: 'analytics', user};
   }
   if (user && tag === 'activity' && rest.length === 1 && entryId === 'reuses') {
-    return {page: 'reuses', user: paramOf(user)};
+    return {page: 'reuses', user};
   }
   if (
     user !== undefined &&
@@ -101,12 +102,10 @@ export function routeOf(pathname: string): Route {
     entryId !== undefined &&
     entryId !== ''
   ) {
-    return {page: 'entry', user: paramOf(user), entryId: paramOf(entryId)};
+    return {page: 'entry', user, entryId};
   }
   if (user === undefined || user === '' || tag === '' || rest.length > 0) {
     return {page: 'none'};
   }
-  return tag === undefined
-    ? {page: 'user', user: paramOf(user)}
-    : {page: 'user', user: paramOf(user), tag: paramOf(tag)};
+  return tag === undefined ? {page: 'user', user} : {page: 'user', user, tag};
 }

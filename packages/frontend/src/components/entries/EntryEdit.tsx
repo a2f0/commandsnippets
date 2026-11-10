@@ -1,4 +1,5 @@
 import React from 'react';
+import {useMounted} from '../../hooks/useMounted';
 import {useSaveError} from '../../hooks/useSaveError';
 import type {ITextEntryJsonApi} from '../../lib/api/responses/types';
 import {useSession} from '../../lib/data/hooks';
@@ -20,6 +21,7 @@ const EntryEdit = ({
   id,
 }: IEntryEdit) => {
   const session = useSession();
+  const mounted = useMounted();
   const saveError = useSaveError('update entry');
 
   const handleSave = (subject: string, body: string) => {
@@ -28,7 +30,9 @@ const EntryEdit = ({
     }
     saveError.clear();
     updateEntry(session, object.id, subject, body)
-      .then(() => handleSaveParent())
+      .then(() => {
+        if (mounted.current) handleSaveParent();
+      })
       .catch(saveError.failed);
   };
 

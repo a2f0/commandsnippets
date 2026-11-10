@@ -47,7 +47,7 @@ const TagListWrapper = () => {
       first !== undefined
     ) {
       setTagSelectedID(first.id);
-      navigate(`/${user}/${first.attributes.name}`);
+      navigate(`/${user}/${encodeURIComponent(first.attributes.name)}`);
     }
   }, [user, tag, entriesList, current, first, setTagSelectedID]);
 

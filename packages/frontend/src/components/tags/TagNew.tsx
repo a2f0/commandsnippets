@@ -1,5 +1,6 @@
 import React, {useEffect, useRef} from 'react';
 import {tagEditFields, useEditFieldCycle} from '../../hooks/useEditFieldCycle';
+import {useMounted} from '../../hooks/useMounted';
 import {useSaveError} from '../../hooks/useSaveError';
 import {useSession} from '../../lib/data/hooks';
 import {createTag} from '../../lib/data/writes';
@@ -13,6 +14,7 @@ interface IProps {
 
 const TagNew = ({id}: IProps) => {
   const session = useSession();
+  const mounted = useMounted();
   const appConfig = useAppConfig();
   const inputSaveRef = useRef<HTMLButtonElement>(null);
   const inputCancelRef = useRef<HTMLButtonElement>(null);
@@ -50,7 +52,7 @@ const TagNew = ({id}: IProps) => {
     saveError.clear();
     createTag(session, tagName)
       .then(() => {
-        appConfig.setTagNew(null);
+        if (mounted.current) appConfig.setTagNew(null);
       })
       .catch(saveError.failed);
   };

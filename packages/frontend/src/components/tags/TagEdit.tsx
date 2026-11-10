@@ -1,4 +1,5 @@
 import React from 'react';
+import {useMounted} from '../../hooks/useMounted';
 import {useSaveError} from '../../hooks/useSaveError';
 import type {ITagJsonApi} from '../../lib/api/responses/types';
 import {useSession} from '../../lib/data/hooks';
@@ -18,6 +19,7 @@ const TagEdit = ({
   object,
 }: ITagEdit) => {
   const session = useSession();
+  const mounted = useMounted();
   const saveError = useSaveError('update tag');
 
   const handleSave = (tagName: string) => {
@@ -27,7 +29,7 @@ const TagEdit = ({
     saveError.clear();
     renameTag(session, object.id, tagName)
       .then(renamed => {
-        if (renamed !== null) {
+        if (mounted.current && renamed !== null) {
           handleSaveParent(renamed);
         }
       })

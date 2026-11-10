@@ -4,6 +4,7 @@ import React, {useEffect} from 'react';
 import {useDrop} from 'react-dnd';
 import {useContextMenu} from '../../hooks/useContextMenu';
 import {useListKeyboard} from '../../hooks/useListKeyboard';
+import {useMounted} from '../../hooks/useMounted';
 import {copyEntry} from '../../lib/data/copyEntry';
 import {NO_TAG_NAMES} from '../../lib/data/entryTags';
 import {useReadOnly, useSession} from '../../lib/data/hooks';
@@ -98,6 +99,7 @@ const EntryList = () => {
   const readOnly = useReadOnly();
   // Whose entries a copy (Enter) counts a reuse of: none but the owner's.
   const session = useSession();
+  const mounted = useMounted();
   const {shown, currentTag, tagId, tagNames} = useShownEntries();
 
   // The list as a drag reorders it.
@@ -121,8 +123,13 @@ const EntryList = () => {
       scrollTo(index, entry.id, up ? 'start' : 'end');
     },
     onEnter: selected => {
-      copyEntry(session, selected.id, selected.attributes.body);
-      appConfig.setMostRecentCopyID(selected.id);
+      void copyEntry(session, selected.id, selected.attributes.body).then(
+        copied => {
+          if (copied && mounted.current) {
+            appConfig.setMostRecentCopyID(selected.id);
+          }
+        }
+      );
     },
   });
 

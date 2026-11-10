@@ -98,7 +98,7 @@ function useTagDrop(id: string, index: number, hover: ISortableRow['hover']) {
 /** Shows the tag's entries, as a click on it does. */
 function openTag(user: string | undefined, tag: ITagJsonApi) {
   beginInteraction('tag switch', listKey({tag: tag.attributes.name}));
-  navigate(`/${user}/${tag.attributes.name}`);
+  navigate(`/${user}/${encodeURIComponent(tag.attributes.name)}`);
   const state = useAppState.getState();
   // Reset the main panel in case Untagged Entries were being viewed.
   state.setAppMode(appMode.tagsList);
@@ -111,13 +111,18 @@ function openTag(user: string | undefined, tag: ITagJsonApi) {
 /** The tag's editor: open or not; a save renames the tag shown too. */
 function useTagEdit(tag: ITagJsonApi, user: string | undefined) {
   const [isEditing, setIsEditing] = useState(false);
-  const begin = useCallback(() => setIsEditing(true), []);
+  const begin = useCallback(() => {
+    useAppState.getState().setAppMode(appMode.tagEditor);
+    setIsEditing(true);
+  }, []);
   const cancel = () => setIsEditing(false);
   // The tag shown follows its new name.
   const save = (renamed: ITagJsonApi) => {
     setIsEditing(false);
     if (currentRoute().tag === tag.attributes.name) {
-      navigate(`/${user}/${renamed.attributes.name}`, {replace: true});
+      navigate(`/${user}/${encodeURIComponent(renamed.attributes.name)}`, {
+        replace: true,
+      });
     }
   };
   return {isEditing, begin, cancel, save};

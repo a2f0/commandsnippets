@@ -7,8 +7,10 @@ describe('routeOf', () => {
     ['//', {page: 'root'}],
     ['/admin', {page: 'admin'}],
     ['/ADMIN/', {page: 'admin'}],
+    ['/%61dmin/', {page: 'admin'}],
     ['/oauth/github', {page: 'githubOAuth'}],
     ['/oauth/google/', {page: 'googleOAuth'}],
+    ['/oauth%2Fgithub', {page: 'user', user: 'oauth/github'}],
     ['/test', {page: 'user', user: 'test'}],
     ['/test/', {page: 'user', user: 'test'}],
     ['/test/shell', {page: 'user', user: 'test', tag: 'shell'}],
@@ -29,6 +31,10 @@ describe('routeOf', () => {
   it.each([
     ['/test/my%20tag', 'my tag'],
     ['/test/a%2Fb', 'a/b'],
+    ['/test/literal%252F', 'literal%2F'],
+    ['/test/literal%252f', 'literal%2f'],
+    ['/test/a%2F', 'a/'],
+    ['/test/100%25', '100%'],
     ['/test/caf%C3%A9', 'café'],
     // Not valid percent-encoding: as it is.
     ['/test/100%', '100%'],

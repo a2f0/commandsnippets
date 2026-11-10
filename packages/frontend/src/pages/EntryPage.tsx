@@ -176,8 +176,9 @@ const BodyPanel = ({
           size="small"
           startIcon={copied ? <Check /> : <FileCopySharp />}
           onClick={() => {
-            copyEntry(session, entry.id, body);
-            setCopied(true);
+            void copyEntry(session, entry.id, body).then(success => {
+              if (success) setCopied(true);
+            });
           }}
         >
           {copied ? t('infoCopied') : t('infoCopy')}
