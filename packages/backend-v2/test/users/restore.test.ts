@@ -175,6 +175,54 @@ describe('POST /api/v1/user/restore', () => {
     );
   });
 
+  it.each([
+    '0001-01-01T00:00:00.000001',
+    '1969-12-31T23:59:59.999999',
+    '9999-12-31T23:59:59.999999',
+  ])('round trips creation time %s through restore and export', async made => {
+    const source = await richUser();
+    const backup = await backupOf(await clientFor(source));
+
+    for (const rows of [
+      backup.tags,
+      backup.entries,
+      backup.tags_entries,
+      backup.entry_reuses,
+    ]) {
+      expect(rows.length).toBeGreaterThan(0);
+      for (const row of rows) row.date_created = made;
+    }
+    expect(backupSchema.safeParse(backup).success).toBe(true);
+    expect((await restore(base.user1Client, backup)).status).toBe(200);
+    expect(contentOf(await backupOf(base.user1Client))).toEqual(
+      contentOf(backup)
+    );
+  });
+
+  it('rejects a year-zero creation time without making a version', async () => {
+    const before = await backupOf(base.user1Client);
+    expect(before.entries.length).toBeGreaterThan(0);
+    const invalid = {
+      ...before,
+      entries: before.entries.map(row => ({
+        ...row,
+        date_created: '0000-01-01T00:00:00.000001',
+      })),
+    };
+    // The wire shape is valid; normalization enforces the supported UTC years.
+    expect(backupSchema.safeParse(invalid).success).toBe(true);
+    const response = await restore(base.user1Client, invalid);
+    expect(response.status).toBe(400);
+    expect((await json(response)).errors[0]).toMatchObject({
+      source: {pointer: '/entries/0/date_created'},
+      detail:
+        'Invalid backup at /entries/0/date_created: Not a valid date and time.',
+    });
+    expect(await versionsOf(base.user1)).toEqual([1]);
+    expect((await refreshUser(base.user1.id))?.active_version).toBe(1);
+    expect(undated(await backupOf(base.user1Client))).toEqual(undated(before));
+  });
+
   it('records where the version came from, and moves the public view to it', async () => {
     const source = await richUser();
     const backup = await backupOf(await clientFor(source));

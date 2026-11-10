@@ -102,7 +102,7 @@ function versionResource(row: VersionRow, active: number) {
   return {type: DATA_VERSION, id: String(row.version), attributes};
 }
 
-const versionWhere = (userId: number, version: number) =>
+export const versionWhere = (userId: number, version: number) =>
   and(eq(dataVersions.user_id, userId), eq(dataVersions.version, version));
 
 /** `userId`'s version `version`, with its counts, if they have it. */

@@ -18,6 +18,7 @@ import {
   textEntryReusedFactory,
   userFactory,
 } from '../helpers';
+import {raceBeforeStatement} from '../support/races';
 
 // v2: a backup of the requester's own data.
 describe('GET /api/v1/user/backup', () => {
@@ -173,6 +174,40 @@ describe('GET /api/v1/user/backup', () => {
       tags_entries: [],
       entry_reuses: [],
     });
+  });
+
+  it('refuses a version deleted between lookup and the backup batch', async () => {
+    const client = base.user1Client;
+    const backup = await backupOf(client);
+    expect(backup.entries.length).toBeGreaterThan(0);
+    expect((await client.post('/api/v1/user/restore', backup)).status).toBe(
+      200
+    );
+    client.dataVersion = 2;
+    let deleted = false;
+    const racing = await clientFor(
+      base.user1,
+      raceBeforeStatement(/select .* from "tags_tag" where/i, async () => {
+        expect(
+          (await client.delete('/api/v1/user/data_versions/1')).status
+        ).toBe(204);
+        deleted = true;
+      })
+    );
+
+    const response = await racing.get('/api/v1/user/backup?version=1');
+
+    expect(deleted).toBe(true);
+    expect(response.status).toBe(404);
+    expect((await json(response)).errors).toEqual([
+      expect.objectContaining({
+        code: 'not_found',
+        detail: 'No DataVersion matches the given query.',
+      }),
+    ]);
+    expect((await backupOf(client)).entries).toHaveLength(
+      backup.entries.length
+    );
   });
 
   it('is JSON that no cache keeps', async () => {

@@ -303,6 +303,22 @@ row when it syncs it. Untagging answers with the junction, and untagging one
 already untagged changes nothing, so a retried untag is answered as the first
 was.
 
+A queued reuse records its copy time from `Client-Updated` in `date_created`,
+not its upload time, with the same clock clamping and missing-header fallback.
+Its `client_id` makes retries count once and retain the original copy time.
+Reuses also participate in the shared `Client-Write-Id` clock ledger: a first
+attempt that is timed but fails before inserting the reuse keeps that time on
+retry. This intentionally costs a clock batch and one retained ledger row per
+new write id; `client_id` alone deduplicates only a reuse already inserted.
+Tags and entries still use their server creation time: when an entry is created
+and copied offline, its copy can therefore predate the entry's `date_created`.
+Analytics keeps those meanings: reuse activity belongs to the copy's day,
+creation activity to the entry's upload day. Do not clamp a copy to that upload
+time, which would lose when it happened. Datetimes must normalize to UTC years
+1 through 9999; an out-of-range `Client-Updated` is a 400, not a stored date.
+Copies still leave the entry's edit revision unchanged; incremental entry
+sync does not deliver another device's reuse counts.
+
 ## Public user data
 
 `GET /api/v1/users/:username` identifies a data owner without exposing account

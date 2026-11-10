@@ -141,6 +141,10 @@ export const PUBLIC_REVISION_HEADER = 'X-Public-Revision';
  * stands). A time ahead of the API's clock counts as now; a write without
  * the header counts as made now (a retry of one named by
  * `CLIENT_WRITE_ID_HEADER`, as made when it first arrived).
+ * A reuse stores that time as its copy event's `date_created`; it does not
+ * change the entry's edit revision. Every use of this header, date filters,
+ * cursors and restore dates must normalize to UTC years 1–9999. A malformed
+ * time is a 400, including on reuse requests (previously ignored there).
  */
 export const CLIENT_UPDATED_HEADER = 'Client-Updated';
 

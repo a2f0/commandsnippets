@@ -1,13 +1,22 @@
+import {
+  analyticsDocumentSchema,
+  backupSchema,
+} from '@commandsnippets/api-shared';
 import {beforeEach, describe, expect, it} from 'vitest';
+import {syncClock} from '../../src/db/schema';
+import {formatMicros, isoformat} from '../../src/lib/clock';
 import {
   type Base,
   clientFor,
+  db,
   type Json,
   json,
+  raceBeforeInsert,
   refreshEntry,
   setUpBase,
   textEntryFactory,
   textEntryReusedFactory,
+  userFactory,
 } from '../helpers';
 
 const reusePayload = (textEntryId: number | string, clientId?: string) => ({
@@ -324,6 +333,185 @@ describe('EntryReusesApi v2', () => {
       'User',
     ]);
   });
+
+  it.each([undefined, 'offline-copy-write'])(
+    'keeps the queued copy time on retry (write id: %s)',
+    async writeId => {
+      const {user1, user1Client} = base;
+      const entry = await textEntryFactory({user: user1});
+      const made = '2024-05-09T10:11:12.123456';
+      const copy = reusePayload(entry.id, 'offline-copy');
+      const send = (at: string) =>
+        user1Client.request('POST', '/api/v1/entry_reuses', copy, {
+          'Client-Updated': at,
+          ...(writeId === undefined ? {} : {'Client-Write-Id': writeId}),
+        });
+      const first = await send(made);
+      expect(first.status).toBe(201);
+      const original = (await json(first)).data;
+      expect(original.attributes.date_created).toBe(made);
+
+      const retried = await send('2024-05-10T10:11:12.123456');
+      expect(retried.status).toBe(201);
+      expect((await json(retried)).data).toEqual(original);
+      expect(await refreshEntry(entry.id)).toMatchObject({
+        reused_count: 1,
+        date_created: entry.date_created,
+        date_updated: entry.date_updated,
+      });
+      const changes = await json(
+        await user1Client.get(
+          `/api/v1/entries?page[after]=${encodeURIComponent(`${entry.date_updated},${entry.id}`)}&include=`
+        )
+      );
+      // Copies deliberately do not advance edit revisions for incremental sync.
+      expect(changes.data).toEqual([]);
+      const backup = await json(await user1Client.get('/api/v1/user/backup'));
+      expect(backup.entry_reuses).toEqual([
+        {id: original.id, text_entry_id: String(entry.id), date_created: made},
+      ]);
+    }
+  );
+
+  it('keeps a timed failed insert at its first write-id time on retry', async () => {
+    const {user1, user1Client} = base;
+    const entry = await textEntryFactory({user: user1});
+    const failing = await clientFor(
+      user1,
+      raceBeforeInsert('text_entries_textentryreused', () =>
+        Promise.reject(new Error('D1 is unavailable'))
+      )
+    );
+    const payload = reusePayload(entry.id, 'failed-copy');
+    const made = '2024-05-09T10:11:12.123456';
+    const failed = await failing.request(
+      'POST',
+      '/api/v1/entry_reuses',
+      payload,
+      {'Client-Updated': made, 'Client-Write-Id': 'failed-copy-write'}
+    );
+    expect(failed.status).toBe(500);
+    expect((await refreshEntry(entry.id))?.reused_count).toBe(0);
+    const retried = await user1Client.request(
+      'POST',
+      '/api/v1/entry_reuses',
+      payload,
+      {
+        'Client-Updated': '2024-05-10T10:11:12.123456',
+        'Client-Write-Id': 'failed-copy-write',
+      }
+    );
+    expect(retried.status).toBe(201);
+    expect((await json(retried)).data.attributes.date_created).toBe(made);
+    expect((await refreshEntry(entry.id))?.reused_count).toBe(1);
+  });
+
+  it('keeps offline copy activity before its entry upload day', async () => {
+    const user1Client = await clientFor(
+      await userFactory({}, {examples: false})
+    );
+    const made = '2024-05-09T10:11:12.123456';
+    const created = await user1Client.request(
+      'POST',
+      '/api/v1/entries',
+      {
+        data: {
+          type: 'TextEntry',
+          attributes: {
+            subject: 'Offline entry',
+            body: 'copied offline',
+            client_id: 'offline',
+          },
+        },
+      },
+      {'Client-Updated': '2024-05-09T10:00:00'}
+    );
+    expect(created.status).toBe(201);
+    const entry = (await json(created)).data;
+    const copied = await user1Client.request(
+      'POST',
+      '/api/v1/entry_reuses',
+      reusePayload(entry.id, 'offline-copy'),
+      {'Client-Updated': made}
+    );
+    expect(copied.status).toBe(201);
+    expect((await json(copied)).data.attributes.date_created).toBe(made);
+    expect(entry.attributes.date_created > made).toBe(true);
+    for (const [activity, date] of [
+      ['created', entry.attributes.date_created.slice(0, 10)],
+      ['reused', made.slice(0, 10)],
+    ]) {
+      const response = await user1Client.get(
+        `/api/v1/user/analytics?activity=${activity}&interval=day&from=all&to=9999-12-31`
+      );
+      expect(response.status).toBe(200);
+      expect(
+        analyticsDocumentSchema.parse(await json(response)).data.timeline
+      ).toEqual([{date, count: 1}]);
+    }
+    const backup = await json(await user1Client.get('/api/v1/user/backup'));
+    expect(backupSchema.safeParse(backup).success).toBe(true);
+    expect(backup.entry_reuses[0].date_created).toBe(made);
+  });
+
+  it.each([undefined, 'future-write'])(
+    'clamps a future copy to the write clock and keeps it on retry (%s)',
+    async writeId => {
+      const {user1, user1Client} = base;
+      const entry = await textEntryFactory({user: user1});
+      const send = () =>
+        user1Client.request(
+          'POST',
+          '/api/v1/entry_reuses',
+          reusePayload(entry.id, 'future-copy'),
+          {
+            'Client-Updated': '2999-01-01T00:00:00.123456',
+            ...(writeId === undefined ? {} : {'Client-Write-Id': writeId}),
+          }
+        );
+      const response = await send();
+      expect(response.status).toBe(201);
+      const original = (await json(response)).data;
+      const [clock] = await db().select().from(syncClock);
+      expect(clock?.micros).toBeGreaterThan(0);
+      expect(original.attributes.date_created).toBe(
+        isoformat(formatMicros(clock?.micros ?? 0))
+      );
+      expect(original.attributes.date_created < '2999-01-01').toBe(true);
+      const retry = await send();
+      expect(retry.status).toBe(201);
+      expect((await json(retry)).data).toEqual(original);
+      expect((await refreshEntry(entry.id))?.reused_count).toBe(1);
+    }
+  );
+
+  it.each([
+    'not-a-time',
+    '0000-01-01T00:00:00+01:00',
+    '0001-01-01T00:00:00+01:00',
+    '9999-12-31T23:00:00-01:00',
+  ])(
+    'refuses an invalid queued copy time without counting it: %s',
+    async made => {
+      const entry = await textEntryFactory({user: base.user1});
+      const response = await base.user1Client.request(
+        'POST',
+        '/api/v1/entry_reuses',
+        reusePayload(entry.id, 'invalid-copy'),
+        {'Client-Updated': made}
+      );
+      expect(response.status).toBe(400);
+      expect((await json(response)).errors[0].detail).toBe(
+        'Client-Updated is not a datetime.'
+      );
+      expect((await refreshEntry(entry.id))?.reused_count).toBe(0);
+      const backup = await json(
+        await base.user1Client.get('/api/v1/user/backup')
+      );
+      expect(backupSchema.safeParse(backup).success).toBe(true);
+      expect(backup.entry_reuses).toEqual([]);
+    }
+  );
 
   it('counts a reuse retried with its client_id once', async () => {
     const {user1, user1Client} = base;

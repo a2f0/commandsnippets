@@ -3,6 +3,19 @@ import {readFileSync} from 'node:fs';
 import {formatMicros, parseDateTime} from '../src/datetime';
 
 describe('formatMicros', () => {
+  test.each([
+    [-1, '1969-12-31T23:59:59.999999'],
+    [-1000, '1969-12-31T23:59:59.999000'],
+    [-999999, '1969-12-31T23:59:59.000001'],
+    [-1000000, '1969-12-31T23:59:59.000000'],
+    [-1000001, '1969-12-31T23:59:58.999999'],
+    [0, '1970-01-01T00:00:00.000000'],
+    [1, '1970-01-01T00:00:00.000001'],
+  ])('round trips %i microseconds across the epoch', (micros, expected) => {
+    expect(formatMicros(micros)).toBe(expected);
+    expect(parseDateTime(expected)).toBe(expected);
+  });
+
   test('formats microseconds as fixed-width naive UTC', () => {
     expect(
       formatMicros(Date.UTC(2021, 0, 15, 14, 52, 32) * 1000 + 404803)
@@ -24,6 +37,10 @@ describe('parseDateTime', () => {
     ['2021-01-15T14:52:32.123456789', '2021-01-15T14:52:32.123456'],
     [' 2021-01-15 ', '2021-01-15T00:00:00.000000'],
     ['2021-01-15', '2021-01-15T00:00:00.000000'],
+    ['0001-01-01T00:00:00.000001', '0001-01-01T00:00:00.000001'],
+    ['9999-12-31T23:59:59.999999', '9999-12-31T23:59:59.999999'],
+    ['0001-01-01T01:00:00.000001+01:00', '0001-01-01T00:00:00.000001'],
+    ['9999-12-31T22:59:59.999999-01:00', '9999-12-31T23:59:59.999999'],
   ])('parses %s', (input, expected) => {
     expect(parseDateTime(input)).toBe(expected);
   });
@@ -33,6 +50,10 @@ describe('parseDateTime', () => {
     '2021-13-45 00:00:00',
     '2021-01-15T14:52:32.1234567891',
     '2021-1-1',
+    '0000-01-01T00:00:00',
+    '0000-01-01T00:00:00+01:00',
+    '0001-01-01T00:00:00+01:00',
+    '9999-12-31T23:00:00-01:00',
     '',
   ])('rejects %j', input => {
     expect(parseDateTime(input)).toBeNull();

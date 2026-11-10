@@ -33,7 +33,7 @@
     },
     "packages/backend-v2": {
       "name": "commandsnippets-backend-v2",
-      "version": "0.2.42",
+      "version": "0.2.43",
       "dependencies": {
         "@commandsnippets/api-shared": "workspace:*",
         "drizzle-orm": "0.45.4",
@@ -54,7 +54,7 @@
     },
     "packages/frontend": {
       "name": "commandsnippets-frontend",
-      "version": "0.7.194",
+      "version": "0.7.195",
       "dependencies": {
         "@a2f0/ct-client": "0.1.6",
         "@commandsnippets/api-shared": "workspace:*",

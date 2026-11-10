@@ -7,6 +7,15 @@
 export const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
+/** Preserve wire coercions, but reject objects whose conversion throws. */
+export function stringValue(value: unknown): string | undefined {
+  try {
+    return String(value);
+  } catch {
+    return undefined;
+  }
+}
+
 /**
  * An own property only: `constructor` is no one's filter, sort field or
  * relationship.

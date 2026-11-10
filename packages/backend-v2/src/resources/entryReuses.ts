@@ -8,11 +8,11 @@ import {Hono} from 'hono';
 import {requireUser} from '../auth/permissions';
 import {entryReuses, type TextEntryReused} from '../db/schema';
 import type {AppEnv} from '../env';
-import {now} from '../lib/clock';
 import {methodNotAllowed} from '../lib/errors';
 import {parseResource} from '../lib/jsonapi/request';
 import {validateFields} from '../lib/validate';
 import {versionOf} from './dataVersions';
+import {clientUpdated} from './lww';
 import {textEntryResource, textEntryReusedResource} from './owned';
 import {resolveRelated} from './related';
 import {TEXT_ENTRY_REUSED} from './resourceTypes';
@@ -42,7 +42,9 @@ entryReuseRoutes.get('/:id', async c => {
  * Record a reuse (201); a trigger maintains the entry's reused_count. One
  * naming a `client_id` the user's reuses already have answers with that
  * reuse, as its first attempt was answered (201): a queued reuse retried
- * after a lost answer is counted once.
+ * after a lost answer is counted once. `Client-Updated` dates the copy, not
+ * its upload; it and `Client-Write-Id` use the shared clock and validation.
+ * Malformed headers are a 400 (older builds ignored them on this route).
  */
 entryReuseRoutes.post('/', async c => {
   const user = requireUser(c);
@@ -63,6 +65,7 @@ entryReuseRoutes.post('/', async c => {
     textEntryReusedCreateRelationshipsSchema,
     {text_entry: textEntryResource}
   );
+  const at = await clientUpdated(c);
   return createOnce(
     c,
     {...textEntryReusedResource, clientId: entryReuses.client_id},
@@ -75,7 +78,8 @@ entryReuseRoutes.post('/', async c => {
           user_id: user.id,
           version,
           client_id: clientId ?? null,
-          date_created: now(),
+          // Fixed-width UTC only, without the write id's tie-break suffix.
+          date_created: at.slice(0, 26),
         })
         .returning()
   );

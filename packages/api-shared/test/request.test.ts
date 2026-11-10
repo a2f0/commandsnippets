@@ -24,6 +24,57 @@ const NO_DATA = [
 ];
 
 describe('requestEnvelopeSchema', () => {
+  test.each([
+    [{toString: 0}],
+    [[{toString: null}]],
+    [{toString: {}, valueOf: 0}],
+  ])('refuses uncoercible identifiers without throwing: %j', value => {
+    expect(refusal({type: 'Tag'}, {data: {type: 'Tag', id: value}})).toEqual([
+      'Received data is not a valid JSONAPI Resource Identifier Object',
+      'parse_error',
+      400,
+      '/data',
+    ]);
+    expect(refusal({type: 'Tag'}, {data: {type: value}})).toEqual([
+      "The resource object's type (object) is not the type that constitute " +
+        'the collection represented by the endpoint (Tag).',
+      'error',
+      409,
+      '/data',
+    ]);
+    expect(
+      refusal(
+        {type: 'Tag'},
+        {data: {type: 'Tag', relationships: {owner: {data: {id: value}}}}}
+      )
+    ).toEqual([
+      'Received data is not a valid JSONAPI Resource Identifier Object',
+      'invalid',
+      400,
+      '/data/relationships/owner',
+    ]);
+  });
+
+  test.each([
+    [5, '5'],
+    ['007', '007'],
+    [true, 'true'],
+    [null, 'null'],
+    [[1], '1'],
+    [[], ''],
+    [{}, '[object Object]'],
+  ])('preserves identifier coercion for %j', (value, expected) => {
+    const resource = parsed(requestEnvelopeSchema({type: 'Tag'}), {
+      data: {
+        type: 'Tag',
+        id: value,
+        relationships: {owner: {data: {id: value}}},
+      },
+    });
+    expect(resource.id).toBe(expected);
+    expect(resource.relationships).toEqual({owner: expected});
+  });
+
   test('normalizes the primary data', () => {
     expect(
       parsed(requestEnvelopeSchema({type: 'Tag'}), {

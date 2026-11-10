@@ -109,6 +109,17 @@ describe('pkField', () => {
     expect(parsed(pkField(), [1])).toBe('1');
   });
 
+  test.each([
+    [{toString: 0}],
+    [[{toString: null}]],
+    [{toString: {}, valueOf: 0}],
+  ])('refuses an uncoercible pk without throwing: %j', value => {
+    expect(failure(pkField(), value)).toEqual([
+      'Incorrect type. Expected pk value, received object.',
+      'incorrect_type',
+    ]);
+  });
+
   test('names the type it received', () => {
     const incorrect = (received: string): [string, string] => [
       `Incorrect type. Expected pk value, received ${received}.`,
@@ -138,6 +149,17 @@ describe('pkField', () => {
 
 describe('relatedField', () => {
   const field = relatedField('Tag');
+
+  test.each([
+    [{toString: 0}],
+    [[{toString: null}]],
+    [{toString: {}, valueOf: 0}],
+  ])('refuses an uncoercible related pk without throwing: %j', value => {
+    expect(failure(field, value)).toEqual([
+      'Incorrect type. Expected pk value, received object.',
+      'incorrect_type',
+    ]);
+  });
 
   test('outputs the linkage, typed with the related type', () => {
     expect(parsed(field, '5')).toEqual({data: {type: 'Tag', id: '5'}});
