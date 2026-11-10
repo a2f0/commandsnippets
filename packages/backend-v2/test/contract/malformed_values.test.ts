@@ -55,3 +55,26 @@ it.each([
   expect(backup.tags).toEqual([]);
   expect(backup.entry_reuses).toEqual([]);
 });
+
+it.each([
+  ['filter[date_updated.gt]', '0000-01-01T00:00:00', 400],
+  ['page[after]', '0000-01-01T00:00:00,0', 400],
+  ['filter[date_updated.gt]', '9999-12-31T23:00:00-01:00', 400],
+  ['page[after]', '9999-12-31T23:00:00-01:00,0', 400],
+  ['filter[date_updated.gt]', '0001-01-01T00:00:00.000001', 200],
+  ['page[after]', '0001-01-01T00:00:00.000001,0', 200],
+])(
+  'bounds %s timestamp %s to the supported UTC years',
+  async (name, value, status) => {
+    const client = await clientFor(await userFactory({}, {examples: false}));
+    const query = new URLSearchParams({[name]: value});
+    const response = await client.get(`/api/v1/entries?${query}`);
+    expect(response.status).toBe(status);
+    const body = await json(response);
+    if (status === 400) {
+      expect(body.errors).toHaveLength(1);
+    } else {
+      expect(body.data).toEqual([]);
+    }
+  }
+);

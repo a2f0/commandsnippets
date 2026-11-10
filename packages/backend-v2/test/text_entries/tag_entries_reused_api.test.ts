@@ -11,6 +11,7 @@ import {
   db,
   type Json,
   json,
+  raceBeforeInsert,
   refreshEntry,
   setUpBase,
   textEntryFactory,
@@ -371,6 +372,39 @@ describe('EntryReusesApi v2', () => {
       ]);
     }
   );
+
+  it('keeps a timed failed insert at its first write-id time on retry', async () => {
+    const {user1, user1Client} = base;
+    const entry = await textEntryFactory({user: user1});
+    const failing = await clientFor(
+      user1,
+      raceBeforeInsert('text_entries_textentryreused', () =>
+        Promise.reject(new Error('D1 is unavailable'))
+      )
+    );
+    const payload = reusePayload(entry.id, 'failed-copy');
+    const made = '2024-05-09T10:11:12.123456';
+    const failed = await failing.request(
+      'POST',
+      '/api/v1/entry_reuses',
+      payload,
+      {'Client-Updated': made, 'Client-Write-Id': 'failed-copy-write'}
+    );
+    expect(failed.status).toBe(500);
+    expect((await refreshEntry(entry.id))?.reused_count).toBe(0);
+    const retried = await user1Client.request(
+      'POST',
+      '/api/v1/entry_reuses',
+      payload,
+      {
+        'Client-Updated': '2024-05-10T10:11:12.123456',
+        'Client-Write-Id': 'failed-copy-write',
+      }
+    );
+    expect(retried.status).toBe(201);
+    expect((await json(retried)).data.attributes.date_created).toBe(made);
+    expect((await refreshEntry(entry.id))?.reused_count).toBe(1);
+  });
 
   it('keeps offline copy activity before its entry upload day', async () => {
     const user1Client = await clientFor(

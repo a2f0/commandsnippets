@@ -42,7 +42,9 @@ entryReuseRoutes.get('/:id', async c => {
  * Record a reuse (201); a trigger maintains the entry's reused_count. One
  * naming a `client_id` the user's reuses already have answers with that
  * reuse, as its first attempt was answered (201): a queued reuse retried
- * after a lost answer is counted once.
+ * after a lost answer is counted once. `Client-Updated` dates the copy, not
+ * its upload; it and `Client-Write-Id` use the shared clock and validation.
+ * Malformed headers are a 400 (older builds ignored them on this route).
  */
 entryReuseRoutes.post('/', async c => {
   const user = requireUser(c);

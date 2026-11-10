@@ -8,7 +8,8 @@
  * row as it stands, which the client then keeps. Times are the clients'
  * (never later than now), or now, by the API's write clock (`tick`), on
  * which no two writes share a time. Reorders are not guarded: they apply in
- * the order they arrive.
+ * the order they arrive. Reuses use the same timing and write-id ledger for
+ * their copy event's date, without changing the entry's edit revision.
  */
 import {
   CLIENT_UPDATED_HEADER,
