@@ -5,6 +5,7 @@ import {styled} from '@mui/material/styles';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {useDrop} from 'react-dnd';
 import {useContextMenu} from '../../hooks/useContextMenu';
+import {useMounted} from '../../hooks/useMounted';
 import {copyEntry} from '../../lib/data/copyEntry';
 import {useReadOnly, useSession} from '../../lib/data/hooks';
 import {
@@ -360,7 +361,6 @@ function useEntryForms(
 ) {
   const [isEditing, setIsEditing] = useState(false);
   const handleBeginEdit = useCallback(() => {
-    useAppState.getState().setAppMode(appMode.entryEditor);
     setIsEditing(true);
   }, []);
   const handleEditClosed = useCallback(() => setIsEditing(false), []);
@@ -383,9 +383,10 @@ const newEntryForm = (
 
 /** Opens a new entry's form above the row. */
 function useNewEntryAbove(rowKey: string) {
-  return useCallback(() => {
-    useAppState.getState().setEntryNew(`textEntry-${rowKey}-top`);
-  }, [rowKey]);
+  return useCallback(
+    () => useAppState.getState().setEntryNew(`textEntry-${rowKey}-top`),
+    [rowKey]
+  );
 }
 
 /**
@@ -397,13 +398,17 @@ function useEntryCopy(
   entry: TextEntry,
   onCopied: () => void
 ) {
+  const mounted = useMounted();
   const copyToClipboard = useCallback(
     (text: string) => {
-      onCopied();
-      copyEntry(session, entry.id, text);
-      useAppState.getState().setMostRecentCopyID(entry.id);
+      void copyEntry(session, entry.id, text).then(copied => {
+        if (copied && mounted.current) {
+          onCopied();
+          useAppState.getState().setMostRecentCopyID(entry.id);
+        }
+      });
     },
-    [onCopied, session, entry.id]
+    [onCopied, session, entry.id, mounted]
   );
   const handleCopyClick = useCallback(() => {
     copyToClipboard(entry.attributes.body);

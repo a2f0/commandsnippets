@@ -1,8 +1,9 @@
 import Alert from '@mui/material/Alert';
 import Grid from '@mui/material/Grid';
-import type React from 'react';
 import {useState} from 'react';
-import {useDocumentKeydown} from '../../hooks/useDocumentKeydown';
+import {useEditFieldCycle} from '../../hooks/useEditFieldCycle';
+import {useEditorOwnership} from '../../hooks/useEditorOwnership';
+import {appMode} from '../../lib/shared';
 import {StyledTagButton} from './StyledTagButton';
 import {StyledTagFormContainer} from './StyledTagFormContainer';
 import {StyledTextFieldTags} from './StyledTextFieldTags';
@@ -14,11 +15,10 @@ interface ITagFormProps {
   name: string;
   /** Save the name the field holds. */
   onSave: (name: string) => void;
-  /** Cancel, or Escape anywhere while the form is open. */
+  /** Cancel, or Escape from this form while it owns the keyboard. */
   onCancel: () => void;
-  nameRef?: React.Ref<HTMLInputElement>;
-  saveRef?: React.Ref<HTMLButtonElement>;
-  cancelRef?: React.Ref<HTMLButtonElement>;
+  /** New tags cycle name/Save/Cancel; renames retain native Tab. */
+  cycleFields?: boolean;
   /** Why the last save failed (none: it did not). */
   error?: string | null;
 }
@@ -29,22 +29,32 @@ export const TagForm = ({
   name: initialName,
   onSave,
   onCancel,
-  nameRef,
-  saveRef,
-  cancelRef,
+  cycleFields = false,
   error = null,
 }: ITagFormProps) => {
+  const owner = useEditorOwnership(appMode.tagEditor, true);
+  useEditFieldCycle(owner, cycleFields);
   const [name, setName] = useState<string>(initialName);
-  useDocumentKeydown(event => {
-    if (event.code === 'Escape') {
-      onCancel();
-    }
-  });
 
   return (
-    <StyledTagFormContainer id={ids.form}>
+    <StyledTagFormContainer
+      id={ids.form}
+      ref={owner.ref}
+      onFocusCapture={owner.onFocusCapture}
+      onKeyDown={event => {
+        if (
+          event.code === 'Escape' &&
+          !event.defaultPrevented &&
+          owner.ownsKeyboard()
+        ) {
+          // Handle the focused form before document-level search shortcuts.
+          event.preventDefault();
+          event.stopPropagation();
+          onCancel();
+        }
+      }}
+    >
       <StyledTextFieldTags
-        ref={nameRef}
         value={name}
         id={ids.name}
         onChange={event => {
@@ -59,7 +69,6 @@ export const TagForm = ({
       <Grid container spacing={0}>
         <Grid sx={{paddingRight: '1px'}} size={{xs: 6}}>
           <StyledTagButton
-            ref={saveRef}
             id={ids.save}
             onClick={() => {
               onSave(name);
@@ -70,7 +79,6 @@ export const TagForm = ({
         </Grid>
         <Grid sx={{paddingLeft: '1px'}} size={{xs: 6}}>
           <StyledTagButton
-            ref={cancelRef}
             id={ids.cancel}
             onClick={() => {
               onCancel();

@@ -5,6 +5,7 @@ import type React from 'react';
 import {useTypedTranslation} from '../../i18n/hooks';
 import {useRoute} from '../../lib/router/navigation';
 import {Link} from '../../lib/router/Router';
+import {userPath} from '../../lib/router/route';
 import {ADMIN_PATH} from '../../routePaths';
 
 type Mode = 'user' | 'admin';
@@ -62,7 +63,7 @@ const ModeTabs = ({username, readOnly}: IProps) => {
         value="user"
         label={t('userMode')}
         component={Link}
-        to={`/${username}`}
+        to={userPath(username)}
         onClick={stayOn('user')}
         sx={tabSx}
       />

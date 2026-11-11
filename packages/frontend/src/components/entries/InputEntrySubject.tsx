@@ -1,9 +1,7 @@
 import {TextField} from '@mui/material';
 import type {Theme} from '@mui/material/styles';
 import {useTheme} from '@mui/material/styles';
-import React, {useEffect, useRef, useState} from 'react';
-import {activeEntryEditField} from '../../lib/shared';
-import {useAppConfig} from '../../lib/state/appState';
+import React, {useState} from 'react';
 import {outlinedFieldSx} from '../../theme/sx';
 
 interface IProps {
@@ -19,10 +17,8 @@ const InputEntrySubject = ({
   placeholder,
   id,
 }: IProps) => {
-  const inputRef = useRef<HTMLInputElement | null>(null);
   const [value, setValue] = useState<string>(valueParent);
   const theme: Theme = useTheme();
-  const appConfig = useAppConfig();
 
   const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setValue(event.target.value);
@@ -32,17 +28,6 @@ const InputEntrySubject = ({
   const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
-    appConfig.setActiveEntryEditField(activeEntryEditField.subject);
-  };
-
-  useEffect(() => {
-    if (appConfig.activeEntryEditField === activeEntryEditField.subject) {
-      inputRef.current?.focus();
-    }
-  }, [appConfig.activeEntryEditField]);
-
-  const setTextInputRef = (element: HTMLInputElement | null) => {
-    inputRef.current = element;
   };
 
   return (
@@ -72,7 +57,6 @@ const InputEntrySubject = ({
       value={value}
       onChange={handleChange}
       onClick={handleClick}
-      inputRef={setTextInputRef}
     />
   );
 };

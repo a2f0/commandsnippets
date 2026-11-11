@@ -13,6 +13,7 @@ import {
   navigate,
   useRouteParam,
 } from '../../lib/router/navigation';
+import {tagPath} from '../../lib/router/route';
 import {needsScrollingIntoView} from '../../lib/scroll';
 import {activeSearch, appMode} from '../../lib/shared';
 import {useAppConfig, useAppState} from '../../lib/state/appState';
@@ -97,8 +98,9 @@ function useTagDrop(id: string, index: number, hover: ISortableRow['hover']) {
 
 /** Shows the tag's entries, as a click on it does. */
 function openTag(user: string | undefined, tag: ITagJsonApi) {
+  if (user === undefined) return;
   beginInteraction('tag switch', listKey({tag: tag.attributes.name}));
-  navigate(`/${user}/${tag.attributes.name}`);
+  navigate(tagPath(user, tag.attributes.name));
   const state = useAppState.getState();
   // Reset the main panel in case Untagged Entries were being viewed.
   state.setAppMode(appMode.tagsList);
@@ -114,13 +116,20 @@ function useTagEdit(tag: ITagJsonApi, user: string | undefined) {
   const begin = useCallback(() => setIsEditing(true), []);
   const cancel = () => setIsEditing(false);
   // The tag shown follows its new name.
-  const save = (renamed: ITagJsonApi) => {
-    setIsEditing(false);
-    if (currentRoute().tag === tag.attributes.name) {
-      navigate(`/${user}/${renamed.attributes.name}`, {replace: true});
+  const followRename = (renamed: ITagJsonApi) => {
+    const route = currentRoute();
+    if (
+      user !== undefined &&
+      route.page === 'user' &&
+      route.user === user &&
+      route.tag === tag.attributes.name
+    ) {
+      navigate(tagPath(user, renamed.attributes.name), {
+        replace: true,
+      });
     }
   };
-  return {isEditing, begin, cancel, save};
+  return {isEditing, begin, cancel, followRename};
 }
 
 /**
@@ -211,7 +220,7 @@ interface ITagProps {
 
 const Tag = ({
   id,
-  object,
+  object: tagObject,
   moveEntry,
   findEntry,
   index,
@@ -220,7 +229,6 @@ const Tag = ({
   movedSelectedUp,
   setSelectedTag,
 }: ITagProps) => {
-  const tagObject = object;
   const appConfig = useAppConfig();
   // Another user's tags (staff reading them): no reordering, editing or
   // context menu.
@@ -265,9 +273,9 @@ const Tag = ({
   return (
     <>
       {!edit.isEditing && (
-        <ListItem key={object.id} sx={{padding: 0}} ref={tagRef}>
+        <ListItem key={tagObject.id} sx={{padding: 0}} ref={tagRef}>
           <ListItemButton
-            data-testid={`tagListButton-${object.id}`}
+            data-testid={`tagListButton-${tagObject.id}`}
             sx={{padding: 0}}
           >
             <Box
@@ -275,8 +283,8 @@ const Tag = ({
               style={{opacity}}
               onContextMenu={readOnly ? undefined : menu.onContextMenu}
               onClick={() => {
-                openTag(user, object);
-                setSelectedTag(object.id);
+                openTag(user, tagObject);
+                setSelectedTag(tagObject.id);
               }}
               id={`tag-${id}`}
               data-testid={`tag-${id}`}
@@ -306,7 +314,7 @@ const Tag = ({
       {appConfig.loggedInUser && !readOnly && (
         <TagContextMenu
           id={id}
-          isPublic={object.attributes.is_public}
+          isPublic={tagObject.attributes.is_public}
           mouse={menu.mouse}
           onClose={menu.close}
           deleteTagParent={deleteTag}
@@ -316,7 +324,8 @@ const Tag = ({
       {edit.isEditing && !readOnly && (
         <TagEdit
           object={tagObject}
-          handleSaveParent={edit.save}
+          handleSaveParent={edit.cancel}
+          handleStoredParent={edit.followRename}
           handleCancelEditParent={edit.cancel}
         />
       )}

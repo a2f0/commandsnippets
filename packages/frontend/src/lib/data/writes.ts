@@ -40,6 +40,11 @@ import {enqueue} from '../sync/outbox';
 import {type SyncSession, withDataLock} from '../sync/session';
 import {SyncUserError} from '../sync/sync';
 import {idNow, junctionOf, rowNamed, tagJunctions} from './queries';
+import {
+  assertWriteIdentity,
+  captureWriteIdentity,
+  type WriteIdentity,
+} from './writeIdentity';
 
 /**
  * A write the API would refuse (a blank or too long field, a tag name the
@@ -119,10 +124,14 @@ function flushSoon(session: SyncSession): void {
  */
 async function write<T>(
   session: SyncSession,
-  change: () => Promise<{writes: QueuedWrite[]; result: T}>
+  change: () => Promise<{writes: QueuedWrite[]; result: T}>,
+  identity?: WriteIdentity
 ): Promise<T> {
   refuseReadOnly(session);
   const {db, owner} = session;
+  // The lifecycle lock can already be held by an account replacement. Capture
+  // before joining its queue, then recheck atomically before changing any row.
+  const captured = identity ?? (await captureWriteIdentity(session));
   // Never while a sign-out (in any tab) decides whether to delete the data.
   const result = await timed('idb', 'write', () =>
     withDataLock(db.name, 'shared', () =>
@@ -130,6 +139,7 @@ async function write<T>(
         'rw',
         [db.tags, db.entries, db.junctions, db.outbox, db.cursors],
         async () => {
+          await assertWriteIdentity(session, captured);
           const {writes, result} = await change();
           const made = await nextMade(db, owner);
           for (const queued of writes) {
@@ -154,20 +164,25 @@ async function patchRow<R extends {id: string; attributes: object}>(
   table: Table<Stored<R>, RowKey>,
   id: string,
   patch: (attributes: R['attributes']) => Partial<R['attributes']>,
-  queued: (id: string) => QueuedWrite
+  queued: (id: string) => QueuedWrite,
+  identity?: WriteIdentity
 ): Promise<Stored<R> | null> {
-  return write<Stored<R> | null>(session, async () => {
-    const row = await rowNamed(table, session.owner, id);
-    if (row === undefined) {
-      return {writes: [], result: null};
-    }
-    const patched = {
-      ...row,
-      attributes: {...row.attributes, ...patch(row.attributes)},
-    };
-    await table.put(patched);
-    return {writes: [queued(row.id)], result: patched};
-  });
+  return write<Stored<R> | null>(
+    session,
+    async () => {
+      const row = await rowNamed(table, session.owner, id);
+      if (row === undefined) {
+        return {writes: [], result: null};
+      }
+      const patched = {
+        ...row,
+        attributes: {...row.attributes, ...patch(row.attributes)},
+      };
+      await table.put(patched);
+      return {writes: [queued(row.id)], result: patched};
+    },
+    identity
+  );
 }
 
 /** The owner's user id, for a row made here (a stored row's, if any). */
@@ -253,36 +268,44 @@ export async function createTag(
   });
 }
 
-/** Rename tag `tagId` (null when there is no such tag). */
+/**
+ * Rename tag `tagId` (null when absent). An editor's captured identity guards
+ * its delayed write against account or known data-version replacement.
+ */
 export async function renameTag(
   session: SyncSession,
   tagId: string,
-  rawName: string
+  rawName: string,
+  identity?: WriteIdentity
 ): Promise<Tag | null> {
   const {db, owner} = session;
   refuseReadOnly(session);
   const {name = ''} = checked(tagUpdateAttributesSchema, {name: rawName});
-  return write(session, async () => {
-    const tag = await rowNamed(db.tags, owner, tagId);
-    if (tag === undefined) {
-      return {writes: [], result: null};
-    }
-    // A user's tags have unique names, deleted ones' included.
-    const taken = await db.tags
-      .where('owner')
-      .equals(owner)
-      .filter(other => other.id !== tag.id && other.attributes.name === name)
-      .count();
-    if (taken > 0) {
-      throw new InvalidWriteError(`name: ${name} is taken`);
-    }
-    const renamed = {...tag, attributes: {...tag.attributes, name}};
-    await db.tags.put(renamed);
-    return {
-      writes: [{kind: 'renameTag', tagId: tag.id, name}],
-      result: renamed,
-    };
-  });
+  return write(
+    session,
+    async () => {
+      const tag = await rowNamed(db.tags, owner, tagId);
+      if (tag === undefined) {
+        return {writes: [], result: null};
+      }
+      // A user's tags have unique names, deleted ones' included.
+      const taken = await db.tags
+        .where('owner')
+        .equals(owner)
+        .filter(other => other.id !== tag.id && other.attributes.name === name)
+        .count();
+      if (taken > 0) {
+        throw new InvalidWriteError(`name: ${name} is taken`);
+      }
+      const renamed = {...tag, attributes: {...tag.attributes, name}};
+      await db.tags.put(renamed);
+      return {
+        writes: [{kind: 'renameTag', tagId: tag.id, name}],
+        result: renamed,
+      };
+    },
+    identity
+  );
 }
 
 /** Visibility changes use the same local queue and last-writer rules as edits. */
@@ -520,7 +543,8 @@ export async function deleteEntry(
  */
 export async function reuseEntry(
   session: SyncSession,
-  entryId: string
+  entryId: string,
+  identity?: WriteIdentity
 ): Promise<void> {
   await patchRow(
     session,
@@ -531,7 +555,8 @@ export async function reuseEntry(
       kind: 'reuseEntry',
       entryId: id,
       reuseId: globalThis.crypto.randomUUID(),
-    })
+    }),
+    identity
   );
 }
 

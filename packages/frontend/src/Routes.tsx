@@ -3,6 +3,7 @@ import {GithubAuth} from './components/auth/GithubAuth';
 import {GoogleAuth} from './components/auth/GoogleAuth';
 import {currentRoute, navigate, useRoute} from './lib/router/navigation';
 import {Navigate} from './lib/router/Router';
+import {userPath} from './lib/router/route';
 import {useAppConfig} from './lib/state/appState';
 import {EntriesPage} from './pages/EntriesPage';
 import {EntryPage} from './pages/EntryPage';
@@ -40,7 +41,7 @@ const Routes = () => {
       previous !== username &&
       (username === null || currentRoute().page !== 'admin')
     )
-      navigate(username === null ? '/' : `/${username}`, {replace: true});
+      navigate(username === null ? '/' : userPath(username), {replace: true});
   }, [username]);
 
   switch (page) {

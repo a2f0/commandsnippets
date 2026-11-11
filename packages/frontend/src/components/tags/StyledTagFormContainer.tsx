@@ -4,12 +4,15 @@ import React from 'react';
 interface IProps {
   children?: React.ReactNode;
   id: string;
+  ref?: React.Ref<HTMLDivElement>;
+  onKeyDown?: React.KeyboardEventHandler<HTMLDivElement>;
+  onFocusCapture?: React.FocusEventHandler<HTMLDivElement>;
 }
 
-const StyledTagFormContainer = ({children, id}: IProps) => {
+const StyledTagFormContainer = ({children, ...props}: IProps) => {
   return (
     <Box
-      id={id}
+      {...props}
       sx={{
         width: theme => `100% - ${theme.main.dragIndicatorWidth}px`,
         ml: theme => `${theme.main.dragIndicatorWidth}px`,

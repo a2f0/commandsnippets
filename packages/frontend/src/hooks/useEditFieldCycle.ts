@@ -1,86 +1,34 @@
-import {type RefObject, useEffect} from 'react';
-import {activeEntryEditField, activeTagEditField, appMode} from '../lib/shared';
-import {type AppState, useAppConfig} from '../lib/state/appState';
+import type {RefObject} from 'react';
 import {useDocumentKeydown} from './useDocumentKeydown';
 
-/** An editor's fields, of which the app state holds the active one. */
-interface IEditFields<Field> {
-  /** The app mode while the editor is open: Tab cycles its fields only then. */
-  mode: appMode;
-  /** The fields in Tab order; Tab on the last goes back to the first. */
-  order: readonly Field[];
-  save: Field;
-  cancel: Field;
-  active: (state: AppState) => Field;
-  setActive: (state: AppState, field: Field) => void;
-}
+/** Only this form's controls, not MUI's hidden textarea sizing mirror. */
+const controlsOf = (root: HTMLDivElement | null) =>
+  Array.from(
+    root?.querySelectorAll<HTMLElement>(
+      'input, textarea:not([aria-hidden]), button'
+    ) ?? []
+  );
 
-/** The entry editors' (`EntryForm`) fields. */
-export const entryEditFields: IEditFields<activeEntryEditField> = {
-  mode: appMode.entryEditor,
-  order: [
-    activeEntryEditField.subject,
-    activeEntryEditField.body,
-    activeEntryEditField.save,
-    activeEntryEditField.cancel,
-  ],
-  save: activeEntryEditField.save,
-  cancel: activeEntryEditField.cancel,
-  active: state => state.activeEntryEditField,
-  setActive: (state, field) => state.setActiveEntryEditField(field),
-};
-
-/** A new tag's form's (`TagNew`) fields. */
-export const tagEditFields: IEditFields<activeTagEditField> = {
-  mode: appMode.tagEditor,
-  order: [
-    activeTagEditField.name,
-    activeTagEditField.save,
-    activeTagEditField.cancel,
-  ],
-  save: activeTagEditField.save,
-  cancel: activeTagEditField.cancel,
-  active: state => state.activeTagEditField,
-  setActive: (state, field) => state.setActiveTagEditField(field),
-};
-
-/**
- * Tab (Shift+Tab too) makes an open editor's next field the active one, in
- * place of the browser's focus move, and Save and Cancel are focused as they
- * become active (the text fields focus themselves).
- */
-export function useEditFieldCycle<Field>(
-  fields: IEditFields<Field>,
-  buttons: {
-    save: RefObject<HTMLButtonElement | null>;
-    cancel: RefObject<HTMLButtonElement | null>;
-  }
-): void {
-  const appConfig = useAppConfig();
-  // Read as the editor renders, so it renders again when it changes; the
-  // listener and the focus read the state as it is when they run.
-  const active = fields.active(appConfig);
-
+/** Tab cycles only the owning form; focus never follows another form's field. */
+export function useEditFieldCycle(
+  owner: {ref: RefObject<HTMLDivElement | null>; ownsKeyboard: () => boolean},
+  enabled = true
+) {
   useDocumentKeydown(event => {
-    if (event.code !== 'Tab' || appConfig.appMode !== fields.mode) {
+    if (
+      !enabled ||
+      event.defaultPrevented ||
+      event.code !== 'Tab' ||
+      !owner.ownsKeyboard()
+    )
       return;
-    }
-    const {order} = fields;
-    const next =
-      order[(order.indexOf(fields.active(appConfig)) + 1) % order.length];
-    if (next !== undefined) {
-      fields.setActive(appConfig, next);
-    }
+    const controls = controlsOf(owner.ref.current);
+    const focused = document.activeElement;
+    const index =
+      focused instanceof HTMLElement ? controls.indexOf(focused) : -1;
+    const next = (index + 1) % controls.length;
+    controls[next]?.focus();
     event.preventDefault();
     event.stopPropagation();
   });
-
-  useEffect(() => {
-    const field = fields.active(appConfig);
-    if (field === fields.save) {
-      buttons.save.current?.focus();
-    } else if (field === fields.cancel) {
-      buttons.cancel.current?.focus();
-    }
-  }, [active]);
 }

@@ -13,7 +13,13 @@ import {useCollectionSync} from '../lib/data/useSync';
 import {formatTimestamp} from '../lib/formatTimestamp';
 import {useRouteParam} from '../lib/router/navigation';
 import {Link} from '../lib/router/Router';
-import {analyticsPath, entryPath, reusesPath} from '../lib/router/route';
+import {
+  analyticsPath,
+  entryPath,
+  reusesPath,
+  tagPath,
+  userPath,
+} from '../lib/router/route';
 import {useAppState} from '../lib/state/appState';
 import {isLocalId} from '../lib/sync/outbox';
 import type {SyncSession} from '../lib/sync/session';
@@ -45,7 +51,7 @@ const TagLinks = ({entryId, owner}: {entryId: string; owner: string}) => {
         <Chip
           key={tag.id}
           component={Link}
-          to={`/${encodeURIComponent(owner)}/${encodeURIComponent(tag.attributes.name)}`}
+          to={tagPath(owner, tag.attributes.name)}
           label={tag.attributes.name}
           size="small"
           variant="outlined"
@@ -176,8 +182,9 @@ const BodyPanel = ({
           size="small"
           startIcon={copied ? <Check /> : <FileCopySharp />}
           onClick={() => {
-            copyEntry(session, entry.id, body);
-            setCopied(true);
+            void copyEntry(session, entry.id, body).then(success => {
+              if (success) setCopied(true);
+            });
           }}
         >
           {copied ? t('infoCopied') : t('infoCopy')}
@@ -294,7 +301,7 @@ const EntryPageContent = () => {
     <DetailPage
       backId="entryBack"
       id="entryPage"
-      backTo={returnPath ?? `/${encodeURIComponent(owner)}`}
+      backTo={returnPath ?? userPath(owner)}
       backLabel={
         returnPath?.split('?')[0] === analyticsPath(owner)
           ? t('backToAnalytics')

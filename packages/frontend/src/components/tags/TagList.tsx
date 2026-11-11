@@ -9,6 +9,7 @@ import {useReadOnly} from '../../lib/data/hooks';
 import {keyOfRow} from '../../lib/data/rowKey';
 import {beginInteraction, listKey} from '../../lib/metrics/timings';
 import {navigate} from '../../lib/router/navigation';
+import {tagPath} from '../../lib/router/route';
 import {activeSearch, appMode} from '../../lib/shared';
 import {useAppConfig, useAppState} from '../../lib/state/appState';
 import {ItemTypes} from '../dnd/itemTypes';
@@ -103,7 +104,7 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
       beginInteraction('tag switch', listKey({tag: selected.attributes.name}));
       appConfig.setAppMode(appMode.entriesList);
       appConfig.setActiveSearch(activeSearch.entries);
-      navigate(`/${username}/${selected.attributes.name}`);
+      navigate(tagPath(username, selected.attributes.name));
     },
   });
 

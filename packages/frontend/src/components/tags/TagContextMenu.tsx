@@ -2,7 +2,7 @@ import React, {useCallback} from 'react';
 import {useTypedTranslation} from '../../i18n/hooks';
 import {useSession} from '../../lib/data/hooks';
 import {setTagPublic} from '../../lib/data/writes';
-import {appMode, type IMouse} from '../../lib/shared';
+import type {IMouse} from '../../lib/shared';
 import {useAppState} from '../../lib/state/appState';
 import {StyledMenuItem} from '../../menu/StyledMenuItem';
 import {ContextMenu} from '../ContextMenu';
@@ -61,8 +61,7 @@ const TagContextMenu = ({
 
   // A new tag's form, at the top of the list, as File > New Tag opens it.
   const handleNewTag = useCallback(() => {
-    const {setAppMode, setTagNew} = useAppState.getState();
-    setAppMode(appMode.tagEditor);
+    const {setTagNew} = useAppState.getState();
     onClose();
     setTagNew('top');
   }, [onClose]);

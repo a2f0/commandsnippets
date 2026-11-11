@@ -13,6 +13,7 @@ import {useOwner} from '../lib/data/hooks';
 import {useCollectionSync} from '../lib/data/useSync';
 import {recordCommit, useRenderTiming} from '../lib/metrics/hooks';
 import {navigate, useRoute} from '../lib/router/navigation';
+import {userPath} from '../lib/router/route';
 import {useAppConfig, useAppState} from '../lib/state/appState';
 
 /**
@@ -31,7 +32,7 @@ const EntriesPageContent = () => {
   // Redirect to user's page when on root path.
   useEffect(() => {
     if (atRoot && appConfig.loggedInUser !== null) {
-      navigate(`/${appConfig.loggedInUser}`);
+      navigate(userPath(appConfig.loggedInUser));
     }
   }, [atRoot, appConfig.loggedInUser]);
 

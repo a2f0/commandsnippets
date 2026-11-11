@@ -10,6 +10,7 @@ import {
   metricsSnapshot,
   recordTiming,
 } from '../../../../src/lib/metrics/timings';
+import {appMode} from '../../../../src/lib/shared';
 import {
   defaultSavedState,
   leaveForeignSession,
@@ -29,7 +30,10 @@ describe('the app state', () => {
       store.setLoggedInUser('dan');
       store.setSelectedTheme('lightTheme');
       store.setEntrySearchString('deploy');
-      store.setAppMode(3);
+      store.sendEditorOwnership({
+        type: 'open',
+        editor: {id: Symbol('entry'), mode: appMode.entryEditor},
+      });
     });
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
     expect(saved.state).toEqual({

@@ -1,6 +1,6 @@
 import React from 'react';
 import {useTypedTranslation} from '../../i18n/hooks';
-import {appMode, type IMouse} from '../../lib/shared';
+import type {IMouse} from '../../lib/shared';
 import {useAppConfig} from '../../lib/state/appState';
 import {StyledMenuItem} from '../../menu/StyledMenuItem';
 import {ContextMenu} from '../ContextMenu';
@@ -22,7 +22,6 @@ const EntryListContextMenu = ({mouse, onClose}: IEntryListContextMenu) => {
   const handleNewEntry = (event: React.MouseEvent<HTMLLIElement>) => {
     event.preventDefault();
     event.stopPropagation();
-    appConfig.setAppMode(appMode.entryEditor);
     appConfig.setEntryNew('textEntry-bottom');
     onClose();
   };

@@ -5,10 +5,13 @@
  * every row again), or that a new entry's form opens next to (a long list
  * stays quick).
  */
-import {act, fireEvent, screen} from '@testing-library/react';
+import {act, cleanup, fireEvent, screen} from '@testing-library/react';
 import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
+import * as copying from '../../src/lib/data/copyEntry';
+import * as writes from '../../src/lib/data/writes';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
+import {mockResult} from '../util/mockResult';
 import {API, serveMockApi, server} from '../util/msw';
 import {signIn, store} from '../util/signIn';
 import {entry, seed} from '../util/storeFixtures';
@@ -55,6 +58,7 @@ const WAIT = {timeout: 10_000};
 vi.setConfig({testTimeout: 30_000});
 
 serveMockApi();
+afterEach(() => cleanup());
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
@@ -83,6 +87,18 @@ async function showList(): Promise<void> {
   await screen.findByText(`subject ${COUNT}`, undefined, WAIT);
 }
 
+async function copyMiddleEntry() {
+  const copied = vi.spyOn(copying, 'copyEntry');
+  const reused = vi.spyOn(writes, 'reuseEntry');
+  await act(async () => {
+    fireEvent.click(screen.getByText(`body-${COUNT / 2}`));
+    // Clipboard fulfillment precedes the identity check and stored reuse.
+    // Drain both operations before measuring or tearing down the database.
+    expect(await mockResult(copied)).toBe(true);
+    await mockResult(reused);
+  });
+}
+
 it('renders each row once when read, and only the changed rows on selection', async () => {
   await showList();
   expect(renders.rows).toBeGreaterThanOrEqual(COUNT);
@@ -91,9 +107,7 @@ it('renders each row once when read, and only the changed rows on selection', as
 
   renders.rows = 0;
   renders.bodies = 0;
-  await act(async () => {
-    fireEvent.click(screen.getByText(`body-${COUNT / 2}`));
-  });
+  await copyMiddleEntry();
   // The entry selected (and copied) before, and the one now: a render or
   // two each (selected and copied at once, then its reuse stored), none of
   // the other rows'.
@@ -107,9 +121,7 @@ it('renders only the entry reused when its reuse is stored', async () => {
 
   renders.rows = 0;
   renders.bodies = 0;
-  await act(async () => {
-    fireEvent.click(screen.getByText(`body-${COUNT / 2}`));
-  });
+  await copyMiddleEntry();
   // The reuse is stored (its count shows): the list reads every entry
   // again, and renders again only the row it changed (and the click's).
   await screen.findByText('1×', undefined, WAIT);

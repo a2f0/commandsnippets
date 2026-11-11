@@ -1,6 +1,5 @@
 import React from 'react';
 import {useTypedTranslation} from '../../../i18n/hooks';
-import {appMode} from '../../../lib/shared';
 import {useAppConfig} from '../../../lib/state/appState';
 import {StyledMenuItem} from '../../StyledMenuItem';
 
@@ -14,7 +13,6 @@ const NewEntry = ({onClose}: IProps) => {
 
   const handleCreateEntry = () => {
     onClose();
-    appConfig.setAppMode(appMode.entryEditor);
     appConfig.setEntryNew('textEntry-top');
   };
 

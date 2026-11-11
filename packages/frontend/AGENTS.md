@@ -58,6 +58,27 @@ touches before making it, and keep them current. The rules most changes meet:
 - Read the URL through `src/lib/router/` selectors that return a value
   (`useRoute(route => route.page)`, `useRouteParam`), selecting the least a
   component needs; handlers use `currentRoute()` and `navigate()`.
+- Keep editor closing scoped to its mounted instance. A completed write may
+  still need a data-related follow-up: a renamed selected tag follows its new
+  URL only while the original route, session and account still apply. Close
+  on successful persistence, not on the follow-up read's success. Test the
+  selected-tag route, a cancelled/reopened draft's next save, and a failed
+  follow-up read without reporting the stored write as unsaved.
+  Capture the database account/version at Save and recheck inside the write
+  transaction: a local row's blank user relationship is not its identity.
+  Common writes capture before joining the lifecycle-lock queue; copies
+  capture before the clipboard wait. Cover replacement accounts with distinct
+  IDs as well as collisions. Unknown accounts are not wildcards; retry after
+  binding from a fresh capture. Unknown versions still permit first adoption.
+- Both form kinds share `lib/state/editorOwnership.ts` and
+  `hooks/useEditorOwnership.ts`: open/focus/close events own keyboard mode;
+  explicit list navigation releases it. Scope Tab to the owning form, not
+  global active-field effects. Test both opening/closing orders, same-kind
+  overlap, focus changes, and real list shortcuts after Save and Cancel.
+  Assert focus without a test-only click: renames autofocus too, and an active
+  close restores its survivor only when focus went with the closing form.
+  Handle tag Escape in the owning form before document search shortcuts;
+  background drafts and an open menu must survive another owner's Escape.
 - Keep list rows cheap: memoized rows with narrow selectors, stable
   callbacks, context menus rendered only while open, and row data from props
   rather than a live query per row.

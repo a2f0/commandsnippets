@@ -8,6 +8,7 @@ import {
   useRouteParam,
   useSearchParam,
 } from '../../../lib/router/navigation';
+import {userPath} from '../../../lib/router/route';
 import {entrySearchMethod} from '../../../lib/shared';
 import {StyledCheckIcon} from '../../../styled/StyledCheckIcon';
 import {StyledMenuItem} from '../../StyledMenuItem';
@@ -49,7 +50,7 @@ const EntriesFilterMenuItem = ({filter, onClose}: IProps) => {
         onClose();
         if (user !== undefined) {
           beginInteraction(interaction, listKey({entries: filter}));
-          navigate(`/${user}?entries=${filter}`);
+          navigate(`${userPath(user)}?entries=${filter}`);
         }
       }}
     >

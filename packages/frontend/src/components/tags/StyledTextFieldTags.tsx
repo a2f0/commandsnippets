@@ -3,6 +3,7 @@ import React from 'react';
 import {useDocumentKeydown} from '../../hooks/useDocumentKeydown';
 import {activeSearch, appMode} from '../../lib/shared';
 import {useAppConfig} from '../../lib/state/appState';
+import type {ListMode} from '../../lib/state/editorOwnership';
 import {outlinedFieldSx} from '../../theme/sx';
 
 interface IStyledTextFieldProps {
@@ -18,7 +19,10 @@ const PANE_KEYS = ['Tab', 'ArrowLeft', 'ArrowRight'];
  * The list the key moves the keyboard to from `mode`: Tab to the other,
  * ArrowRight from the tags to the entries, ArrowLeft back; or none.
  */
-function paneAfter(key: string, mode: appMode) {
+function paneAfter(
+  key: string,
+  mode: appMode
+): {mode: ListMode; search: activeSearch} | null {
   if (mode === appMode.tagsList && (key === 'Tab' || key === 'ArrowRight')) {
     return {mode: appMode.entriesList, search: activeSearch.entries};
   }
@@ -34,6 +38,7 @@ const StyledTextFieldTags = React.forwardRef<
 >(({id, value, onChange}: IStyledTextFieldProps, ref) => {
   const appConfig = useAppConfig();
   useDocumentKeydown(event => {
+    if (event.defaultPrevented) return;
     if (event.code === 'Escape') {
       appConfig.setActiveSearch(activeSearch.tags);
     }

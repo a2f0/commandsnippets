@@ -1,6 +1,6 @@
 import React from 'react';
 import {useTypedTranslation} from '../../i18n/hooks';
-import {appMode, type IMouse} from '../../lib/shared';
+import type {IMouse} from '../../lib/shared';
 import {useAppConfig} from '../../lib/state/appState';
 import {StyledMenuItem} from '../../menu/StyledMenuItem';
 import {ContextMenu} from '../ContextMenu';
@@ -21,7 +21,6 @@ const TagListContextMenu = ({mouse, onClose}: ITagListContextMenuProps) => {
 
   const handleNewTag = () => {
     appConfig.setTagNew('bottom');
-    appConfig.setAppMode(appMode.tagEditor);
     onClose();
   };
 
