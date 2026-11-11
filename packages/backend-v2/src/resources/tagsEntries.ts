@@ -44,8 +44,9 @@ export const listTagEntries = (
   listResponse(c, {
     ...tagTextEntryResource,
     user: owner,
-    publicOnly,
-    ...(publicOnly ? {visibility: publicJunction(owner.id)} : {}),
+    ...(publicOnly
+      ? {publicOnly: true, visibility: publicJunction(owner.id)}
+      : {publicOnly: false}),
     query: tagTextEntryListQuerySchema,
     filters: {
       tag__id: value => eq(tagsEntries.tag_id, value),

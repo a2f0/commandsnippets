@@ -77,16 +77,14 @@ beforeAll(() => {
     },
   });
   symlinkSync(join(root, 'node_modules'), join(dir, 'node_modules'), 'dir');
+  // Check the copy before any compile can create its expected .ts-out output.
+  expect(readdirSync(dir).sort()).toEqual(
+    [...COMPILE_INPUTS, 'node_modules'].sort()
+  );
 });
 
 afterAll(() => {
   rmSync(dir, {recursive: true, force: true});
-});
-
-it('copies only compiler inputs into the fixture', () => {
-  expect(readdirSync(dir).sort()).toEqual(
-    [...COMPILE_INPUTS, 'node_modules'].sort()
-  );
 });
 
 it('keeps the declarations current across a model and global type change', () => {

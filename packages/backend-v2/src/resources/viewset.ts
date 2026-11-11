@@ -176,27 +176,27 @@ interface RevisedRow {
   date_updated: string;
 }
 
-interface ListOptions<
+type ListOptions<
   F extends FilterSchemas,
   S extends string,
   Search extends SearchMode,
-> extends OwnedResource,
-    CollectionQuery<F, S, Search> {
-  /** The rows' revision, for keyset pages (where the query supports them). */
-  dateUpdated?: SQLiteColumn;
-  /**
-   * Whose rows are listed, of the data version the request reads them at
-   * (`versionOf`).
-   */
-  user: User;
-  publicOnly?: boolean;
-  /** Omit for unrestricted owned reads; public reads supply a concrete filter. */
-  visibility?: SQL;
-  fields?: Record<string, SQLiteColumn | SQL>;
-  defaultOrdering: SQLiteColumn[];
-  /** `filter[search]`, where the query schema supports it. */
-  search?: (term: string) => SQL;
-}
+> = OwnedResource &
+  CollectionQuery<F, S, Search> & {
+    /** The rows' revision, for keyset pages (where the query supports them). */
+    dateUpdated?: SQLiteColumn;
+    /**
+     * Whose rows are listed, of the data version the request reads them at
+     * (`versionOf`).
+     */
+    user: User;
+    fields?: Record<string, SQLiteColumn | SQL>;
+    defaultOrdering: SQLiteColumn[];
+    /** `filter[search]`, where the query schema supports it. */
+    search?: (term: string) => SQL;
+  } & (
+    | {publicOnly: true; visibility: SQL}
+    | {publicOnly?: false; visibility?: never}
+  );
 
 /**
  * GET on a collection. Reads are scoped to the requesting user;

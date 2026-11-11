@@ -62,10 +62,13 @@ export const listEntries = (
   listResponse(c, {
     ...textEntryResource,
     user: owner,
-    publicOnly,
     ...(publicOnly
-      ? {visibility: publicEntry(owner.id), fields: publicEntryFields(owner.id)}
-      : {fields: entryColumns}),
+      ? {
+          publicOnly: true,
+          visibility: publicEntry(owner.id),
+          fields: publicEntryFields(owner.id),
+        }
+      : {publicOnly: false, fields: entryColumns}),
     query: textEntryListQuerySchema,
     filters: {
       id: value => eq(textEntries.id, value),
