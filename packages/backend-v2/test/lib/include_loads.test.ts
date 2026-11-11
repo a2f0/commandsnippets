@@ -23,9 +23,9 @@ describe('include paths of one length', () => {
       }
       await Promise.race([
         gate.promise,
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('loaded one at a time')), 1000)
-        ),
+        new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('loaded one at a time')), 1000);
+        }),
       ]);
       return ids.map(id => ({id}));
     };
@@ -98,7 +98,9 @@ describe('include paths of one length', () => {
             load: async (parentIds: number[]) => {
               loads.push({type: 'Middle.children', ids: parentIds});
               // Answered after the other path has asked for it too.
-              await new Promise(settle => setTimeout(settle, 5));
+              await new Promise(settle => {
+                setTimeout(settle, 5);
+              });
               return parentIds.flatMap(parent => [
                 {id: parent * 10 + 1, parent},
                 {id: parent * 10 + 2, parent},

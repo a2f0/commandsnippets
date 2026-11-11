@@ -12,7 +12,7 @@
     "build:production": "bun run images && astro build --mode production",
     "preview": "astro preview",
     "check": "astro check",
-    "lint": "biome check . && bun run lint:knip",
+    "lint": "biome check --error-on-warnings . && bun run lint:knip",
     "lint:knip": "../../node_modules/.bin/knip --directory ../.. --workspace packages/website",
     "fix": "biome check --write .",
     "test": "bun run images && bun test",

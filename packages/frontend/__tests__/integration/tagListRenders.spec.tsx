@@ -13,6 +13,7 @@ import * as syncReads from '../../src/lib/sync/sync';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {mockResult} from '../util/mockResult';
 import {API, serveMockApi, server} from '../util/msw';
+import {getRows} from '../util/rows';
 import {signIn, store, TEST_USER} from '../util/signIn';
 import {seed, tag} from '../util/storeFixtures';
 import {renderAppAt} from '../util/TestAppRouter';
@@ -135,8 +136,7 @@ function observeOfflineWork() {
 }
 
 const highlighted = () =>
-  screen
-    .getAllByRole('tag')
+  getRows('tag')
     .filter(row => row.getAttribute('aria-current') === 'true')
     .map(row => row.id);
 
@@ -168,7 +168,7 @@ it('renders the list once for each list read, and each row once', async () => {
   renders.rows = 0;
   // A search: the list as read again, the tags whose names match.
   act(() => store.setTagSearchString('name-1'));
-  expect(screen.getAllByRole('tag')).toHaveLength(11);
+  expect(getRows('tag')).toHaveLength(11);
   expect(renders.lists).toBe(1);
   expect(renders.rows).toBeLessThanOrEqual(11);
   // The tag selected is not listed: the first is highlighted.

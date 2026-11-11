@@ -14,7 +14,7 @@
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "cf-typegen": "wrangler types",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json",
-    "lint": "biome check . && bun run lint:knip",
+    "lint": "biome check --error-on-warnings . && bun run lint:knip",
     "lint:knip": "../../node_modules/.bin/knip --directory ../.. --workspace packages/backend-v2",
     "fix": "biome check --write .",
     "test": "vitest run",

@@ -20,6 +20,7 @@ import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {JSON_API} from '../util/documents';
 import {mockResult} from '../util/mockResult';
 import {API, serveMockApi, server} from '../util/msw';
+import {queryRows} from '../util/rows';
 import {signIn, store, TEST_USER} from '../util/signIn';
 import {entry, junction, seed, tag} from '../util/storeFixtures';
 import {renderAppAt} from '../util/TestAppRouter';
@@ -127,7 +128,7 @@ function observePageWork() {
 
 /** The entries the list shows (drag handle, subject, body), in order. */
 const listed = () =>
-  screen.queryAllByRole('entry').map(element => element.textContent ?? '');
+  queryRows('entry').map(element => element.textContent ?? '');
 
 /** Bring the app back into view, as much later as a sync waits for. */
 async function comeBackIntoView() {
@@ -336,7 +337,7 @@ describe('The entries page', () => {
     renderAppAt('/test/test-tag-1');
     try {
       await waitFor(() => expect(listed()).toHaveLength(4));
-      expect(screen.queryAllByRole('tag')).not.toEqual([]);
+      expect(queryRows('tag')).not.toEqual([]);
       await act(async () => requested.promise);
 
       // This tab takes up another tab's sign-in while the old tag read is
@@ -344,7 +345,7 @@ describe('The entries page', () => {
       act(() => store.setLoggedInUser('someone-else'));
 
       expect(listed()).toEqual([]);
-      expect(screen.queryAllByRole('tag')).toEqual([]);
+      expect(queryRows('tag')).toEqual([]);
     } finally {
       await act(async () => tagRead.resolve());
       await pageWork.finish([

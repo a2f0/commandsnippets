@@ -1,7 +1,6 @@
 import {
   booleanField,
   charField,
-  fail,
   QUERY_ERROR,
   reorderAttributesSchema,
   toErrorObject,
@@ -95,10 +94,26 @@ describe('parseOrThrow', () => {
     const schema = z.pipe(
       z.unknown(),
       z.transform((_, ctx) => {
-        fail(ctx, 'first', {code: 'not_found', status: 404, pointer: '/data'});
-        return fail(ctx, 'second', QUERY_ERROR);
+        ctx.issues.push(
+          {
+            code: 'custom',
+            message: 'first',
+            params: {code: 'not_found', status: 404, pointer: '/data'},
+            input: ctx.value,
+          },
+          {
+            code: 'custom',
+            message: 'second',
+            params: QUERY_ERROR,
+            input: ctx.value,
+          }
+        );
+        return z.NEVER;
       })
     );
+    expect(
+      schema.safeParse(1).error?.issues.map(issue => issue.message)
+    ).toEqual(['first', 'second']);
     const error = await apiErrorOf(() => parseOrThrow(schema, 1));
     expect(error.status).toBe(404);
     expect(error.errors).toEqual([

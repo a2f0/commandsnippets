@@ -68,7 +68,9 @@ describe('Entries List', () => {
       fireEvent.dragStart(handle);
       fireEvent.dragEnter(rowAt(entries, 0));
       fireEvent.dragOver(rowAt(entries, 0));
-      await new Promise(res => setTimeout(res, 0));
+      await new Promise(res => {
+        setTimeout(res, 0);
+      });
     });
     const after = expectRows('entry', subjects(1, 2, 3, 4));
     // Dropping it onto itself, as the screen does in a real drag.

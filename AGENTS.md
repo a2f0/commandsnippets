@@ -40,7 +40,10 @@ Monorepo for the Command Snippets app.
     every package's `biome.json` extends it. Budgets: cognitive complexity
     at most 20, functions at most 75 lines, files at most 800 (blank lines
     skipped; tests exempt); split code by responsibility to stay within
-    them. No import cycles, type-only imports included.
+    them. No import cycles, type-only imports included. Warnings fail lint.
+    Keep `useAwaitThenable` deferred while it misclassifies React's awaited
+    async `act`; do not remove that await. Blanket switch exhaustiveness
+    also remains deferred for narrowed-union false positives.
   - Layers: the frontend's `src/lib` never imports `components`, `pages`,
     `menu` or `hooks`, and its UI reaches IndexedDB only through `lib/data`
     (`packages/frontend/biome.json`).

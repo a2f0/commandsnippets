@@ -185,9 +185,9 @@ const TagContent = ({
   const showTagCounts = useAppState(state => state.showTagCounts);
   return (
     <TagContainer ref={previewRef}>
-      <DragHandleContainer role="tagDragHandleContainer">
+      <DragHandleContainer data-testid="tagDragHandleContainer">
         <DragHandle
-          role="tagDragHandle"
+          data-testid="tagDragHandle"
           ref={handleRef}
           style={{visibility: handleShown ? 'visible' : 'hidden'}}
         >
@@ -196,7 +196,7 @@ const TagContent = ({
       </DragHandleContainer>
       <TagLabelWrapper
         id={`tagLabelWrapper-${tag.id}`}
-        role="tagLabelWrapper"
+        data-testid="tagLabelWrapper"
         ref={dropRef}
       >
         <TagLabel label={tag.attributes.name} />
@@ -277,18 +277,18 @@ const Tag = ({
           <ListItemButton
             data-testid={`tagListButton-${tagObject.id}`}
             sx={{padding: 0}}
+            onContextMenu={readOnly ? undefined : menu.onContextMenu}
+            onClick={() => {
+              openTag(user, tagObject);
+              setSelectedTag(tagObject.id);
+            }}
           >
             <Box
               ref={dropRef}
               style={{opacity}}
-              onContextMenu={readOnly ? undefined : menu.onContextMenu}
-              onClick={() => {
-                openTag(user, tagObject);
-                setSelectedTag(tagObject.id);
-              }}
               id={`tag-${id}`}
               data-testid={`tag-${id}`}
-              role="tag"
+              data-row-kind="tag"
               aria-current={isSelected ? 'true' : undefined}
               onMouseEnter={dragHandle.show}
               onMouseLeave={dragHandle.hide}

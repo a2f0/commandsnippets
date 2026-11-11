@@ -9,7 +9,7 @@
         "useUniqueElementIds": "off"
       },
       "a11y": {
-        "useValidAriaRole": "off"
+        "useValidAriaRole": "error"
       },
       "style": {
         "noRestrictedImports": {

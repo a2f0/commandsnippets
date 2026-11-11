@@ -24,4 +24,6 @@ async function init() {
   initClickTracking();
 }
 
-init();
+init().catch((error: unknown) => {
+  console.error('ERROR: Failed to start application:', error);
+});

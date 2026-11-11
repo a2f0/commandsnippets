@@ -1,11 +1,12 @@
-import {act, fireEvent, screen} from '@testing-library/react';
+import {act, fireEvent, isInaccessible, screen} from '@testing-library/react';
 import type {UserEvent} from '@testing-library/user-event';
 import invariant from 'invariant';
+import {getRows, type RowKind} from './rows';
 
 /**
  * Drag-and-drop on a sortable list (`components/dnd/`), whose rows have the
- * role `role` (`entry`, `tag`) and show a drag handle (`${role}DragHandle`)
- * while the pointer is over their `${role}DragHandleContainer`.
+ * data-row-kind `kind` (`entry`, `tag`) and show a test-identified drag handle
+ * (`${kind}DragHandle`) over their `${kind}DragHandleContainer`.
  */
 
 /** Row `index` of `rows`, which must be there. */
@@ -17,10 +18,10 @@ export function rowAt(rows: HTMLElement[], index: number): HTMLElement {
 
 /** The list's rows, checked to read `labels` in that order. */
 export function expectRows(
-  role: string,
+  kind: RowKind,
   labels: readonly string[]
 ): HTMLElement[] {
-  const rows = screen.getAllByRole(role);
+  const rows = getRows(kind);
   expect(rows).toHaveLength(labels.length);
   labels.forEach((label, index) => {
     expect(rows[index]).toHaveTextContent(label);
@@ -34,14 +35,24 @@ export function expectRows(
  */
 export async function pointAtHandle(
   user: UserEvent,
-  role: string,
+  kind: RowKind,
   index: number,
   count: number
 ): Promise<HTMLElement> {
-  const containers = screen.getAllByRole(`${role}DragHandleContainer`);
+  const containers = screen
+    .getAllByTestId(`${kind}DragHandleContainer`)
+    .filter(container => !isInaccessible(container));
   expect(containers).toHaveLength(count);
   await user.pointer({target: rowAt(containers, index)});
-  return screen.getByRole(`${role}DragHandle`);
+  // Unlike role queries, test IDs include hidden handles: require only the
+  // hovered one to be accessible, and explicitly assert its CSS visibility.
+  const handles = screen
+    .getAllByTestId(`${kind}DragHandle`)
+    .filter(handle => !isInaccessible(handle));
+  expect(handles).toHaveLength(1);
+  const handle = rowAt(handles, 0);
+  expect(handle).toBeVisible();
+  return handle;
 }
 
 export async function dragStart(handle: HTMLElement): Promise<void> {
@@ -58,7 +69,9 @@ export async function dragEnter(
   await act(async () => {
     fireEvent.dragEnter(row);
     if (settleMs !== undefined) {
-      await new Promise(resolve => setTimeout(resolve, settleMs));
+      await new Promise(resolve => {
+        setTimeout(resolve, settleMs);
+      });
     }
   });
 }

@@ -89,7 +89,7 @@ describe("Another user's page", () => {
     expect(document.getElementById('entryListContextMenu')).toBeNull();
 
     // An entry's offers Copy, and its info (staff only, not the public).
-    const row = entry.closest('[role="entry"]');
+    const row = entry.closest('[data-row-kind="entry"]');
     invariant(row instanceof HTMLElement, 'the entry is rendered');
     fireEvent.contextMenu(row);
     const menu = byId('tagsEntriesContextMenu-71');
@@ -102,14 +102,18 @@ describe("Another user's page", () => {
     );
 
     // No drag handles, to reorder or tag with.
-    for (const container of document.querySelectorAll<HTMLElement>(
-      '[role="entryDragHandleContainer"], [role="tag"]'
-    )) {
+    const containers = document.querySelectorAll<HTMLElement>(
+      '[data-testid="entryDragHandleContainer"], [data-row-kind="tag"]'
+    );
+    expect(containers).toHaveLength(2);
+    for (const container of containers) {
       fireEvent.mouseEnter(container);
     }
-    for (const handle of document.querySelectorAll<HTMLElement>(
-      '[role="entryDragHandle"], [role="tagDragHandle"]'
-    )) {
+    const handles = document.querySelectorAll<HTMLElement>(
+      '[data-testid="entryDragHandle"], [data-testid="tagDragHandle"]'
+    );
+    expect(handles).toHaveLength(2);
+    for (const handle of handles) {
       expect(handle).not.toBeVisible();
     }
     await work.finish();

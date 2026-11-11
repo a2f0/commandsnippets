@@ -53,7 +53,8 @@ async function openWith(count: number) {
   await screen.findByText('subject 1', {}, {timeout: 10000});
 }
 
-const rendered = () => document.querySelectorAll('[role="entry"]').length;
+const rendered = () =>
+  document.querySelectorAll('[data-row-kind="entry"]').length;
 
 // Each test lists hundreds of entries.
 vi.setConfig({testTimeout: 30000});

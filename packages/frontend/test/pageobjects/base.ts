@@ -352,7 +352,9 @@ class Base {
             clientY: top + height / 2,
           })
         );
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await new Promise(resolve => {
+          setTimeout(resolve, 50);
+        });
       };
       window.__E2E_DRAG__ = {from, fire};
       await fire(from, 'dragstart');

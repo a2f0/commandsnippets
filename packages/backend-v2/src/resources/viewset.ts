@@ -190,7 +190,8 @@ interface ListOptions<
    */
   user: User;
   publicOnly?: boolean;
-  visibility?: SQL;
+  /** Drizzle conditions may be undefined when no extra restriction applies. */
+  visibility?: SQL | undefined;
   fields?: Record<string, SQLiteColumn | SQL>;
   defaultOrdering: SQLiteColumn[];
   /** `filter[search]`, where the query schema supports it. */

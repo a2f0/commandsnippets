@@ -1,4 +1,4 @@
-import {act, screen, waitFor} from '@testing-library/react';
+import {act, isInaccessible, screen, waitFor} from '@testing-library/react';
 import userEvent, {type UserEvent} from '@testing-library/user-event';
 import {vi} from 'vitest';
 import * as writes from '../../src/lib/data/writes';
@@ -14,6 +14,7 @@ import {
 import {mockResult} from '../util/mockResult';
 import {serveMockApi} from '../util/msw';
 import {observeSyncWork} from '../util/observeSyncWork';
+import {getRows, queryRows} from '../util/rows';
 import {signIn, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
@@ -33,7 +34,9 @@ beforeEach(() => {
 
 /** Open tag `index` (of the four) by a click on its label. */
 async function openTag(user: UserEvent, index: number) {
-  const labels = screen.getAllByRole('tagLabelWrapper');
+  const labels = screen
+    .getAllByTestId('tagLabelWrapper')
+    .filter(label => !isInaccessible(label));
   expect(labels).toHaveLength(4);
   await user.pointer({target: rowAt(labels, index), keys: '[MouseLeft]'});
 }
@@ -55,13 +58,13 @@ describe('Tag An Entry', () => {
     // Tag 2 holds none of them yet.
     await openTag(user, 1);
     expect(history.location.pathname).toBe('/test/test-tag-2');
-    await waitFor(() => expect(screen.queryAllByRole('entry')).toHaveLength(0));
+    await waitFor(() => expect(queryRows('entry')).toHaveLength(0));
     await openTag(user, 0);
     expect(history.location.pathname).toBe('/test/test-tag-1');
-    await waitFor(() => expect(screen.queryAllByRole('entry')).toHaveLength(4));
+    await waitFor(() => expect(queryRows('entry')).toHaveLength(4));
 
     const handle = await pointAtHandle(user, 'entry', 0, 4);
-    const tags = screen.getAllByRole('tag');
+    const tags = getRows('tag');
     expect(tags).toHaveLength(4);
     await dragStart(handle);
     await dragEnter(rowAt(tags, 1));
@@ -69,7 +72,7 @@ describe('Tag An Entry', () => {
 
     await openTag(user, 1);
     expect(history.location.pathname).toBe('/test/test-tag-2');
-    await waitFor(() => expect(screen.queryAllByRole('entry')).toHaveLength(1));
+    await waitFor(() => expect(queryRows('entry')).toHaveLength(1));
     expectRows('entry', ['entry-1-subject']);
     expect(tagged).toHaveBeenCalledTimes(1);
     await act(async () => {

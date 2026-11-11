@@ -27,7 +27,9 @@ beforeEach(async () => {
 
 /** The row of the entry with this subject. */
 async function rowOf(subject: string) {
-  const row = (await screen.findByText(subject)).closest('[role="entry"]');
+  const row = (await screen.findByText(subject)).closest(
+    '[data-row-kind="entry"]'
+  );
   invariant(row instanceof HTMLElement, `${subject} is in a row`);
   return row;
 }

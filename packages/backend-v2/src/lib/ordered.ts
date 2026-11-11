@@ -39,8 +39,9 @@ export interface OrderedSpec {
    * The rows that hold a place in the order, when others do not: soft-deleted
    * junctions keep their rank but are never shifted, moved, or positioned
    * against (nor offered as a move's rows, `reorder.ts`).
+   * Drizzle conjunctions may explicitly return undefined (no restriction).
    */
-  ranked?: SQL;
+  ranked?: SQL | undefined;
   /**
    * A statement run in the same batch as every move (atomically), e.g. to
    * advance the revisions of parent rows clients sync the moved rows through.

@@ -30,19 +30,19 @@ export const useOAuth = (config: OAuthConfig) => {
   };
 
   const handleCallback = async ({code, state}: OAuthCallbackParams) => {
-    const storedState = window.sessionStorage.getItem('oauth_state');
-
-    if (!storedState || storedState !== state) {
-      console.error('Invalid OAuth state - potential CSRF attack');
-      appConfig.setLoggedInUser(null);
-      return;
-    }
-
-    window.sessionStorage.removeItem('oauth_state');
-    const newURL = `${window.location.protocol}//${window.location.host}/`;
-    window.history.pushState({}, '', newURL);
-
     try {
+      const storedState = window.sessionStorage.getItem('oauth_state');
+
+      if (!storedState || storedState !== state) {
+        console.error('Invalid OAuth state - potential CSRF attack');
+        appConfig.setLoggedInUser(null);
+        return;
+      }
+
+      window.sessionStorage.removeItem('oauth_state');
+      const newURL = `${window.location.protocol}//${window.location.host}/`;
+      window.history.pushState({}, '', newURL);
+
       if (!code) {
         throw new Error('No authorization code received');
       }
@@ -84,7 +84,12 @@ export const useOAuth = (config: OAuthConfig) => {
         (config.scopeCheck ? config.scopeCheck(scope) : true));
 
     if (isValidCallback && isOAuthCallback()) {
-      handleCallback({code, scope, state});
+      handleCallback({code, scope, state}).catch((error: unknown) => {
+        console.error(
+          `Failed to finish ${config.provider} authentication:`,
+          error
+        );
+      });
     }
   }, []);
 
