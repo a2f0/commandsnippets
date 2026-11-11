@@ -65,10 +65,10 @@ async function performRestore(
     if (current())
       send({type: 'restored', username, request, result, shown: true});
   } catch (error: unknown) {
-    if (!current()) return;
     if (error instanceof RestoreNotAdoptedError) {
       // Restored: only this page is behind. Never offer it again.
       console.error('ERROR: restored, but not taken up here:', error);
+      if (!current()) return;
       send({
         type: 'restored',
         username,
@@ -79,6 +79,7 @@ async function performRestore(
       return;
     }
     console.error('ERROR: backup restore failed:', error);
+    if (!current()) return;
     send({
       type: 'restoreFailed',
       username,

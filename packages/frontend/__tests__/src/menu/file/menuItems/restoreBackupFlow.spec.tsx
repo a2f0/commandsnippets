@@ -188,7 +188,7 @@ function selectFile() {
   return input;
 }
 
-it.each(['cancel', 'unmount', 'user change'])(
+it.each(['cancel', 'unmount', 'user change', 'empty selection'])(
   'abandons file work after %s',
   async action => {
     signIn();
@@ -207,13 +207,16 @@ it.each(['cancel', 'unmount', 'user change'])(
     }
     if (action === 'unmount') unmount();
     if (action === 'user change') act(() => store.setLoggedInUser('other'));
+    if (action === 'empty selection')
+      fireEvent.change(input, {target: {files: []}});
     await act(async () => {
       text.resolve(JSON.stringify(backup));
       await text.promise;
     });
-    expect(target).not.toHaveBeenCalled();
-    expect(screen.queryByRole('dialog')).toBeNull();
+    const dialog = screen.queryByRole('dialog');
     unmount();
+    expect(target).not.toHaveBeenCalled();
+    expect(dialog).toBeNull();
   }
 );
 
@@ -240,3 +243,47 @@ it('ignores an old target failure after a replacement warning is cancelled', asy
   expect(errors).not.toHaveBeenCalled();
   unmount();
 });
+
+it.each([
+  {
+    name: 'failed restore',
+    error: new Error('Restore unavailable'),
+    diagnostic: 'ERROR: backup restore failed:',
+  },
+  {
+    name: 'restored but not adopted',
+    error: new backupData.RestoreNotAdoptedError(
+      result,
+      new Error('Database closed')
+    ),
+    diagnostic: 'ERROR: restored, but not taken up here:',
+  },
+])(
+  'logs a $name after unmount without reopening the dialog',
+  async ({error, diagnostic}) => {
+    signIn();
+    vi.spyOn(backupData, 'restoreTarget').mockResolvedValue(prepared.target);
+    vi.spyOn(backupData, 'liveCounts').mockResolvedValue(prepared.current);
+    const pending = Promise.withResolvers<RestoreResult>();
+    const restore = vi
+      .spyOn(backupData, 'restoreBackup')
+      .mockReturnValueOnce(pending.promise);
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const {unmount} = render(<RestoreWithProviders />);
+    selectFile();
+    fireEvent.click(
+      await screen.findByRole('button', {name: 'Restore backup'})
+    );
+    await waitFor(() =>
+      expect(restore).toHaveBeenCalledWith('test', prepared.target, backup)
+    );
+    unmount();
+    await act(async () => {
+      pending.reject(error);
+      await pending.promise.catch(() => undefined);
+    });
+    expect(errors.mock.calls).toEqual([[diagnostic, error]]);
+    expect(restore).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('dialog')).toBeNull();
+  }
+);
