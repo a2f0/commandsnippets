@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useReducer} from 'react';
+import {useCallback, useEffect, useLayoutEffect, useReducer} from 'react';
 import {AdminSignedOutError, getStaffStatus} from '../../lib/api/adminApi';
 import {resetApplicationState, useAppState} from '../../lib/state/appState';
 
@@ -94,8 +94,9 @@ export function useStaffAccess() {
     };
   }, [state, loggedInUser]);
 
-  // Guard external effects too: an ignored answer must not change the store.
-  useEffect(() => {
+  // Publish before the accepted view can paint, but recheck the live user:
+  // an ignored answer must not change the store.
+  useLayoutEffect(() => {
     const app = useAppState.getState();
     if (state.user !== app.loggedInUser) return;
     if (state.status === 'staff' || state.status === 'forbidden') {
@@ -114,6 +115,11 @@ export function useStaffAccess() {
   const retry = useCallback(() => {
     if (user !== null) send({type: 'retry', user, request});
   }, [user, request]);
-  const access = state.user === loggedInUser ? state.status : 'checking';
+  const access =
+    state.user !== loggedInUser ||
+    state.status === 'idle' ||
+    state.status === 'expired'
+      ? 'checking'
+      : state.status;
   return {access, loggedInUser, retry, forbid};
 }

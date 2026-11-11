@@ -596,8 +596,10 @@ per-row work multiplies (the HUD's Analytics tab times it).
   forbidden, error or expired, with one pure `transitionStaffAccess`. Initial
   checks and retries enter the same cleaned-up effect; user/request tags reject
   stale completions and retained forbidden callbacks. Accepted staff-flag and
-  session-reset effects also check the live user. The selected tab is an
-  independent display preference, not part of access checking.
+  session-reset effects also check the live user and publish before paint.
+  Idle and expired states keep the loading view until navigation takes over.
+  The selected tab is an independent display preference, not part of access
+  checking.
 
 ## Testing Setup
 
