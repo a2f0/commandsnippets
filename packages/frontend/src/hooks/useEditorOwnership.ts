@@ -5,7 +5,8 @@ import type {EditorOwner} from '../lib/state/editorOwnership';
 /** One registration per mounted form, shared by entries and tags. */
 export function useEditorOwnership(
   mode: EditorOwner['mode'],
-  autoFocus: boolean
+  autoFocus: boolean,
+  saving = false
 ) {
   const [editor] = useState<EditorOwner>(() => ({id: Symbol('editor'), mode}));
   const ref = useRef<HTMLDivElement>(null);
@@ -27,15 +28,19 @@ export function useEditorOwnership(
   }, [autoFocus]);
 
   useEffect(() => {
-    // Hand back focus only if it disappeared with the closing form. A save
+    // Recover focus lost with a closing form or a now-disabled Save. A save
     // completing after the user focused another control must not steal it.
     if (
       active &&
-      (!document.activeElement || document.activeElement === document.body)
+      (!document.activeElement ||
+        document.activeElement === document.body ||
+        (saving &&
+          ref.current?.contains(document.activeElement) &&
+          document.activeElement.matches(':disabled')))
     ) {
       ref.current?.querySelector<HTMLElement>('input, textarea')?.focus();
     }
-  }, [active]);
+  }, [active, saving]);
 
   const ownsKeyboard = () => {
     const state = useAppState.getState().editorOwnership;

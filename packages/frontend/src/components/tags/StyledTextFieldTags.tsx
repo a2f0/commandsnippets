@@ -10,6 +10,7 @@ interface IStyledTextFieldProps {
   id: string;
   value: string | null;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  readOnly?: boolean;
 }
 
 /** The keys that move the keyboard between the tag and entry lists. */
@@ -35,7 +36,7 @@ function paneAfter(
 const StyledTextFieldTags = React.forwardRef<
   HTMLInputElement,
   IStyledTextFieldProps
->(({id, value, onChange}: IStyledTextFieldProps, ref) => {
+>(({id, value, onChange, readOnly = false}: IStyledTextFieldProps, ref) => {
   const appConfig = useAppConfig();
   useDocumentKeydown(event => {
     if (event.defaultPrevented) return;
@@ -65,7 +66,9 @@ const StyledTextFieldTags = React.forwardRef<
       id={id}
       onChange={onChange}
       variant="outlined"
-      slotProps={{htmlInput: {sx: {pl: 0.5, pt: 0.5, pb: 0.5, pr: 0}}}}
+      slotProps={{
+        htmlInput: {readOnly, sx: {pl: 0.5, pt: 0.5, pb: 0.5, pr: 0}},
+      }}
       sx={{p: 0, ...outlinedFieldSx}}
     />
   );

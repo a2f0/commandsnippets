@@ -61,6 +61,16 @@ function mountForm(kind: 'entry' | 'tag', id: string) {
   return {...result, control};
 }
 
+it.each(['entry', 'tag'] as const)(
+  '%s does not move focus when Save starts no work',
+  async kind => {
+    const form = mountForm(kind, 'idle');
+    const user = userEvent.setup();
+    await user.click(form.control('Save'));
+    expect(form.control('Save')).toHaveFocus();
+  }
+);
+
 it.each([
   ['entry', 'tag'],
   ['tag', 'entry'],

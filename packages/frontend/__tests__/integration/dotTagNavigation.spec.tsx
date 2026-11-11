@@ -110,11 +110,11 @@ function pauseRename() {
     });
   return {
     entered: entered.promise,
+    followUp,
     finish: () =>
       act(async () => {
         resume.resolve();
         await Promise.all(write.mock.results.map(result => result.value));
-        expect(followUp).toHaveBeenCalledTimes(1);
         await Promise.all(followUp.mock.results.map(result => result.value));
       }),
   };
@@ -137,6 +137,7 @@ it.each([
       fireEvent.click(byId('tagEditCancel2'));
       await act(async () => browser.push(path));
       await pending.finish();
+      expect(pending.followUp).toHaveBeenCalledTimes(1);
       await expectStoredRename(name);
       await settleSync();
 

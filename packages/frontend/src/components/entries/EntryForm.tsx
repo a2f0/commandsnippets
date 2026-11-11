@@ -45,7 +45,7 @@ export const EntryForm = ({
   const {t} = useTypedTranslation('common');
   const [subject, setSubject] = useState<string>(initialSubject);
   const [body, setBody] = useState<string>(initialBody);
-  const owner = useEditorOwnership(appMode.entryEditor, true);
+  const owner = useEditorOwnership(appMode.entryEditor, true, saving);
   const saveRef = useRef<HTMLButtonElement>(null);
   const theme = useTheme();
 

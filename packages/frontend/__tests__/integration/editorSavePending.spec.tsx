@@ -284,6 +284,8 @@ it.each(editors)(
         expect(byId(editor.body)).toHaveValue('saved body');
       }
       expect(byId(editor.save)).toBeDisabled();
+      expect(byId(editor.save)).toHaveClass('Mui-disabled');
+      expect(byId(editor.field)).toHaveAttribute('readonly');
       expect(byId(editor.cancel)).toBeEnabled();
       // A disabled MUI button rejects pointer targeting; synthetic clicks still
       // probe the save guard without weakening the user-facing disabled check.
@@ -357,6 +359,7 @@ it.each(editors)(
       'Not saved: write unavailable'
     );
     expect(byId(editor.save)).toBeEnabled();
+    expect(byId(editor.field)).toHaveFocus();
     await user.type(byId(editor.field), ' retry');
     expect(byId(editor.field)).toHaveValue('saved draft retry');
     if (editor.body !== null) {
@@ -391,19 +394,29 @@ it.each(editors)(
   }
 );
 
-it.each(editors.filter(editor => editor.body === null))(
-  '$kind keeps keyboard cancellation available during a pending save',
+it.each(editors)(
+  '$kind keeps keyboard cancellation available after a keyboard save',
   async editor => {
     await renderAppAt('/test/test-tag-1', {act: true});
     await screen.findByText('entry-1-subject');
     const user = await openEditor(editor);
     const pending = holdCompletion(editor.kind);
     try {
-      await user.click(byId(editor.save));
+      await user.tab();
+      expect(byId(editor.save)).toHaveFocus();
+      await user.keyboard('{Enter}');
       await act(async () => pending.entered);
       // Do not leave focus on a now-disabled control (or on the document).
       expect(byId(editor.field)).toHaveFocus();
-      await user.keyboard('{Escape}');
+      if (editor.body === null) {
+        await user.keyboard('{Escape}');
+      } else {
+        await user.tab();
+        expect(byId(editor.body)).toHaveFocus();
+        await user.tab();
+        expect(byId(editor.cancel)).toHaveFocus();
+        await user.keyboard('{Enter}');
+      }
       expect(document.getElementById(editor.field)).toBeNull();
       await pending.finish();
       expect(await storedDrafts(editor)).toHaveLength(1);

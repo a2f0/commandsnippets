@@ -43,4 +43,10 @@ it('keeps both dot-only tag names through native history', async () => {
     expect(browser.currentTestErrors).toHaveLength(0);
     previousName = dot;
   }
+
+  await browser.refresh();
+  await expect(browser).toHaveUrl('http://localhost:8081/test/tags/~..');
+  await expect(BasePage.tagLabelWrapper('1')).toHaveText('..');
+  await expect(BasePage.tagsEntries1).toBeDisplayed();
+  expect(browser.currentTestErrors).toHaveLength(0);
 });
