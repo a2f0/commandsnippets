@@ -15,10 +15,18 @@ type Prepared = Read & {
 export type RestoreStep =
   | {step: 'closed'}
   | ({step: 'reading'; file: File} & Read)
+  /** The file chosen is not a backup. */
   | {step: 'invalid'}
+  /**
+   * The warning: the data now of `username` (the user who chose the file),
+   * `target` (their account, and the data version it is of here), and the
+   * backup's, to replace it.
+   */
   | ({step: 'confirm'} & Prepared)
   | ({step: 'restoring'} & Prepared)
+  /** `shown`: false when this page could not take the restored data up. */
   | {step: 'done'; result: RestoreResult; shown: boolean}
+  /** `detail`: why the API refused the backup, when it said. */
   | {step: 'failed'; detail: string | undefined};
 
 export type RestoreEvent =

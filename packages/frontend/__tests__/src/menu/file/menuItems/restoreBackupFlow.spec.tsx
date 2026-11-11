@@ -121,7 +121,10 @@ const transitions: Transition[] = [
   })),
 ];
 it.each(transitions)('$name', ({state, event, next}) => {
-  expect(transitionRestoreBackup(state, event)).toEqual(next);
+  const actual = transitionRestoreBackup(state, event);
+  expect(actual).toEqual(next);
+  // A new restoring object would restart the effect and repeat the mutation.
+  if (state.step === 'restoring' && next === state) expect(actual).toBe(state);
 });
 
 const readEvents: Extract<RestoreEvent, {request: number}>[] = [

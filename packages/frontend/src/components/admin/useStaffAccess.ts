@@ -59,7 +59,12 @@ function assertNever(value: never): never {
   throw new Error(`Unhandled staff access event: ${JSON.stringify(value)}`);
 }
 
-/** Initial reads and retries share the same cleaned-up effect. */
+/**
+ * Whether the signed-in user is staff, checked against the API on every
+ * visit (the stored flag can be stale); the admin API checks it again on
+ * each call, and `forbid` takes its word that they are not.
+ * Initial reads and retries share the same cleaned-up effect.
+ */
 export function useStaffAccess() {
   const loggedInUser = useAppState(state => state.loggedInUser);
   const [state, send] = useReducer(transitionStaffAccess, {
