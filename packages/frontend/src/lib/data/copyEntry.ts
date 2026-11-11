@@ -52,7 +52,8 @@ async function isCurrentCopy(session: SyncSession, identity: WriteIdentity) {
  * is one (the copy icon, a click on the body, the menu's Copy, Enter in the
  * list). Its owner's only: a read-only page (staff's, the public's) counts
  * nothing. Returns true only if this is still the newest successful copy in
- * the same account; counting it cannot undo its clipboard success.
+ * the same account. Writable copies also verify their captured data identity;
+ * counting or refusing feedback cannot undo the clipboard write itself.
  */
 export async function copyEntry(
   session: SyncSession | null,
@@ -63,7 +64,9 @@ export async function copyEntry(
   const account = signedInUser();
   const generation = sessionsEndedCount();
   // Start capture now, but never await storage before gesture-sensitive copy.
-  const capturing = session === null ? null : captureCopyIdentity(session);
+  // Read-only copies mutate no data, so they do not depend on storage at all.
+  const capturing =
+    session === null || session.readOnly ? null : captureCopyIdentity(session);
   try {
     await navigator.clipboard.writeText(text);
   } catch (error) {
@@ -73,16 +76,13 @@ export async function copyEntry(
   const captured = await capturing;
   if (session !== null && captured !== null) {
     if (captured.status === 'failed') {
-      if (!session.readOnly)
-        console.error('Failed to count the entry copy:', captured.error);
+      console.error('Failed to count the entry copy:', captured.error);
       return false;
     }
-    if (!session.readOnly) {
-      void reuseEntry(session, entryId, captured.identity).catch(
-        (error: unknown) =>
-          console.error('Failed to count the entry copy:', error)
-      );
-    }
+    void reuseEntry(session, entryId, captured.identity).catch(
+      (error: unknown) =>
+        console.error('Failed to count the entry copy:', error)
+    );
     if (!(await isCurrentCopy(session, captured.identity))) return false;
   }
   if (

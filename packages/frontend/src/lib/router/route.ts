@@ -61,15 +61,16 @@ const STATIC_PAGES: ReadonlyArray<readonly [string, Page]> = [
 
 /**
  * Split before decoding, so an encoded slash stays inside its segment and
- * a literal `%2F` is never decoded twice. Invalid encoding is left as it is.
+ * a literal `%2F` is never decoded twice. Leave only malformed segments as-is.
  */
 function decodedSegments(pathname: string): string[] {
-  const segments = pathname.split('/');
-  try {
-    return segments.map(segment => decodeURIComponent(segment));
-  } catch {
-    return segments;
-  }
+  return pathname.split('/').map(segment => {
+    try {
+      return decodeURIComponent(segment);
+    } catch {
+      return segment;
+    }
+  });
 }
 
 /** The route of the URL path `pathname`. */

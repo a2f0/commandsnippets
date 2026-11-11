@@ -15,7 +15,7 @@ interface ITagFormProps {
   name: string;
   /** Save the name the field holds. */
   onSave: (name: string) => void;
-  /** Cancel, or Escape anywhere while the form is open. */
+  /** Cancel, or Escape from this form while it owns the keyboard. */
   onCancel: () => void;
   /** New tags cycle name/Save/Cancel; renames retain native Tab. */
   cycleFields?: boolean;

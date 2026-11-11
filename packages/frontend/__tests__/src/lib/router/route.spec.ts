@@ -49,6 +49,25 @@ describe('routeOf', () => {
   });
 
   it.each([
+    ['/oauth%2Fgithub/100%', {page: 'user', user: 'oauth/github', tag: '100%'}],
+    ['/100%/caf%C3%A9', {page: 'user', user: '100%', tag: 'café'}],
+    ['/literal%252F/100%', {page: 'user', user: 'literal%2F', tag: '100%'}],
+    [
+      '/oauth%2Fgithub/%65ntries/%ZZ',
+      {page: 'entry', user: 'oauth/github', entryId: '%ZZ'},
+    ],
+    [
+      '/%E0%A4/hello%20world',
+      {page: 'user', user: '%E0%A4', tag: 'hello world'},
+    ],
+  ])(
+    'isolates invalid encoding to its own segment in %s',
+    (pathname, route) => {
+      expect(routeOf(pathname)).toEqual(route);
+    }
+  );
+
+  it.each([
     '/a/b/c',
     '//x',
     '/test//x',

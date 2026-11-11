@@ -24,6 +24,12 @@ const replacementAccount = 'account-b';
 const originalId = '1001';
 const replacementId = '2002';
 const draft = 'private draft from a';
+const originalLocks = Object.getOwnPropertyDescriptor(navigator, 'locks');
+
+afterEach(() => {
+  if (originalLocks) Object.defineProperty(navigator, 'locks', originalLocks);
+  else Reflect.deleteProperty(navigator, 'locks');
+});
 
 async function putRows(session: SyncSession, id: string, account: string) {
   const user = {data: {type: 'User' as const, id: account}};
@@ -39,7 +45,7 @@ async function putRows(session: SyncSession, id: string, account: string) {
 
 async function prepare(version: number | null = 1) {
   signIn();
-  vi.stubGlobal('navigator', {...globalThis.navigator, locks});
+  Object.defineProperty(navigator, 'locks', {configurable: true, value: locks});
   await claimData(TEST_USER, originalAccount);
   const session = syncSession(TEST_USER);
   vi.spyOn(session.sync, 'flush').mockResolvedValue(undefined);
@@ -63,9 +69,9 @@ async function duringClaim(
   const requested = Promise.withResolvers<void>();
   const generation = sessionsEndedCount();
   let intercepted = false;
-  vi.stubGlobal('navigator', {
-    ...globalThis.navigator,
-    locks: {
+  Object.defineProperty(navigator, 'locks', {
+    configurable: true,
+    value: {
       request: (
         name: string,
         options: {mode: 'shared' | 'exclusive'},

@@ -5,6 +5,7 @@ import {adoptVersion} from '../../../../src/lib/sync/dataVersion';
 import {
   claimData,
   endSyncSession,
+  publicSyncSession,
   type SyncSession,
   syncSession,
 } from '../../../../src/lib/sync/session';
@@ -27,6 +28,70 @@ it('does not publish clipboard success into a different signed-in account', asyn
 
   expect(await result).toBe(false);
 });
+
+it.each(['staff', 'public'] as const)(
+  'reports a %s copy without depending on read-only storage',
+  async source => {
+    if (source === 'staff') signIn();
+    const session =
+      source === 'staff'
+        ? syncSession(TEST_USER, 'other')
+        : publicSyncSession('other');
+    const transaction = vi
+      .spyOn(session.db, 'transaction')
+      .mockRejectedValue(new Error('Storage unavailable'));
+    const reuse = vi.spyOn(writes, 'reuseEntry');
+    const failed = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      value: {writeText},
+      configurable: true,
+    });
+
+    expect(session.readOnly).toBe(true);
+    expect(await copyEntry(session, '1', 'body')).toBe(true);
+    expect(writeText).toHaveBeenCalledExactlyOnceWith('body');
+    expect(transaction).not.toHaveBeenCalled();
+    expect(reuse).not.toHaveBeenCalled();
+    expect(failed).not.toHaveBeenCalled();
+  }
+);
+
+it.each(['accepts', 'rejects'] as const)(
+  'handles a failed identity capture when the pending clipboard %s',
+  async outcome => {
+    signIn();
+    const session = syncSession(TEST_USER);
+    const captureFailure = new Error('Identity unavailable');
+    const transaction = vi
+      .spyOn(session.db, 'transaction')
+      .mockRejectedValueOnce(captureFailure);
+    const reuse = vi.spyOn(writes, 'reuseEntry');
+    const failed = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const pending = Promise.withResolvers<void>();
+    const clipboardFailure = new DOMException('Denied', 'NotAllowedError');
+    Object.defineProperty(navigator, 'clipboard', {
+      value: {writeText: vi.fn().mockReturnValue(pending.promise)},
+      configurable: true,
+    });
+    const copying = copyEntry(session, '1', 'body');
+    try {
+      await mockResult(transaction).catch(() => undefined);
+      expect(reuse).not.toHaveBeenCalled();
+    } finally {
+      if (outcome === 'accepts') pending.resolve();
+      else pending.reject(clipboardFailure);
+    }
+    expect(await copying).toBe(false);
+    expect(reuse).not.toHaveBeenCalled();
+    expect(failed).toHaveBeenCalledExactlyOnceWith(
+      outcome === 'accepts'
+        ? 'Failed to count the entry copy:'
+        : 'Failed to copy the entry:',
+      outcome === 'accepts' ? captureFailure : clipboardFailure
+    );
+  }
+);
 
 async function seed(session: SyncSession, account: string) {
   const row = entry('1', {body: account, reused_count: 0});
