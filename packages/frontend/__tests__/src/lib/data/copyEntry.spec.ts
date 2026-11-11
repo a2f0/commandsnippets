@@ -159,6 +159,33 @@ it.each(['account', 'version'] as const)(
   }
 );
 
+it('withholds feedback when verification fails after identity capture', async () => {
+  const {session, pending, reuse, copied} = await pendingCopy();
+  const failure = new Error('Verification unavailable');
+  const failed = vi.spyOn(console, 'error').mockImplementation(() => {});
+  // Isolate feedback verification from the independently covered reuse write.
+  reuse.mockResolvedValue(undefined);
+  const transaction = vi
+    .spyOn(session.db, 'transaction')
+    .mockRejectedValueOnce(failure);
+  pending.resolve();
+
+  expect(await copied).toBe(false);
+  expect(transaction).toHaveBeenCalledExactlyOnceWith(
+    'r',
+    session.db.cursors,
+    expect.any(Function)
+  );
+  expect(reuse).toHaveBeenCalledExactlyOnceWith(session, '1', {
+    accountId: 'original',
+    version: 1,
+  });
+  expect(failed).toHaveBeenCalledExactlyOnceWith(
+    'Failed to verify the entry copy:',
+    failure
+  );
+});
+
 it('counts an eligible held copy without advancing its edit date', async () => {
   const {session, pending, reuse, copied} = await pendingCopy();
   const before = await session.db.entries.get([TEST_USER, '1']);

@@ -1,5 +1,5 @@
 import {ThemeProvider} from '@mui/material/styles';
-import {act, fireEvent, render, waitFor} from '@testing-library/react';
+import {act, cleanup, fireEvent, render, waitFor} from '@testing-library/react';
 import invariant from 'invariant';
 import {I18nextProvider} from 'react-i18next';
 import {vi} from 'vitest';
@@ -20,7 +20,10 @@ vi.mock('../../../../src/lib/data/writes', async importOriginal => ({
 }));
 
 beforeEach(() => signIn());
-afterEach(() => renameTag.mockReset());
+afterEach(() => {
+  cleanup();
+  renameTag.mockReset();
+});
 
 const object = tag('2', {name: 'the-tag'});
 
@@ -79,6 +82,77 @@ describe('TagEdit', () => {
     }
     expect(onSave).toHaveBeenCalledOnce();
   });
+
+  it('holds the Save guard until the stored-rename follow-up finishes', async () => {
+    const identity = {accountId: undefined, version: undefined};
+    vi.spyOn(tagRename, 'captureTagRenameIdentity').mockResolvedValue(identity);
+    const pending = Promise.withResolvers<boolean>();
+    const current = vi
+      .spyOn(tagRename, 'isCurrentTagRename')
+      .mockReturnValueOnce(pending.promise)
+      .mockResolvedValue(false);
+    const renamed = tag('2', {name: 'stored'});
+    renameTag.mockResolvedValue(renamed);
+    const {onSave, onStored} = renderEditor();
+    await act(async () => fireEvent.click(byId('tagEditSave2')));
+    try {
+      expect(onSave).toHaveBeenCalledExactlyOnceWith();
+      expect(current).toHaveBeenCalledExactlyOnceWith(
+        expect.anything(),
+        renamed,
+        identity
+      );
+      expect(onStored).not.toHaveBeenCalled();
+      await act(async () => fireEvent.click(byId('tagEditSave2')));
+      expect(renameTag).toHaveBeenCalledOnce();
+    } finally {
+      await act(async () => pending.resolve(true));
+    }
+    expect(onStored).toHaveBeenCalledExactlyOnceWith(renamed);
+    await act(async () => fireEvent.click(byId('tagEditSave2')));
+    expect(renameTag).toHaveBeenCalledTimes(2);
+    expect(onSave).toHaveBeenCalledTimes(2);
+  });
+
+  it.each(['close', 'follow'])(
+    'does not report a stored rename as unsaved when the %s callback throws',
+    async callback => {
+      const failure = new Error(`${callback} callback failed`);
+      const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const identity = {accountId: undefined, version: undefined};
+      vi.spyOn(tagRename, 'captureTagRenameIdentity').mockResolvedValue(
+        identity
+      );
+      vi.spyOn(tagRename, 'isCurrentTagRename').mockResolvedValue(true);
+      const renamed = tag('2', {name: 'stored'});
+      renameTag.mockResolvedValue(renamed);
+      const {onSave, onStored} = renderEditor();
+      const failedCallback = callback === 'close' ? onSave : onStored;
+      failedCallback.mockImplementationOnce(() => {
+        throw failure;
+      });
+
+      await act(async () => fireEvent.click(byId('tagEditSave2')));
+
+      expect(renameTag).toHaveBeenCalledExactlyOnceWith(
+        expect.anything(),
+        '2',
+        'the-tag',
+        identity
+      );
+      expect(failedCallback).toHaveBeenCalledOnce();
+      expect(document.getElementById('tagEdit2Error')).toBeNull();
+      expect(errors).toHaveBeenCalledExactlyOnceWith(
+        'Failed to finish the saved tag rename:',
+        failure
+      );
+      await act(async () => fireEvent.click(byId('tagEditSave2')));
+      expect(renameTag).toHaveBeenCalledTimes(2);
+      expect(failedCallback).toHaveBeenCalledTimes(2);
+      expect(onStored).toHaveBeenLastCalledWith(renamed);
+      expect(errors).toHaveBeenCalledOnce();
+    }
+  );
 
   it('permits another Save after a failed rename', async () => {
     const failure = new InvalidWriteError('name: taken is taken');
@@ -155,9 +229,12 @@ describe('TagEdit', () => {
   it('does not start an unguarded write when identity capture fails', async () => {
     const failure = new Error('identity unavailable');
     const failed = vi.spyOn(console, 'error').mockImplementation(() => {});
-    vi.spyOn(tagRename, 'captureTagRenameIdentity').mockRejectedValueOnce(
-      failure
-    );
+    const capture = vi
+      .spyOn(tagRename, 'captureTagRenameIdentity')
+      .mockRejectedValueOnce(failure)
+      .mockResolvedValue({accountId: undefined, version: undefined});
+    vi.spyOn(tagRename, 'isCurrentTagRename').mockResolvedValue(false);
+    renameTag.mockResolvedValue(tag('2', {name: 'the-tag'}));
     const {onSave, onStored} = renderEditor();
     fireEvent.click(byId('tagEditSave2'));
     await waitFor(() =>
@@ -172,6 +249,12 @@ describe('TagEdit', () => {
       'Failed to update tag:',
       failure
     );
+    await act(async () => fireEvent.click(byId('tagEditSave2')));
+    expect(capture).toHaveBeenCalledTimes(2);
+    expect(renameTag).toHaveBeenCalledOnce();
+    expect(onSave).toHaveBeenCalledOnce();
+    expect(document.getElementById('tagEdit2Error')).toBeNull();
+    expect(failed).toHaveBeenCalledOnce();
   });
 
   it('stays open with the name and says why when the save fails', async () => {

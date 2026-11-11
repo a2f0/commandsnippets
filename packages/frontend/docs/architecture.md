@@ -127,10 +127,15 @@ API; everything else the app keeps is a zustand store.
   writes count nothing and show no success. Feedback belongs to the newest
   successful copy in the same account and a still-mounted view; a newer
   failed attempt does not suppress an older success. Counting uses the
-  captured original session, even for stale feedback, and a failure to count
-  is logged without undoing clipboard success. Account/version capture starts
-  before the clipboard wait without delaying the browser gesture. Reuse and
-  feedback refuse replacement data; feedback also checks session generation.
+  captured original session, even for stale feedback. Once its data identity is
+  verified, a failure to count is logged without suppressing success feedback.
+  Account/version capture starts before the clipboard wait without delaying the
+  browser gesture. Writable copies withhold feedback if capture or verification
+  fails: an unavailable identity is not proof that the original data remains
+  current. No such refusal can undo text the clipboard already accepted.
+  Read-only staff/public copies count nothing and do not depend on storage.
+  Reuse and feedback refuse replacement data; feedback also checks session
+  generation.
   The entry's `reused_count`
   goes up locally, shown beside its subject (`EntryReuseCount`), and the
   reuse is queued with a client id of its own (`client_id`), so one retried
@@ -506,7 +511,9 @@ registered forms in focus/open order; `released` carries the explicitly chosen
 list mode and any still-mounted forms. Open/focus claims ownership, close removes
 only that instance, and release yields to list navigation. Closing the active
 form restores its most recently focused survivor or, if none remains, that
-kind's list mode. Closing a background form never changes the current owner.
+kind's list mode. Release retains mounted drafts rather than retiring them:
+opening another editor starts an editing context whose close can resume one
+of those drafts. Closing a background form never changes the current owner.
 Application UI resets discard registrations, so old cleanup cannot remove a
 replacement form, even if it has the same DOM id.
 

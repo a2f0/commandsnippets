@@ -48,14 +48,19 @@ const TagEdit = ({
       const identity = await captureTagRenameIdentity(session);
       const renamed = await renameTag(session, object.id, tagName, identity);
       if (renamed === null) return;
-      // Closing belongs to the saved editor, not the optional route follow-up.
-      if (mounted.current) {
-        handleSaveParent();
-      }
-      if (!sameSession()) return;
-      const current = await isCurrentTagRename(session, renamed, identity);
-      if (current && sameSession() && currentPath() === path) {
-        handleStoredParent(renamed);
+      try {
+        // Closing belongs to the saved editor, not the optional route follow-up.
+        if (mounted.current) {
+          handleSaveParent();
+        }
+        if (!sameSession()) return;
+        const current = await isCurrentTagRename(session, renamed, identity);
+        if (current && sameSession() && currentPath() === path) {
+          handleStoredParent(renamed);
+        }
+      } catch (error) {
+        // Persistence succeeded; a callback failure must not report it unsaved.
+        console.error('Failed to finish the saved tag rename:', error);
       }
     } catch (error) {
       saveError.failed(error);
