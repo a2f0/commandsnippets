@@ -1,7 +1,4 @@
-import type {
-  Backup,
-  RestoreResult,
-} from '@commandsnippets/api-shared/responses';
+import type {Backup} from '@commandsnippets/api-shared/responses';
 import {
   Box,
   Button,
@@ -14,35 +11,12 @@ import {
 } from '@mui/material';
 import React from 'react';
 import {useTypedTranslation} from '../../../i18n/hooks';
-import type {RestoreTarget} from '../../../lib/data/backup';
 import {formatTimestamp} from '../../../lib/formatTimestamp';
-
-/** Where a restore is: what the dialog shows. */
-export type RestoreStep =
-  | {step: 'closed'}
-  /** The file chosen is not a backup. */
-  | {step: 'invalid'}
-  /**
-   * The warning: the data now of `username` (the user who chose the file),
-   * `target` (their account, and the data version it is of here), and the
-   * backup's, to replace it.
-   */
-  | {
-      step: 'confirm';
-      username: string;
-      target: RestoreTarget;
-      backup: Backup;
-      current: {tags: number; entries: number};
-    }
-  | {step: 'restoring'}
-  /** `shown`: false when this page could not take the restored data up. */
-  | {step: 'done'; result: RestoreResult; shown: boolean}
-  /** `detail`: why the API refused the backup, when it said. */
-  | {step: 'failed'; detail: string | undefined};
+import type {RestoreStep} from './restoreBackupFlow';
 
 interface IProps {
   state: RestoreStep;
-  onConfirm: (username: string, target: RestoreTarget, backup: Backup) => void;
+  onConfirm: () => void;
   onClose: () => void;
 }
 
@@ -89,7 +63,7 @@ const ConfirmText = ({
   );
 };
 
-type ShownStep = Exclude<RestoreStep, {step: 'closed'}>;
+type ShownStep = Exclude<RestoreStep, {step: 'closed' | 'reading'}>;
 
 /** The dialog's title, text and buttons at `view`'s step. */
 function useStepContent(
@@ -112,7 +86,7 @@ function useStepContent(
 
   switch (view.step) {
     case 'confirm': {
-      const {username, target, backup, current} = view;
+      const {backup, current} = view;
       return {
         title: t('restoreConfirmTitle'),
         body: <ConfirmText backup={backup} current={current} />,
@@ -129,7 +103,7 @@ function useStepContent(
             <Button
               id="restoreBackupConfirm"
               variant="outlined"
-              onClick={() => onConfirm(username, target, backup)}
+              onClick={onConfirm}
             >
               {t('restoreConfirm')}
             </Button>
@@ -204,7 +178,8 @@ function useStepContent(
 const RestoreBackupDialog = ({state, onConfirm, onClose}: IProps) => {
   // While it closes, it shows what it last did.
   const shown = React.useRef<ShownStep>({step: 'invalid'});
-  if (state.step !== 'closed') {
+  const open = state.step !== 'closed' && state.step !== 'reading';
+  if (open) {
     shown.current = state;
   }
   // Nothing closes it while the restore runs.
@@ -217,7 +192,7 @@ const RestoreBackupDialog = ({state, onConfirm, onClose}: IProps) => {
   return (
     <Dialog
       id="restoreBackupDialog"
-      open={state.step !== 'closed'}
+      open={open}
       onClose={close}
       fullWidth
       maxWidth="sm"

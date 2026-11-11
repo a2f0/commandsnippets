@@ -302,6 +302,12 @@ API; everything else the app keeps is a zustand store.
     though a sync here took it up, is a 409); this copy then takes up the new
     version and syncs it. The API's reason for refusing a backup is shown
     (`ApiRequestError.detail`).
+    `restoreBackupFlow.ts` owns the pure `transitionRestoreBackup`: closed,
+    reading, invalid, confirm, restoring, done or failed. File preparation
+    carries its username and request number. Selecting another file, reopening
+    the picker, closing or changing user invalidates a pending read; cleaned-up
+    effects cannot publish its warning or error. Confirmed restores cannot be
+    cancelled. The dialog's retained view exists only for its close animation.
   - File > Data Versions (`DataVersions.tsx`, `DataVersionsDialog.tsx`)
     lists the versions, newest first, with their origin and counts; one not
     active can be made active (after a warning; `activateVersion`, which
@@ -586,6 +592,12 @@ per-row work multiplies (the HUD's Analytics tab times it).
   the API too (usernames are the first path segment): see backend-v2's
   [reserved usernames](../../backend-v2/README.md#access-and-auth);
   `__tests__/src/routePaths.spec.ts` checks it
+- `/admin` uses `components/admin/useStaffAccess.ts`: idle, checking, staff,
+  forbidden, error or expired, with one pure `transitionStaffAccess`. Initial
+  checks and retries enter the same cleaned-up effect; user/request tags reject
+  stale completions and retained forbidden callbacks. Accepted staff-flag and
+  session-reset effects also check the live user. The selected tab is an
+  independent display preference, not part of access checking.
 
 ## Testing Setup
 

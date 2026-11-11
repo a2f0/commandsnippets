@@ -6,104 +6,145 @@ import {ApiRequestError} from '../../../lib/api/errors';
 import {
   liveCounts,
   RestoreNotAdoptedError,
-  type RestoreTarget,
   readBackupFile,
   restoreBackup,
   restoreTarget,
 } from '../../../lib/data/backup';
 import {useAppState} from '../../../lib/state/appState';
 import {StyledMenuItem} from '../../StyledMenuItem';
-import {RestoreBackupDialog, type RestoreStep} from './RestoreBackupDialog';
+import {RestoreBackupDialog} from './RestoreBackupDialog';
+import {
+  type RestoreEvent,
+  type RestoreStep,
+  transitionRestoreBackup,
+} from './restoreBackupFlow';
 
 interface IProps {
   onClose: () => void;
 }
 
-/**
- * Replace all of the signed-in user's data with a backup file's
- * (`lib/data/backup.ts`): the file is read and checked, then the user is
- * warned what is deleted and what replaces it, and only their confirmation
- * restores it.
- */
-const RestoreBackup = ({onClose}: IProps) => {
-  const {t} = useTypedTranslation('menu');
-  const input = React.useRef<HTMLInputElement>(null);
-  const [state, setState] = React.useState<RestoreStep>({step: 'closed'});
+/** Check the file first, then the account/version and counts it replaces. */
+async function readForConfirmation(
+  state: Extract<RestoreStep, {step: 'reading'}>,
+  send: React.Dispatch<RestoreEvent>,
+  current: () => boolean
+) {
+  const {file, username, request} = state;
+  let backup: Backup;
+  try {
+    const text = await file.text();
+    if (!current()) return;
+    backup = readBackupFile(text);
+  } catch (error: unknown) {
+    if (!current()) return;
+    console.error('ERROR: not a backup:', error);
+    send({type: 'invalid', username, request});
+    return;
+  }
+  try {
+    const target = await restoreTarget(username);
+    if (!current()) return;
+    const counts = await liveCounts(username);
+    if (current())
+      send({type: 'ready', username, request, target, backup, current: counts});
+  } catch (error: unknown) {
+    if (!current()) return;
+    console.error('ERROR: backup restore failed:', error);
+    send({type: 'readFailed', username, request});
+  }
+}
 
-  const handleClick = () => {
-    onClose();
-    input.current?.click();
-  };
+async function performRestore(
+  state: Extract<RestoreStep, {step: 'restoring'}>,
+  send: React.Dispatch<RestoreEvent>,
+  current: () => boolean
+) {
+  const {username, request, target, backup} = state;
+  try {
+    const result = await restoreBackup(username, target, backup);
+    if (current())
+      send({type: 'restored', username, request, result, shown: true});
+  } catch (error: unknown) {
+    if (!current()) return;
+    if (error instanceof RestoreNotAdoptedError) {
+      // Restored: only this page is behind. Never offer it again.
+      console.error('ERROR: restored, but not taken up here:', error);
+      send({
+        type: 'restored',
+        username,
+        request,
+        result: error.result,
+        shown: false,
+      });
+      return;
+    }
+    console.error('ERROR: backup restore failed:', error);
+    send({
+      type: 'restoreFailed',
+      username,
+      request,
+      detail: error instanceof ApiRequestError ? error.detail : undefined,
+    });
+  }
+}
 
+function useRestoreBackup() {
+  const [state, send] = React.useReducer(transitionRestoreBackup, {
+    step: 'closed',
+  });
+  const nextRequest = React.useRef(0);
   const loggedInUser = useAppState(appState => appState.loggedInUser);
-  // The warning is for the user who chose the file: another signed in
-  // meanwhile (in another tab) closes it.
   React.useEffect(() => {
-    setState(current =>
-      current.step === 'confirm' && current.username !== loggedInUser
-        ? {step: 'closed'}
-        : current
-    );
+    send({type: 'select', username: loggedInUser});
   }, [loggedInUser]);
+  React.useEffect(() => {
+    let active = true;
+    if (state.step === 'reading') {
+      const current = () =>
+        active && useAppState.getState().loggedInUser === state.username;
+      void readForConfirmation(state, send, current);
+    } else if (state.step === 'restoring') {
+      void performRestore(state, send, () => active);
+    }
+    return () => {
+      active = false;
+    };
+  }, [state]);
 
-  const handleFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFile = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     // The same file can be chosen again.
     event.target.value = '';
     const username = useAppState.getState().loggedInUser;
     if (file === undefined || username === null) {
+      send({type: 'close'});
       return;
     }
-    let backup: Backup;
-    try {
-      backup = readBackupFile(await file.text());
-    } catch (error: unknown) {
-      console.error('ERROR: not a backup:', error);
-      setState({step: 'invalid'});
-      return;
-    }
-    try {
-      // The account and data version the warning is about: only they are
-      // restored over.
-      const target = await restoreTarget(username);
-      const current = await liveCounts(username);
-      setState(
-        useAppState.getState().loggedInUser === username
-          ? {step: 'confirm', username, target, backup, current}
-          : {step: 'closed'}
-      );
-    } catch (error: unknown) {
-      console.error('ERROR: backup restore failed:', error);
-      setState({step: 'failed', detail: undefined});
-    }
+    nextRequest.current += 1;
+    send({type: 'read', file, username, request: nextRequest.current});
   };
-
-  const handleConfirm = (
-    username: string,
-    target: RestoreTarget,
-    backup: Backup
-  ) => {
+  const handleConfirm = () => {
+    if (state.step !== 'confirm') return;
     // Only into the account the user was warned about.
-    if (useAppState.getState().loggedInUser !== username) {
-      setState({step: 'closed'});
+    if (useAppState.getState().loggedInUser !== state.username) {
+      send({type: 'close'});
       return;
     }
-    setState({step: 'restoring'});
-    restoreBackup(username, target, backup)
-      .then(result => setState({step: 'done', result, shown: true}))
-      .catch((error: unknown) => {
-        if (error instanceof RestoreNotAdoptedError) {
-          // Restored: only this page is behind. Never offer it again.
-          console.error('ERROR: restored, but not taken up here:', error);
-          setState({step: 'done', result: error.result, shown: false});
-          return;
-        }
-        console.error('ERROR: backup restore failed:', error);
-        setState({
-          step: 'failed',
-          detail: error instanceof ApiRequestError ? error.detail : undefined,
-        });
-      });
+    send({type: 'confirm', username: state.username, request: state.request});
+  };
+  return {state, handleFile, handleConfirm, close: () => send({type: 'close'})};
+}
+
+/** File selection, warning, then a confirmed restore of that file only. */
+const RestoreBackup = ({onClose}: IProps) => {
+  const {t} = useTypedTranslation('menu');
+  const input = React.useRef<HTMLInputElement>(null);
+  const {state, handleFile, handleConfirm, close} = useRestoreBackup();
+  const handleClick = () => {
+    // Opening another picker abandons the pending read, even if cancelled.
+    close();
+    onClose();
+    input.current?.click();
   };
 
   return (
@@ -118,14 +159,14 @@ const RestoreBackup = ({onClose}: IProps) => {
           type="file"
           accept="application/json,.json"
           hidden
-          onChange={event => void handleFile(event)}
+          onChange={handleFile}
         />,
         document.body
       )}
       <RestoreBackupDialog
         state={state}
         onConfirm={handleConfirm}
-        onClose={() => setState({step: 'closed'})}
+        onClose={close}
       />
     </>
   );
