@@ -9,6 +9,11 @@ export function useEditorOwnership(
 ) {
   const [editor] = useState<EditorOwner>(() => ({id: Symbol('editor'), mode}));
   const ref = useRef<HTMLDivElement>(null);
+  const active = useAppState(
+    ({editorOwnership}) =>
+      editorOwnership.status === 'editing' &&
+      editorOwnership.active.id === editor.id
+  );
   useLayoutEffect(() => {
     const {sendEditorOwnership} = useAppState.getState();
     sendEditorOwnership({type: 'open', editor});
@@ -20,6 +25,17 @@ export function useEditorOwnership(
     if (autoFocus)
       ref.current?.querySelector<HTMLElement>('input, textarea')?.focus();
   }, [autoFocus]);
+
+  useEffect(() => {
+    // Hand back focus only if it disappeared with the closing form. A save
+    // completing after the user focused another control must not steal it.
+    if (
+      active &&
+      (!document.activeElement || document.activeElement === document.body)
+    ) {
+      ref.current?.querySelector<HTMLElement>('input, textarea')?.focus();
+    }
+  }, [active]);
 
   const ownsKeyboard = () => {
     const state = useAppState.getState().editorOwnership;

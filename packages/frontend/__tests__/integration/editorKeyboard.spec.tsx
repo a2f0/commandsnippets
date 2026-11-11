@@ -317,9 +317,49 @@ it('leaves arrow keys in a tag rename field to its caret', async () => {
   fireEvent.contextMenu(screen.getByText('test-tag-1'));
   fireEvent.click(await screen.findByRole('menuitem', {name: 'Edit Tag'}));
   const name = byId('tagEditTagName1');
-  act(() => name.focus());
+  expect(name).toHaveFocus();
 
   expect(fireEvent.keyDown(name, {key: 'ArrowLeft', code: 'ArrowLeft'})).toBe(
     true
   );
+});
+
+it.each(['tag', 'entry'] as const)(
+  'Escape in the active %s leaves a background tag draft intact',
+  async kind => {
+    const user = userEvent.setup();
+    await renderAppAt('/test/test-tag-1', {act: true});
+    await screen.findByText('entry-1-subject');
+    const background = await openEditor('tag', 1);
+    fireEvent.change(background.field, {target: {value: 'keep this draft'}});
+    const active = await openEditor(kind, 2);
+    await user.click(active.field);
+    await user.keyboard('{Escape}');
+    expect(background.field).toBeInTheDocument();
+    expect(background.field).toHaveValue('keep this draft');
+    if (kind === 'tag') {
+      expect(active.field).not.toBeInTheDocument();
+      expect(background.field).toHaveFocus();
+    } else {
+      expect(active.field).toBeInTheDocument();
+    }
+  }
+);
+
+it('closing a menu with Escape preserves the underlying tag draft', async () => {
+  const user = userEvent.setup();
+  await renderAppAt('/test/test-tag-1', {act: true});
+  await screen.findByText('entry-1-subject');
+  const editor = await openEditor('tag', 1);
+  fireEvent.change(editor.field, {target: {value: 'keep this draft'}});
+  await user.click(byId('file-menu-button'));
+  const menuItem = screen.getByRole('menuitem', {name: 'New Tag'});
+  expect(menuItem).toBeInTheDocument();
+  await user.keyboard('{Escape}');
+  await waitFor(() =>
+    expect(
+      screen.queryByRole('menuitem', {name: 'New Tag'})
+    ).not.toBeInTheDocument()
+  );
+  expect(editor.field).toHaveValue('keep this draft');
 });

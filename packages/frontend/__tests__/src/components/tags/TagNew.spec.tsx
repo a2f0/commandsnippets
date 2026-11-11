@@ -121,7 +121,11 @@ describe('TagNew', () => {
     ['Cancel', () => fireEvent.click(byId('tagNewTopCancel'))],
     [
       'Escape',
-      () => fireEvent.keyDown(document, {key: 'Escape', code: 'Escape'}),
+      () =>
+        fireEvent.keyDown(byId('tagNewTopTextField'), {
+          key: 'Escape',
+          code: 'Escape',
+        }),
     ],
   ])('closes unsaved on %s', (_, cancel) => {
     renderForm();

@@ -1,9 +1,11 @@
 import {act, cleanup, fireEvent, screen, waitFor} from '@testing-library/react';
 import {vi} from 'vitest';
+import * as copying from '../../src/lib/data/copyEntry';
 import * as writes from '../../src/lib/data/writes';
 import {appMode} from '../../src/lib/shared';
 import {syncSession} from '../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
+import {mockResult} from '../util/mockResult';
 import {serveMockApi} from '../util/msw';
 import {signIn, store, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
@@ -118,7 +120,7 @@ it.each(sources)(
         await screen.findByRole('button', {name: 'Copied'})
       ).toBeInTheDocument();
     } else {
-      expect(store.mostRecentCopyID).toBe('1');
+      await waitFor(() => expect(store.mostRecentCopyID).toBe('1'));
     }
     await waitFor(async () =>
       expect(
@@ -130,6 +132,7 @@ it.each(sources)(
 );
 
 it('does not let an older body copy replace a newer keyboard copy', async () => {
+  const copy = vi.spyOn(copying, 'copyEntry');
   const older = Promise.withResolvers<void>();
   const newer = Promise.withResolvers<void>();
   vi.spyOn(navigator.clipboard, 'writeText')
@@ -144,12 +147,12 @@ it('does not let an older body copy replace a newer keyboard copy', async () => 
   );
   await act(async () => {
     newer.resolve();
-    await newer.promise;
+    await mockResult(copy, 1);
   });
   expect(store.mostRecentCopyID).toBe('2');
   await act(async () => {
     older.resolve();
-    await older.promise;
+    await mockResult(copy);
   });
   expect(store.mostRecentCopyID).toBe('2');
   await waitFor(async () => {
@@ -198,7 +201,7 @@ it('reports an older successful copy when the newer request fails', async () => 
       1, 0,
     ]);
   });
-  expect(store.mostRecentCopyID).toBe('1');
+  await waitFor(() => expect(store.mostRecentCopyID).toBe('1'));
 });
 
 it('still reports a successful copy when recording its reuse fails', async () => {
@@ -214,12 +217,13 @@ it('still reports a successful copy when recording its reuse fails', async () =>
       expect.objectContaining({message: 'Storage unavailable'})
     )
   );
-  expect(store.mostRecentCopyID).toBe('1');
+  await waitFor(() => expect(store.mostRecentCopyID).toBe('1'));
 });
 
 it.each(['body', 'keyboard'] as const)(
   'a late %s copy cannot replace feedback after its view unmounts',
   async source => {
+    const copy = vi.spyOn(copying, 'copyEntry');
     const pending = Promise.withResolvers<void>();
     vi.spyOn(navigator.clipboard, 'writeText').mockReturnValueOnce(
       pending.promise
@@ -233,11 +237,14 @@ it.each(['body', 'keyboard'] as const)(
 
     await act(async () => {
       pending.resolve();
-      await pending.promise;
+      await mockResult(copy);
     });
 
     expect(store.mostRecentCopyID).toBe('replacement-copy');
-    expect(reuse).toHaveBeenCalledExactlyOnceWith(originalSession, '1');
+    expect(reuse).toHaveBeenCalledExactlyOnceWith(originalSession, '1', {
+      accountId: '1',
+      version: 1,
+    });
     await waitFor(async () =>
       expect(
         (await originalSession.db.entries.get([TEST_USER, '1']))?.attributes
@@ -248,6 +255,7 @@ it.each(['body', 'keyboard'] as const)(
 );
 
 it('a detail-page completion cannot mark a replacement entry as copied', async () => {
+  const copy = vi.spyOn(copying, 'copyEntry');
   const pending = Promise.withResolvers<void>();
   vi.spyOn(navigator.clipboard, 'writeText').mockReturnValueOnce(
     pending.promise
@@ -260,11 +268,14 @@ it('a detail-page completion cannot mark a replacement entry as copied', async (
 
   await act(async () => {
     pending.resolve();
-    await pending.promise;
+    await mockResult(copy);
   });
 
   expectNotCopied('detail page');
-  expect(reuse).toHaveBeenCalledExactlyOnceWith(syncSession(TEST_USER), '1');
+  expect(reuse).toHaveBeenCalledExactlyOnceWith(syncSession(TEST_USER), '1', {
+    accountId: '1',
+    version: 1,
+  });
   await waitFor(async () =>
     expect(
       (await syncSession(TEST_USER).db.entries.get([TEST_USER, '1']))

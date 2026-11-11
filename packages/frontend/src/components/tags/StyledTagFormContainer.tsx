@@ -5,7 +5,7 @@ interface IProps {
   children?: React.ReactNode;
   id: string;
   ref?: React.Ref<HTMLDivElement>;
-  onFocus?: React.FocusEventHandler<HTMLDivElement>;
+  onKeyDown?: React.KeyboardEventHandler<HTMLDivElement>;
   onFocusCapture?: React.FocusEventHandler<HTMLDivElement>;
 }
 

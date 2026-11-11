@@ -173,6 +173,16 @@ it.each(cases)('%s', (_name, state, event, expected) => {
   expect(registeredEditors(state)).toEqual(before);
 });
 
+it.each([appMode.tagsList, appMode.entriesList] as const)(
+  'keeps the same state when already released to %s',
+  mode => {
+    const state = released(mode, entry, tag);
+    expect(transitionEditorOwnership(state, {type: 'release', mode})).toBe(
+      state
+    );
+  }
+);
+
 it.each([
   [entry, tag],
   [tag, entry],

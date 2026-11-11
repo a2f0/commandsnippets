@@ -163,3 +163,34 @@ it('a background close cannot undo explicit list navigation', () => {
   expect(useAppState.getState().appMode).toBe(appMode.entriesList);
   expect(registeredEditors(useAppState.getState().editorOwnership)).toEqual([]);
 });
+
+it.each(['entry', 'tag'] as const)(
+  'hands focus to the surviving %s when the active form closes',
+  async kind => {
+    const user = userEvent.setup();
+    const first = mountForm(kind, 'first');
+    const second = mountForm('tag', 'second');
+    expect(second.control('Name')).toHaveFocus();
+    second.unmount();
+    const field = first.control(kind === 'entry' ? 'Subject' : 'Name');
+    expect(field).toHaveFocus();
+    await user.keyboard('{End}X');
+    expect(field).toHaveValue(kind === 'entry' ? 'subjectX' : 'tagX');
+    await user.tab();
+    expect(first.control(kind === 'entry' ? 'Body' : 'Save')).toHaveFocus();
+  }
+);
+
+it('does not steal outside focus when the active form closes', () => {
+  mountForm('entry', 'first');
+  const second = mountForm('tag', 'second');
+  const outside = document.createElement('button');
+  document.body.append(outside);
+  try {
+    act(() => outside.focus());
+    second.unmount();
+    expect(outside).toHaveFocus();
+  } finally {
+    outside.remove();
+  }
+});

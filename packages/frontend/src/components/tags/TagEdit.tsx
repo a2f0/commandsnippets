@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useRef} from 'react';
 import {useMounted} from '../../hooks/useMounted';
 import {useSaveError} from '../../hooks/useSaveError';
 import type {ITagJsonApi} from '../../lib/api/responses/types';
@@ -31,11 +31,13 @@ const TagEdit = ({
   const session = useSession();
   const mounted = useMounted();
   const saveError = useSaveError('update tag');
+  const saving = useRef(false);
 
   const handleSave = async (tagName: string) => {
-    if (session === null) {
+    if (session === null || saving.current) {
       return;
     }
+    saving.current = true;
     saveError.clear();
     const generation = sessionsEndedCount();
     const path = currentPath();
@@ -57,6 +59,8 @@ const TagEdit = ({
       }
     } catch (error) {
       saveError.failed(error);
+    } finally {
+      saving.current = false;
     }
   };
 

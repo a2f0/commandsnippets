@@ -79,6 +79,8 @@ export function transitionEditorOwnership(
     case 'close':
       return closeEditor(state, event.id);
     case 'release':
+      if (state.status === 'released' && state.mode === event.mode)
+        return state;
       return {status: 'released', mode: event.mode, editors};
     default:
       return assertNever(event);

@@ -187,6 +187,41 @@ it.each(['before', 'after'])(
   }
 );
 
+it.each(['before', 'after'])(
+  'requires a fresh capture when an unknown account is bound %s persistence',
+  async when => {
+    const {session, object, identity} = await localTag(false);
+    const renamed =
+      when === 'after'
+        ? await renameTag(session, object.id, 'renamed', identity)
+        : null;
+    await claimData(TEST_USER, testUser.id);
+    if (when === 'before') {
+      await expect(
+        renameTag(session, object.id, 'renamed', identity)
+      ).rejects.toBeInstanceOf(AccountChangedError);
+    } else {
+      invariant(renamed, 'the tag was already stored');
+      expect(await isCurrentTagRename(session, renamed, identity)).toBe(false);
+    }
+    // Refusal loses neither the retained local row nor the ability to retry.
+    expect(
+      (await session.db.tags.get([TEST_USER, object.id]))?.attributes.name
+    ).toBe(when === 'before' ? 'first local tag' : 'renamed');
+    const retryIdentity = await captureTagRenameIdentity(session);
+    const retried = await renameTag(
+      session,
+      object.id,
+      'retried',
+      retryIdentity
+    );
+    invariant(retried, 'the fresh attempt was stored');
+    expect(await isCurrentTagRename(session, retried, retryIdentity)).toBe(
+      true
+    );
+  }
+);
+
 it('does not treat an unavailable identity read as an unbound snapshot', async () => {
   const {session, object} = await localTag(false);
   vi.spyOn(session.db, 'transaction').mockRejectedValueOnce(

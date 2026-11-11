@@ -1,12 +1,50 @@
+import {DataVersionChangedError} from '../api/errors';
 import {signedInUser} from '../auth/authUtils';
-import type {SyncSession} from '../sync/session';
+import {AccountChangedError} from '../sync/accountBinding';
+import {type SyncSession, sessionsEndedCount} from '../sync/session';
+import {
+  assertWriteIdentity,
+  captureWriteIdentity,
+  type WriteIdentity,
+} from './writeIdentity';
 import {reuseEntry} from './writes';
 
 // Shared by row, keyboard and detail-page copies: a late completion must not
 // replace feedback for a newer success. A failed request supersedes nothing.
-// Every successful copy still counts, even when its feedback is stale.
+// Successful copies still count against their captured data, never replacement
+// data, even when their view or newer-success feedback has moved on.
 let nextCopy = 0;
 let newestSuccessfulCopy = 0;
+
+async function captureCopyIdentity(session: SyncSession) {
+  try {
+    return {
+      status: 'captured' as const,
+      identity: await captureWriteIdentity(session),
+    };
+  } catch (error) {
+    // Handle rejection immediately even if the clipboard later fails first.
+    return {status: 'failed' as const, error};
+  }
+}
+
+async function isCurrentCopy(session: SyncSession, identity: WriteIdentity) {
+  try {
+    await session.db.transaction('r', session.db.cursors, async () => {
+      await assertWriteIdentity(session, identity);
+    });
+    return true;
+  } catch (error) {
+    if (
+      !(error instanceof AccountChangedError) &&
+      !(error instanceof DataVersionChangedError) &&
+      !session.db.hasBeenClosed()
+    ) {
+      console.error('Failed to verify the entry copy:', error);
+    }
+    return false;
+  }
+}
 
 /**
  * Copy `text` (entry `entryId`'s body, or a selection of it) to the
@@ -23,18 +61,35 @@ export async function copyEntry(
 ): Promise<boolean> {
   const request = ++nextCopy;
   const account = signedInUser();
+  const generation = sessionsEndedCount();
+  // Start capture now, but never await storage before gesture-sensitive copy.
+  const capturing = session === null ? null : captureCopyIdentity(session);
   try {
     await navigator.clipboard.writeText(text);
   } catch (error) {
     console.error('Failed to copy the entry:', error);
     return false;
   }
-  if (session !== null && !session.readOnly) {
-    void reuseEntry(session, entryId).catch((error: unknown) =>
-      console.error('Failed to count the entry copy:', error)
-    );
+  const captured = await capturing;
+  if (session !== null && captured !== null) {
+    if (captured.status === 'failed') {
+      if (!session.readOnly)
+        console.error('Failed to count the entry copy:', captured.error);
+      return false;
+    }
+    if (!session.readOnly) {
+      void reuseEntry(session, entryId, captured.identity).catch(
+        (error: unknown) =>
+          console.error('Failed to count the entry copy:', error)
+      );
+    }
+    if (!(await isCurrentCopy(session, captured.identity))) return false;
   }
-  if (request < newestSuccessfulCopy || account !== signedInUser()) {
+  if (
+    request < newestSuccessfulCopy ||
+    account !== signedInUser() ||
+    generation !== sessionsEndedCount()
+  ) {
     return false;
   }
   newestSuccessfulCopy = request;

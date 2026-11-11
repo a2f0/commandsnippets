@@ -49,6 +49,7 @@ export interface SavedState {
 
 /** The UI's state, which each page starts afresh. */
 export interface UiState {
+  /** Derived view: only editorOwnershipUpdate writes it (both reset together). */
   appMode: appMode;
   editorOwnership: EditorOwnership;
   activeSearch: activeSearch;

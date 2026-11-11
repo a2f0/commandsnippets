@@ -50,6 +50,59 @@ const byId = (id: string): HTMLElement => {
 };
 
 describe('TagEdit', () => {
+  it('ignores a second Save while a rename is pending', async () => {
+    vi.spyOn(tagRename, 'captureTagRenameIdentity').mockResolvedValue({
+      accountId: undefined,
+      version: undefined,
+    });
+    vi.spyOn(tagRename, 'isCurrentTagRename').mockResolvedValue(false);
+    const pending = Promise.withResolvers<ReturnType<typeof tag>>();
+    renameTag.mockReturnValue(pending.promise);
+    const {onSave} = renderEditor();
+    fireEvent.change(byId('tagEditTagName2'), {target: {value: 'first'}});
+    fireEvent.click(byId('tagEditSave2'));
+    await waitFor(() => expect(renameTag).toHaveBeenCalledOnce());
+    try {
+      await act(async () => {
+        fireEvent.change(byId('tagEditTagName2'), {target: {value: 'second'}});
+        fireEvent.click(byId('tagEditSave2'));
+      });
+      expect(renameTag).toHaveBeenCalledOnce();
+      expect(renameTag).toHaveBeenLastCalledWith(
+        expect.anything(),
+        '2',
+        'first',
+        expect.anything()
+      );
+    } finally {
+      await act(async () => pending.resolve(tag('2', {name: 'first'})));
+    }
+    expect(onSave).toHaveBeenCalledOnce();
+  });
+
+  it('permits another Save after a failed rename', async () => {
+    const failure = new InvalidWriteError('name: taken is taken');
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+    renameTag
+      .mockRejectedValueOnce(failure)
+      .mockResolvedValueOnce(tag('2', {name: 'free'}));
+    const {onSave} = renderEditor();
+    fireEvent.click(byId('tagEditSave2'));
+    await waitFor(() =>
+      expect(byId('tagEdit2Error')).toHaveTextContent(
+        'Not saved: name: taken is taken'
+      )
+    );
+    fireEvent.change(byId('tagEditTagName2'), {target: {value: 'free'}});
+    fireEvent.click(byId('tagEditSave2'));
+    await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
+    expect(renameTag).toHaveBeenCalledTimes(2);
+    expect(errors).toHaveBeenCalledExactlyOnceWith(
+      'Failed to update tag:',
+      failure
+    );
+  });
+
   it('saves the name the field holds and closes without passing a row', async () => {
     const renamed = tag('2', {name: 'renamed'});
     renameTag.mockResolvedValue(renamed);
@@ -144,7 +197,11 @@ describe('TagEdit', () => {
     ['Cancel', () => fireEvent.click(byId('tagEditCancel2'))],
     [
       'Escape',
-      () => fireEvent.keyDown(document, {key: 'Escape', code: 'Escape'}),
+      () =>
+        fireEvent.keyDown(byId('tagEditTagName2'), {
+          key: 'Escape',
+          code: 'Escape',
+        }),
     ],
   ])('cancels on %s', (_, cancel) => {
     const {onCancel, onSave} = renderEditor();

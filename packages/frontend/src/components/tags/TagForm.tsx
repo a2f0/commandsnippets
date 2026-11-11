@@ -1,7 +1,6 @@
 import Alert from '@mui/material/Alert';
 import Grid from '@mui/material/Grid';
 import {useState} from 'react';
-import {useDocumentKeydown} from '../../hooks/useDocumentKeydown';
 import {useEditFieldCycle} from '../../hooks/useEditFieldCycle';
 import {useEditorOwnership} from '../../hooks/useEditorOwnership';
 import {appMode} from '../../lib/shared';
@@ -33,20 +32,27 @@ export const TagForm = ({
   cycleFields = false,
   error = null,
 }: ITagFormProps) => {
-  const owner = useEditorOwnership(appMode.tagEditor, cycleFields);
+  const owner = useEditorOwnership(appMode.tagEditor, true);
   useEditFieldCycle(owner, cycleFields);
   const [name, setName] = useState<string>(initialName);
-  useDocumentKeydown(event => {
-    if (event.code === 'Escape') {
-      onCancel();
-    }
-  });
 
   return (
     <StyledTagFormContainer
       id={ids.form}
       ref={owner.ref}
       onFocusCapture={owner.onFocusCapture}
+      onKeyDown={event => {
+        if (
+          event.code === 'Escape' &&
+          !event.defaultPrevented &&
+          owner.ownsKeyboard()
+        ) {
+          // Handle the focused form before document-level search shortcuts.
+          event.preventDefault();
+          event.stopPropagation();
+          onCancel();
+        }
+      }}
     >
       <StyledTextFieldTags
         value={name}

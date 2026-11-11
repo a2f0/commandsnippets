@@ -3,24 +3,10 @@ import {boundAccount} from '../sync/accountBinding';
 import {heldVersion} from '../sync/dataVersion';
 import type {SyncSession} from '../sync/session';
 import {rowNamed} from './queries';
-
-/** A captured unbound account is distinct from an unavailable capture. */
-export interface TagRenameIdentity {
-  readonly accountId: string | undefined;
-  /** None held yet: first version adoption keeps local rows and their queue. */
-  readonly version: number | undefined;
-}
+import {captureWriteIdentity, type WriteIdentity} from './writeIdentity';
 
 /** Capture at Save; renameTag revalidates this inside its write transaction. */
-export async function captureTagRenameIdentity({
-  db,
-  owner,
-}: SyncSession): Promise<TagRenameIdentity> {
-  return db.transaction('r', db.cursors, async () => ({
-    accountId: await boundAccount(db, owner),
-    version: await heldVersion(db, owner),
-  }));
-}
+export const captureTagRenameIdentity = captureWriteIdentity;
 
 const belongsToAccount = (tag: Tag, account: string | undefined) =>
   tag.relationships.user.data.id === '' ||
@@ -30,7 +16,7 @@ const belongsToAccount = (tag: Tag, account: string | undefined) =>
 export async function isCurrentTagRename(
   session: SyncSession,
   renamed: Tag,
-  identity: TagRenameIdentity | undefined
+  identity: WriteIdentity | undefined
 ): Promise<boolean> {
   const {db, owner} = session;
   if (identity === undefined || db.hasBeenClosed()) return false;

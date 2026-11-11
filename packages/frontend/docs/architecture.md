@@ -115,6 +115,12 @@ API; everything else the app keeps is a zustand store.
   replaces the local one, so the row is never shown twice. Writes are
   checked against api-shared's request schemas first (`InvalidWriteError`):
   one the API would refuse is never queued, and its editor keeps it.
+  `writeIdentity.ts` captures the bound account and held version before the
+  write joins the lifecycle-lock queue. Every local write rechecks that snapshot
+  inside the mutation transaction, so a queued create cannot leak its draft
+  into a replacement account, even without a reused row ID. An unbound account
+  is not a wildcard: a later binding requires a fresh attempt. OAuth binds
+  before publishing sign-in; a refused racing attempt preserves its draft.
 - **Reuses**: every copy of an entry (its copy icon, a click on its body,
   its menu's Copy, Enter in the list: `copyEntry`) is a reuse
   (`reuseEntry`) only after the clipboard accepts it. Failed clipboard
@@ -122,7 +128,10 @@ API; everything else the app keeps is a zustand store.
   successful copy in the same account and a still-mounted view; a newer
   failed attempt does not suppress an older success. Counting uses the
   captured original session, even for stale feedback, and a failure to count
-  is logged without undoing clipboard success. The entry's `reused_count`
+  is logged without undoing clipboard success. Account/version capture starts
+  before the clipboard wait without delaying the browser gesture. Reuse and
+  feedback refuse replacement data; feedback also checks session generation.
+  The entry's `reused_count`
   goes up locally, shown beside its subject (`EntryReuseCount`), and the
   reuse is queued with a client id of its own (`client_id`), so one retried
   after a lost answer is counted once. Its answer is the entry as counted. A
@@ -482,7 +491,11 @@ transaction, before changing the row or queuing a write. Its follow-up read
 checks the account, known version and current row, including ID remaps. A
 blank user relationship on a first-local tag is only a placeholder, not an
 account identity. Unknown initial versions permit first adoption, as other
-local writes do; known version replacement refuses the old write.
+local writes do; known version replacement refuses the old write. First account
+binding is deliberately different: an unknown account cannot identify the
+eventual owner, so a raced binding refuses the old attempt without losing the
+retained row. A new Save captures the now-known account. A rename accepts only
+one Save at a time, including its follow-up; failure releases that guard.
 A failed or ineligible follow-up read skips only route correction: the
 successful write closes its still-mounted editor before that read, even if
 the session has since ended. A replacement draft stays open and remains saveable.
@@ -499,7 +512,11 @@ replacement form, even if it has the same DOM id.
 
 `hooks/useEditorOwnership.ts` registers forms in a layout effect and captures
 their focus. Initial draft autofocus runs in a passive effect, after closing
-menus restore focus. `useEditFieldCycle` cycles only the owner's controls,
+menus restore focus, including rename fields. A surviving form receives focus
+only when focus disappeared with the closing form, never from another control.
+Escape cancels only its focused tag form, before document search shortcuts;
+menu Escape and background drafts remain independent.
+`useEditFieldCycle` cycles only the owner's controls,
 not every form sharing a global active-field value. Entry and new-tag Tab
 cycles, native rename Tab, and explicit pane/list navigation remain distinct.
 
