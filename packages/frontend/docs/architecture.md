@@ -477,9 +477,25 @@ selected-tag rename also corrects its URL, even after Cancel or Escape, but
 only when the original path/query, session generation, username, bound
 account and stored renamed tag still match. `lib/data/tagRename.ts` checks
 the account and stored row without exposing IndexedDB to UI components.
-A replacement draft stays open and remains saveable. `TagForm` owns keyboard
-mode while mounted, releasing it only when no tag form remains and another
-editor has not taken the mode.
+A failed or ineligible follow-up read skips route correction, never closing:
+the successful write closes its still-mounted editor before that read. A
+replacement draft stays open and remains saveable.
+
+Both form kinds share the pure `transitionEditorOwnership` in
+`lib/state/editorOwnership.ts`. `editing` carries the active form and the other
+registered forms in focus/open order; `released` carries the explicitly chosen
+mode and any still-mounted forms. Open/focus claims ownership, close removes
+only that instance, and release yields to list navigation. Closing the active
+form restores its most recently focused survivor or, if none remains, that
+kind's list mode. Closing a background form never changes the current owner.
+Application UI resets discard registrations, so old cleanup cannot remove a
+replacement form, even if it has the same DOM id.
+
+`hooks/useEditorOwnership.ts` registers forms in a layout effect and captures
+their focus. Initial draft autofocus runs in a passive effect, after closing
+menus restore focus. `useEditFieldCycle` cycles only the owner's controls,
+not every form sharing a global active-field value. Entry and new-tag Tab
+cycles, native rename Tab, and explicit pane/list navigation remain distinct.
 
 The app's own router, `src/lib/router/` (no React Router: its hooks render
 every component that calls them on any change of the URL, `React.memo` or
@@ -488,8 +504,9 @@ not, so a tag switch rendered every tag and entry row and the whole page).
 - `route.ts`: `routeOf(pathname)`, the page (`admin`, `githubOAuth`,
   `googleOAuth`, `user`, `entry`, `root`, `none`), a user's page's `user`
   and `tag`, and an entry's page's `user` and `entryId` (`entryPath` makes
-  one). `tagPath` encodes both username and tag as separate segments for
-  click, keyboard, first-tag and rename navigation. Parsing splits before
+  one). `userPath` encodes the account segment for redirects, filters and
+  account links; `tagPath` encodes both username and tag as separate segments
+  for click, keyboard, first-tag and rename navigation. Parsing splits before
   decoding, so encoded slashes remain inside their segment and literal
   percent escapes are decoded once. A tag named
   `entries` is still a tag (`/:user/entries`); `/:user/entries/:id` is the

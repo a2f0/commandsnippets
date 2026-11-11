@@ -1,32 +1,13 @@
 import Alert from '@mui/material/Alert';
 import Grid from '@mui/material/Grid';
-import type React from 'react';
-import {useEffect, useState} from 'react';
+import {useState} from 'react';
 import {useDocumentKeydown} from '../../hooks/useDocumentKeydown';
+import {tagEditFields, useEditFieldCycle} from '../../hooks/useEditFieldCycle';
+import {useEditorOwnership} from '../../hooks/useEditorOwnership';
 import {appMode} from '../../lib/shared';
-import {useAppState} from '../../lib/state/appState';
 import {StyledTagButton} from './StyledTagButton';
 import {StyledTagFormContainer} from './StyledTagFormContainer';
 import {StyledTextFieldTags} from './StyledTextFieldTags';
-
-// The mounted forms own the keyboard mode, not the rows that open them.
-// Closing one must not release another tag editor's (or entry editor's) mode.
-const mountedForms = new Set<object>();
-
-function useTagEditorMode() {
-  useEffect(() => {
-    const owner = {};
-    mountedForms.add(owner);
-    useAppState.getState().setAppMode(appMode.tagEditor);
-    return () => {
-      mountedForms.delete(owner);
-      const state = useAppState.getState();
-      if (mountedForms.size === 0 && state.appMode === appMode.tagEditor) {
-        state.setAppMode(appMode.tagsList);
-      }
-    };
-  }, []);
-}
 
 interface ITagFormProps {
   /** The ids of the form, its name field and its buttons. */
@@ -37,9 +18,8 @@ interface ITagFormProps {
   onSave: (name: string) => void;
   /** Cancel, or Escape anywhere while the form is open. */
   onCancel: () => void;
-  nameRef?: React.Ref<HTMLInputElement>;
-  saveRef?: React.Ref<HTMLButtonElement>;
-  cancelRef?: React.Ref<HTMLButtonElement>;
+  /** New tags cycle name/Save/Cancel; renames retain native Tab. */
+  cycleFields?: boolean;
   /** Why the last save failed (none: it did not). */
   error?: string | null;
 }
@@ -50,12 +30,11 @@ export const TagForm = ({
   name: initialName,
   onSave,
   onCancel,
-  nameRef,
-  saveRef,
-  cancelRef,
+  cycleFields = false,
   error = null,
 }: ITagFormProps) => {
-  useTagEditorMode();
+  const owner = useEditorOwnership(appMode.tagEditor, cycleFields);
+  const onFocus = useEditFieldCycle(tagEditFields, owner, cycleFields);
   const [name, setName] = useState<string>(initialName);
   useDocumentKeydown(event => {
     if (event.code === 'Escape') {
@@ -64,9 +43,13 @@ export const TagForm = ({
   });
 
   return (
-    <StyledTagFormContainer id={ids.form}>
+    <StyledTagFormContainer
+      id={ids.form}
+      ref={owner.ref}
+      onFocusCapture={owner.onFocusCapture}
+      onFocus={onFocus}
+    >
       <StyledTextFieldTags
-        ref={nameRef}
         value={name}
         id={ids.name}
         onChange={event => {
@@ -81,7 +64,6 @@ export const TagForm = ({
       <Grid container spacing={0}>
         <Grid sx={{paddingRight: '1px'}} size={{xs: 6}}>
           <StyledTagButton
-            ref={saveRef}
             id={ids.save}
             onClick={() => {
               onSave(name);
@@ -92,7 +74,6 @@ export const TagForm = ({
         </Grid>
         <Grid sx={{paddingLeft: '1px'}} size={{xs: 6}}>
           <StyledTagButton
-            ref={cancelRef}
             id={ids.cancel}
             onClick={() => {
               onCancel();

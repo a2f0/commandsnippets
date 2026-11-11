@@ -15,7 +15,7 @@ interface ITagEdit {
   /** Close this editor after its rename is stored, never a replacement. */
   handleSaveParent: (renamed: ITagJsonApi) => void;
   /** Follow the stored rename even if the editor was closed meanwhile. */
-  handleStoredParent?: (renamed: ITagJsonApi) => void;
+  handleStoredParent: (renamed: ITagJsonApi) => void;
   handleCancelEditParent: () => void;
 }
 
@@ -42,20 +42,16 @@ const TagEdit = ({
     renameTag(session, object.id, tagName)
       .then(async renamed => {
         if (renamed === null || !sameSession()) return;
-        if (
-          handleStoredParent !== undefined &&
-          !(await isCurrentTagRename(
-            session,
-            renamed,
-            object.relationships.user.data.id
-          ))
-        )
-          return;
-        if (!sameSession()) return;
+        // Closing belongs to the saved editor, not the optional route follow-up.
         if (mounted.current) {
           handleSaveParent(renamed);
         }
-        if (handleStoredParent !== undefined && currentPath() === path) {
+        const current = await isCurrentTagRename(
+          session,
+          renamed,
+          object.relationships.user.data.id
+        );
+        if (current && sameSession() && currentPath() === path) {
           handleStoredParent(renamed);
         }
       })

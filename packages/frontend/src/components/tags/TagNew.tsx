@@ -1,10 +1,8 @@
-import React, {useEffect, useRef} from 'react';
-import {tagEditFields, useEditFieldCycle} from '../../hooks/useEditFieldCycle';
+import React from 'react';
 import {useMounted} from '../../hooks/useMounted';
 import {useSaveError} from '../../hooks/useSaveError';
 import {useSession} from '../../lib/data/hooks';
 import {createTag} from '../../lib/data/writes';
-import {activeTagEditField} from '../../lib/shared';
 import {useAppConfig} from '../../lib/state/appState';
 import {TagForm} from './TagForm';
 
@@ -16,30 +14,7 @@ const TagNew = ({id}: IProps) => {
   const session = useSession();
   const mounted = useMounted();
   const appConfig = useAppConfig();
-  const inputSaveRef = useRef<HTMLButtonElement>(null);
-  const inputCancelRef = useRef<HTMLButtonElement>(null);
-  const inputTagNameRef = useRef<HTMLInputElement>(null);
   const saveError = useSaveError('create tag');
-
-  useEditFieldCycle(tagEditFields, {
-    save: inputSaveRef,
-    cancel: inputCancelRef,
-  });
-
-  useEffect(() => {
-    if (appConfig.activeTagEditField === activeTagEditField.name) {
-      inputTagNameRef.current?.focus();
-    }
-  }, [appConfig.activeTagEditField]);
-
-  // Closing leaves the name active for the next form. Only on close: a reset
-  // whenever the active field changed sent Tab straight back to the name.
-  useEffect(
-    () => () => {
-      appConfig.setActiveTagEditField(activeTagEditField.name);
-    },
-    []
-  );
 
   const handleCancel = () => {
     appConfig.setTagNew(null);
@@ -69,9 +44,7 @@ const TagNew = ({id}: IProps) => {
       onSave={handleSave}
       onCancel={handleCancel}
       error={saveError.error}
-      nameRef={inputTagNameRef}
-      saveRef={inputSaveRef}
-      cancelRef={inputCancelRef}
+      cycleFields
     />
   );
 };

@@ -24,6 +24,7 @@ const object = tag('2', {name: 'the-tag'});
 
 function renderEditor() {
   const onSave = vi.fn();
+  const onStored = vi.fn();
   const onCancel = vi.fn();
   render(
     <I18nextProvider i18n={i18n}>
@@ -31,6 +32,7 @@ function renderEditor() {
         <TagEdit
           object={object}
           handleSaveParent={onSave}
+          handleStoredParent={onStored}
           handleCancelEditParent={onCancel}
         />
       </ThemeProvider>

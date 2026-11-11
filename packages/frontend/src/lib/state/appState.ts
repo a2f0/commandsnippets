@@ -28,6 +28,14 @@ import {
 import {clampSidebarWidth, DEFAULT_SIDEBAR_WIDTH} from '../sidebarWidth';
 import {subscribeRemaps} from '../sync/remaps';
 import {endSyncSession} from '../sync/session';
+import {
+  type EditorOwnership,
+  type EditorOwnershipEvent,
+  editorOwnershipMode,
+  initialEditorOwnership,
+  registeredEditors,
+  transitionEditorOwnership,
+} from './editorOwnership';
 
 /** What is saved to localStorage. */
 export interface SavedState {
@@ -47,6 +55,7 @@ export interface SavedState {
 /** The UI's state, which each page starts afresh. */
 export interface UiState {
   appMode: appMode;
+  editorOwnership: EditorOwnership;
   activeSearch: activeSearch;
   activeEntryEditField: activeEntryEditField;
   activeTagEditField: activeTagEditField;
@@ -78,6 +87,7 @@ export interface AppActions {
   setShowTagCounts(value: boolean): void;
   setTagSidebarWidth(value: number): void;
   setAppMode(value: appMode): void;
+  sendEditorOwnership(event: EditorOwnershipEvent): void;
   setActiveSearch(value: activeSearch): void;
   setActiveEntryEditField(value: activeEntryEditField): void;
   setActiveTagEditField(value: activeTagEditField): void;
@@ -107,6 +117,7 @@ export const defaultSavedState: SavedState = {
 
 export const defaultUiState: UiState = {
   appMode: appMode.tagsList,
+  editorOwnership: initialEditorOwnership,
   activeSearch: activeSearch.tags,
   activeEntryEditField: activeEntryEditField.subject,
   activeTagEditField: activeTagEditField.name,
@@ -182,9 +193,29 @@ const guardedStorage: StateStorage = {
   },
 };
 
+/** Publish the machine and its legacy keyboard-mode/field views atomically. */
+function editorOwnershipUpdate(state: AppState, event: EditorOwnershipEvent) {
+  const editorOwnership = transitionEditorOwnership(
+    state.editorOwnership,
+    event
+  );
+  if (editorOwnership === state.editorOwnership) return state;
+  const editors = registeredEditors(editorOwnership);
+  return {
+    editorOwnership,
+    appMode: editorOwnershipMode(editorOwnership),
+    ...(!editors.some(editor => editor.mode === appMode.entryEditor)
+      ? {activeEntryEditField: activeEntryEditField.subject}
+      : {}),
+    ...(!editors.some(editor => editor.mode === appMode.tagEditor)
+      ? {activeTagEditField: activeTagEditField.name}
+      : {}),
+  };
+}
+
 export const useAppState = create<AppState>()(
   persist(
-    set => ({
+    (set, get) => ({
       ...defaultSavedState,
       ...defaultUiState,
       setLoggedInUser: loggedInUser => set({loggedInUser}),
@@ -197,7 +228,9 @@ export const useAppState = create<AppState>()(
       setShowTagCounts: showTagCounts => set({showTagCounts}),
       setTagSidebarWidth: width =>
         set({tagSidebarWidth: clampSidebarWidth(width)}),
-      setAppMode: appMode => set({appMode}),
+      setAppMode: mode => get().sendEditorOwnership({type: 'release', mode}),
+      sendEditorOwnership: event =>
+        set(state => editorOwnershipUpdate(state, event)),
       setActiveSearch: activeSearch => set({activeSearch}),
       setActiveEntryEditField: activeEntryEditField =>
         set({activeEntryEditField}),

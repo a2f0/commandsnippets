@@ -35,6 +35,10 @@ export interface Route {
   entryId?: string | undefined;
 }
 
+/** The path of `user`'s page, preserving the username as one segment. */
+export const userPath = (user: string): string =>
+  `/${encodeURIComponent(user)}`;
+
 /** The path of `user`'s entry `entryId`'s page. */
 export const entryPath = (user: string, entryId: string): string =>
   `/${encodeURIComponent(user)}/entries/${encodeURIComponent(entryId)}`;

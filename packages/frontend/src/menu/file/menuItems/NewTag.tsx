@@ -1,6 +1,5 @@
 import React from 'react';
 import {useTypedTranslation} from '../../../i18n/hooks';
-import {appMode} from '../../../lib/shared';
 import {useAppConfig} from '../../../lib/state/appState';
 import {StyledMenuItem} from '../../StyledMenuItem';
 
@@ -13,7 +12,6 @@ const NewTag = ({onClose}: IProps) => {
   const {t} = useTypedTranslation('menu');
 
   const handleCreateTag = () => {
-    appConfig.setAppMode(appMode.tagEditor);
     onClose();
     appConfig.setTagNew('top');
   };

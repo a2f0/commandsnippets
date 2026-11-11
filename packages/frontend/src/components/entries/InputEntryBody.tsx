@@ -1,14 +1,11 @@
 import styled from '@emotion/styled';
 import {TextareaAutosize} from '@mui/material';
 import {useTheme} from '@mui/material/styles';
-import React, {useEffect, useRef, useState} from 'react';
-import {activeEntryEditField} from '../../lib/shared';
-import {useAppConfig} from '../../lib/state/appState';
+import React, {useState} from 'react';
 import type {Theme} from '../../theme/themes';
 
 interface StyledTextAreaIProps {
   theme: Theme;
-  ref: React.Ref<HTMLTextAreaElement>;
 }
 
 const StyledTextareaAutosize = styled(TextareaAutosize)<StyledTextAreaIProps>`
@@ -49,8 +46,6 @@ const InputEntryBody = ({
   id,
 }: IProps) => {
   const [value, setValue] = useState<string>(valueParent);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-  const appConfig = useAppConfig();
 
   const theme = useTheme<Theme>();
 
@@ -70,17 +65,6 @@ const InputEntryBody = ({
   const handleClick = (event: React.MouseEvent<HTMLTextAreaElement>) => {
     event.preventDefault();
     event.stopPropagation();
-    appConfig.setActiveEntryEditField(activeEntryEditField.body);
-  };
-
-  useEffect(() => {
-    if (appConfig.activeEntryEditField === activeEntryEditField.body) {
-      inputRef.current?.focus();
-    }
-  }, [appConfig.activeEntryEditField]);
-
-  const setTextInputRef = (element: HTMLTextAreaElement) => {
-    inputRef.current = element;
   };
 
   return (
@@ -93,7 +77,6 @@ const InputEntryBody = ({
       value={value}
       minRows={minRows(value)}
       onChange={handleChange}
-      ref={setTextInputRef}
     />
   );
 };

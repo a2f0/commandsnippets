@@ -1,9 +1,10 @@
 import {tagCreateAttributesSchema} from '@commandsnippets/api-shared/requests';
-import {fireEvent, screen, waitFor} from '@testing-library/react';
+import {act, cleanup, fireEvent, screen, waitFor} from '@testing-library/react';
 import invariant from 'invariant';
 import {HttpResponse, http} from 'msw/http';
 
 import {apiClient} from '../../src/lib/api/apiClient';
+import {UserMismatchError} from '../../src/lib/api/errors';
 import {routeOf} from '../../src/lib/router/route';
 import {syncSession} from '../../src/lib/sync/session';
 import {testUser} from '../../src/msw/fixtures';
@@ -17,6 +18,22 @@ beforeEach(() => {
   signIn();
   assignLoggedInCookie();
 });
+afterEach(() => cleanup());
+
+/** Change accounts only after fixture writes, preserving the mock write guard. */
+function signInAs(user: string): void {
+  server.use(
+    http.get('*/api/v1/user/', () =>
+      HttpResponse.json({
+        data: {
+          ...testUser,
+          attributes: {...testUser.attributes, username: user},
+        },
+      })
+    )
+  );
+  store.setLoggedInUser(user);
+}
 
 function byId(id: string): HTMLElement {
   const element = document.getElementById(id);
@@ -77,23 +94,55 @@ it.each(['click', 'keyboard', 'first tag'])(
   }
 );
 
+it.each(['test', 'oauth/github'])(
+  'opens an encoded tag from an entry detail page for %s',
+  async user => {
+    const warnings = vi.spyOn(console, 'warn');
+    const name = 'C#/literal%20';
+    await apiClient.forVersion(1).updateTag('1', name);
+    signInAs(user);
+    const root = `/${encodeURIComponent(user)}`;
+    const {history} = await renderAppAt(`${root}/entries/1`, {act: true});
+    const link = (await screen.findByText(name)).closest('a');
+    invariant(link, 'the entry detail tag is a link');
+    // Detail history sends an expected-user header even on its GET. The
+    // encoded-account fixture deliberately does not relax the mock guard.
+    if (user === TEST_USER) {
+      await screen.findByText('Not reused yet.');
+      expect(warnings).not.toHaveBeenCalled();
+    } else {
+      await screen.findByText('The reuses could not be read.');
+      expect(warnings.mock.calls).toEqual([
+        [
+          'WARNING: the reuses could not be read:',
+          new UserMismatchError('Failed to fetch entry', user),
+        ],
+      ]);
+    }
+    await act(async () => syncSession(user).sync.syncAll());
+
+    fireEvent.click(link);
+
+    expect(link).toHaveAttribute('href', `${root}/${encodeURIComponent(name)}`);
+    expect(routeOf(history.location.pathname)).toEqual({
+      page: 'user',
+      user,
+      tag: name,
+    });
+    expect(history.location.search).toBe('');
+    expect(history.location.hash).toBe('');
+    expect(await screen.findByText('entry-1-subject')).toBeInTheDocument();
+    await act(async () => syncSession(user).sync.syncAll());
+  }
+);
+
 it.each(['click', 'keyboard', 'first tag'])(
   'round-trips an encoded account when opening by %s',
   async method => {
     const user = 'oauth/github';
-    server.use(
-      http.get('*/api/v1/user/', () =>
-        HttpResponse.json({
-          data: {
-            ...testUser,
-            attributes: {...testUser.attributes, username: user},
-          },
-        })
-      )
-    );
     const name = 'C#/literal%20';
     await apiClient.forVersion(1).updateTag('1', name);
-    store.setLoggedInUser(user);
+    signInAs(user);
     const root = `/${encodeURIComponent(user)}`;
     const {history} = await renderAppAt(
       method === 'first tag' ? root : `${root}/test-tag-2`,

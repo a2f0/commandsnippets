@@ -13,7 +13,12 @@ import {useCollectionSync} from '../lib/data/useSync';
 import {formatTimestamp} from '../lib/formatTimestamp';
 import {useRouteParam} from '../lib/router/navigation';
 import {Link} from '../lib/router/Router';
-import {analyticsPath, entryPath, reusesPath} from '../lib/router/route';
+import {
+  analyticsPath,
+  entryPath,
+  reusesPath,
+  tagPath,
+} from '../lib/router/route';
 import {useAppState} from '../lib/state/appState';
 import {isLocalId} from '../lib/sync/outbox';
 import type {SyncSession} from '../lib/sync/session';
@@ -45,7 +50,7 @@ const TagLinks = ({entryId, owner}: {entryId: string; owner: string}) => {
         <Chip
           key={tag.id}
           component={Link}
-          to={`/${encodeURIComponent(owner)}/${encodeURIComponent(tag.attributes.name)}`}
+          to={tagPath(owner, tag.attributes.name)}
           label={tag.attributes.name}
           size="small"
           variant="outlined"

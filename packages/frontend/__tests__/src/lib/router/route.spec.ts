@@ -4,6 +4,7 @@ import {
   reusesPath,
   routeOf,
   tagPath,
+  userPath,
 } from '../../../../src/lib/router/route';
 
 describe('routeOf', () => {
@@ -62,6 +63,19 @@ describe('routeOf', () => {
       page: 'reuses',
       user: 'a/b c',
     });
+  });
+
+  it.each([
+    ['test', '/test'],
+    ['oauth/github', '/oauth%2Fgithub'],
+    ['literal%2F?x#y', '/literal%252F%3Fx%23y'],
+    ['café + space', '/caf%C3%A9%20%2B%20space'],
+  ])('round-trips the account path for %s', (user, path) => {
+    expect(userPath(user)).toBe(path);
+    const url = new URL(userPath(user), 'https://example.com');
+    expect(url.search).toBe('');
+    expect(url.hash).toBe('');
+    expect(routeOf(url.pathname)).toEqual({page: 'user', user});
   });
 
   it.each([

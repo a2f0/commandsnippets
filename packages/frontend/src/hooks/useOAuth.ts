@@ -2,6 +2,7 @@ import {useEffect} from 'react';
 import {v4 as uuidv4} from 'uuid';
 import {apiClient} from '../lib/api/apiClient';
 import {navigate} from '../lib/router/navigation';
+import {userPath} from '../lib/router/route';
 import {useAppConfig} from '../lib/state/appState';
 import {claimData} from '../lib/sync/session';
 
@@ -58,7 +59,7 @@ export const useOAuth = (config: OAuthConfig) => {
 
       appConfig.setLoggedInUser(username);
       appConfig.setIsStaff(response.data.attributes.is_staff);
-      navigate(`/${username}`);
+      navigate(userPath(username));
     } catch (error: unknown) {
       console.error(`${config.provider} authentication error:`, error);
       appConfig.setLoggedInUser(null);

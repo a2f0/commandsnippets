@@ -34,6 +34,7 @@ const StyledTextFieldTags = React.forwardRef<
 >(({id, value, onChange}: IStyledTextFieldProps, ref) => {
   const appConfig = useAppConfig();
   useDocumentKeydown(event => {
+    if (event.defaultPrevented) return;
     if (event.code === 'Escape') {
       appConfig.setActiveSearch(activeSearch.tags);
     }

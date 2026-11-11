@@ -7,10 +7,10 @@ import {
   entryEditFields,
   useEditFieldCycle,
 } from '../../hooks/useEditFieldCycle';
+import {useEditorOwnership} from '../../hooks/useEditorOwnership';
 import {useTypedTranslation} from '../../i18n/hooks';
 import {needsScrollingIntoView} from '../../lib/scroll';
-import {activeEntryEditField, appMode} from '../../lib/shared';
-import {useAppConfig} from '../../lib/state/appState';
+import {appMode} from '../../lib/shared';
 import {InputEntryBody} from './InputEntryBody';
 import {InputEntrySubject} from './InputEntrySubject';
 
@@ -45,17 +45,9 @@ export const EntryForm = ({
   const {t} = useTypedTranslation('common');
   const [subject, setSubject] = useState<string>(initialSubject);
   const [body, setBody] = useState<string>(initialBody);
-  const appConfig = useAppConfig();
+  const owner = useEditorOwnership(appMode.entryEditor, true);
   const saveRef = useRef<HTMLButtonElement>(null);
-  const cancelRef = useRef<HTMLButtonElement>(null);
   const theme = useTheme();
-
-  useEffect(() => {
-    return () => {
-      appConfig.setActiveEntryEditField(activeEntryEditField.subject);
-      appConfig.setAppMode(appMode.entriesList);
-    };
-  }, [appConfig]);
 
   // An entry's editor opens with its Save button in view (above the footer).
   useEffect(() => {
@@ -71,7 +63,7 @@ export const EntryForm = ({
     }
   }, [kind, theme]);
 
-  useEditFieldCycle(entryEditFields, {save: saveRef, cancel: cancelRef});
+  const onFocus = useEditFieldCycle(entryEditFields, owner);
 
   const handleCancel = () => {
     setBody(initialBody);
@@ -94,6 +86,9 @@ export const EntryForm = ({
   return (
     <Box
       id={id}
+      ref={owner.ref}
+      onFocusCapture={owner.onFocusCapture}
+      onFocus={onFocus}
       sx={{
         ml: theme => `${theme.main.dragIndicatorWidth}px`,
       }}
@@ -136,7 +131,6 @@ export const EntryForm = ({
         {t('save')}
       </Button>
       <Button
-        ref={cancelRef}
         id={`${id}Cancel`}
         color={color}
         size="small"

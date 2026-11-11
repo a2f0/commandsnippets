@@ -361,7 +361,6 @@ function useEntryForms(
 ) {
   const [isEditing, setIsEditing] = useState(false);
   const handleBeginEdit = useCallback(() => {
-    useAppState.getState().setAppMode(appMode.entryEditor);
     setIsEditing(true);
   }, []);
   const handleEditClosed = useCallback(() => setIsEditing(false), []);
@@ -386,7 +385,6 @@ const newEntryForm = (
 function useNewEntryAbove(rowKey: string) {
   return useCallback(() => {
     const state = useAppState.getState();
-    state.setAppMode(appMode.entryEditor);
     state.setEntryNew(`textEntry-${rowKey}-top`);
   }, [rowKey]);
 }
