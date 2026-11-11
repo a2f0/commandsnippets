@@ -111,7 +111,6 @@ Known constrained transitive dependencies include:
   It is development tooling; do not expose its development server to untrusted
   websites or force an unsupported esbuild major beneath it. Revisit when
   Drizzle Kit removes or updates that legacy integration.
-
 - markdownlint pins RE2JS 2.8.6, affected by
   [GHSA-gg6h-894w-4m9c](https://github.com/advisories/GHSA-gg6h-894w-4m9c),
   and its math extension limits KaTeX to the vulnerable 0.16 line

@@ -28,9 +28,10 @@ Interpolate with `{{name}}` in the text and `t('key', {name})`. A plural key
 has one entry per plural form, with i18next's suffixes (`tagCount_one`,
 `tagCount_other`; see
 [Plurals](https://www.i18next.com/translation-function/plurals)); `t` takes
-the key without its suffix, and a `count`: `t('tagCount', {count})`. A form a
-language does not define falls back to English (Spanish's `many`, for
-counts such as 1000000).
+the key without its suffix, and a `count`: `t('tagCount', {count})`. A missing
+plural form first uses that language's `_other` form: Spanish's `many`, for
+counts such as 1000000, remains Spanish. Missing translations still fall back
+to English.
 
 ## Adding text or a language
 

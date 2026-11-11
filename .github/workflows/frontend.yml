@@ -22,6 +22,7 @@ on:
       - 'package.json'
       - 'packages/frontend/**'
       - 'packages/api-shared/**'
+      - 'scripts/testing/runBrowserAcquisition.sh'
       - 'scripts/testing/runUnitTests.sh'
       - 'scripts/testing/runWebdriverTests.sh'
       - '.github/actions/setup/**'

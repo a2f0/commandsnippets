@@ -14,6 +14,8 @@ test('downloads Chrome and Chromedriver, then reuses both', {
     join(tmpdir(), 'commandsnippets-browser-acquisition-')
   );
   let archiveDownloads = 0;
+  // The pinned downloader uses node:http(s) for Chrome's ZIP archives. A move
+  // to fetch/undici or another format must update this measurement, not its gate.
   const requests = channel('http.client.request.start');
   const onRequest = (message: unknown) => {
     if (

@@ -129,6 +129,23 @@ describe('ciScopes', () => {
     });
   });
 
+  test.each(['runUnitTests', 'runWebdriverTests', 'runBrowserAcquisition'])(
+    '%s runs frontend CI on pull requests and branch pushes',
+    async name => {
+      const script = `scripts/testing/${name}.sh`;
+      expect(ciScopes([script])).toMatchObject({
+        tooling: true,
+        frontend: true,
+      });
+      const workflow = Bun.YAML.parse(
+        await Bun.file(path.join(root, '.github/workflows/frontend.yml')).text()
+      );
+      expect(workflow).toMatchObject({
+        on: {push: {paths: expect.arrayContaining([script])}},
+      });
+    }
+  );
+
   test('brand sources and image settings run the web package lanes', () => {
     expect(ciScopes(['assets/brand/logo.svg'])).toEqual({
       tooling: false,
