@@ -8,12 +8,20 @@ import {
 } from '../../../../../src/lib/featureFlags/featureFlags';
 import {assignLoggedInCookie} from '../../../../util/assignLoggedInCookie';
 import {serveMockApi} from '../../../../util/msw';
-import {signIn} from '../../../../util/signIn';
+import {observeSyncWork} from '../../../../util/observeSyncWork';
+import {signIn, TEST_USER} from '../../../../util/signIn';
 import {renderAppAt} from '../../../../util/TestAppRouter';
 
 serveMockApi();
+let syncWork: ReturnType<typeof observeSyncWork>;
+// Finish the mounted fixture before MSW removes its handlers and DB reset.
+afterEach(async () => {
+  await syncWork.finish();
+  expect(syncWork.syncAll).toHaveBeenCalledTimes(1);
+});
 beforeEach(() => {
   signIn();
+  syncWork = observeSyncWork(TEST_USER);
   assignLoggedInCookie();
 });
 

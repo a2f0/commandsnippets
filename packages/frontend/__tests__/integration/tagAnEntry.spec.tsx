@@ -1,5 +1,7 @@
-import {screen, waitFor} from '@testing-library/react';
+import {act, screen, waitFor} from '@testing-library/react';
 import userEvent, {type UserEvent} from '@testing-library/user-event';
+import {vi} from 'vitest';
+import * as writes from '../../src/lib/data/writes';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {
   dragEnter,
@@ -9,14 +11,23 @@ import {
   pointAtHandle,
   rowAt,
 } from '../util/dragReorder';
+import {mockResult} from '../util/mockResult';
 import {serveMockApi} from '../util/msw';
-import {signIn} from '../util/signIn';
+import {observeSyncWork} from '../util/observeSyncWork';
+import {signIn, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
 // The mock API tags entry 1 with test-tag-2 as the API would.
 serveMockApi();
+let syncWork: ReturnType<typeof observeSyncWork>;
+// Finish the mounted fixture before MSW removes its handlers and DB reset.
+afterEach(async () => {
+  await syncWork.finish();
+  expect(syncWork.syncAll).toHaveBeenCalledTimes(1);
+});
 beforeEach(() => {
   signIn();
+  syncWork = observeSyncWork(TEST_USER);
   assignLoggedInCookie();
 });
 
@@ -29,6 +40,7 @@ async function openTag(user: UserEvent, index: number) {
 
 describe('Tag An Entry', () => {
   it('tags an entry dropped on a tag', async () => {
+    const tagged = vi.spyOn(writes, 'tagEntry');
     const user = userEvent.setup();
     const {history} = renderAppAt('/test/test-tag-1');
     await screen.findByText('entry-4-subject');
@@ -59,5 +71,9 @@ describe('Tag An Entry', () => {
     expect(history.location.pathname).toBe('/test/test-tag-2');
     await waitFor(() => expect(screen.queryAllByRole('entry')).toHaveLength(1));
     expectRows('entry', ['entry-1-subject']);
+    expect(tagged).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      await mockResult(tagged);
+    });
   });
 });

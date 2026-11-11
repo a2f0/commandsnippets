@@ -27,6 +27,8 @@ export interface IEntryFormProps {
   onCancel: () => void;
   /** Why the last save failed (none: it did not). */
   error?: string | null;
+  /** Freeze the submitted draft until its save finishes; Cancel stays available. */
+  saving?: boolean;
 }
 
 /** The subject, body, Save and Cancel of the entry editors. */
@@ -38,11 +40,12 @@ export const EntryForm = ({
   onSave,
   onCancel,
   error = null,
+  saving = false,
 }: IEntryFormProps) => {
   const {t} = useTypedTranslation('common');
   const [subject, setSubject] = useState<string>(initialSubject);
   const [body, setBody] = useState<string>(initialBody);
-  const owner = useEditorOwnership(appMode.entryEditor, true);
+  const owner = useEditorOwnership(appMode.entryEditor, true, saving);
   const saveRef = useRef<HTMLButtonElement>(null);
   const theme = useTheme();
 
@@ -95,6 +98,7 @@ export const EntryForm = ({
           placeholder="subject"
           valueParent={subject}
           handleChangeParent={setSubject}
+          readOnly={saving}
         />
       </div>
       <div>
@@ -103,6 +107,7 @@ export const EntryForm = ({
           placeholder="body"
           valueParent={body}
           handleChangeParent={setBody}
+          readOnly={saving}
         />
       </div>
       {error !== null && (
@@ -113,6 +118,8 @@ export const EntryForm = ({
       <Button
         ref={saveRef}
         id={`${id}Save`}
+        disabled={saving}
+        aria-busy={saving}
         color={color}
         sx={{
           ...buttonSx,

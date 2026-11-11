@@ -1,11 +1,22 @@
 import {act, screen, waitFor} from '@testing-library/react';
 import {describe, expect, it} from 'vitest';
+import {publicSyncSession} from '../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {serveMockApi} from '../util/msw';
-import {signIn} from '../util/signIn';
+import {observeSyncWork} from '../util/observeSyncWork';
+import {signIn, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
 serveMockApi();
+let syncWork: ReturnType<typeof observeSyncWork> | null;
+beforeEach(() => {
+  syncWork = null;
+});
+afterEach(async () => {
+  if (syncWork === null) return;
+  await syncWork.finish();
+  expect(syncWork.syncAll).toHaveBeenCalledTimes(1);
+});
 
 const robotsTags = () =>
   [...document.head.querySelectorAll('meta[name="robots"]')].map(meta =>
@@ -18,6 +29,7 @@ describe('search indexing', () => {
   it.each(['/test', '/test/test-tag-1'])(
     "keeps a guest's view of %s out of search, and not the sign-in page",
     async url => {
+      syncWork = observeSyncWork(publicSyncSession(TEST_USER));
       const {history} = await renderAppAt(url, {act: true});
       expect(await screen.findByText('Read-only: test')).toBeInTheDocument();
       expect(robotsTags()).toEqual(['noindex, nofollow']);
@@ -35,6 +47,7 @@ describe('search indexing', () => {
 
   it("keeps the signed-in user's own page, where the root goes, out of search", async () => {
     signIn();
+    syncWork = observeSyncWork(TEST_USER);
     assignLoggedInCookie();
     const {history} = await renderAppAt('/', {act: true});
     await waitFor(() => expect(history.location.pathname).toBe('/test'));

@@ -3,6 +3,7 @@ import {act, fireEvent, screen, waitFor, within} from '@testing-library/react';
 import invariant from 'invariant';
 import {HttpResponse, http} from 'msw/http';
 import * as adminApi from '../../../src/lib/api/adminApi';
+import {syncSession} from '../../../src/lib/sync/session';
 
 import {
   errorDocument,
@@ -13,7 +14,8 @@ import type {MockAdminUser} from '../../../src/msw/fixtures';
 import {adminAuditLog, adminUsers} from '../../../src/msw/state';
 import {assignLoggedInCookie} from '../../util/assignLoggedInCookie';
 import {API, recordRequests, serveMockApi, server} from '../../util/msw';
-import {signIn, store} from '../../util/signIn';
+import {observeSyncWork} from '../../util/observeSyncWork';
+import {signIn, store, TEST_USER} from '../../util/signIn';
 import {renderAppAt} from '../../util/TestAppRouter';
 
 // The mock API's admin routes (src/msw/routes/admin.ts), over its users
@@ -391,6 +393,7 @@ describe('AdminPage', () => {
 
   it('ignores a forbidden mutation from the previous admin identity', async () => {
     const old = Promise.withResolvers<adminApi.AdminUser>();
+    const denied = new adminApi.AdminForbiddenError();
     const mutation = vi
       .spyOn(adminApi, 'setUserActive')
       .mockReturnValueOnce(old.promise);
@@ -405,8 +408,8 @@ describe('AdminPage', () => {
       await usersTable();
       expect(store.isStaff).toBe(true);
       await act(async () => {
-        old.reject(new adminApi.AdminForbiddenError());
-        await old.promise.catch(() => undefined);
+        old.reject(denied);
+        await expect(old.promise).rejects.toBe(denied);
       });
 
       expect(store.loggedInUser).toBe('replacement-user');
@@ -416,8 +419,8 @@ describe('AdminPage', () => {
         screen.queryByText('You do not have access to this page.')
       ).toBeNull();
     } finally {
-      old.reject(new adminApi.AdminForbiddenError());
-      await old.promise.catch(() => undefined);
+      old.reject(denied);
+      await expect(old.promise).rejects.toBe(denied);
       view.unmount();
     }
   });
@@ -573,20 +576,26 @@ describe('AdminPage', () => {
     expect(screen.getByText('Restore Backup')).toBeInTheDocument();
     expect(screen.getByText('Data Versions')).toBeInTheDocument();
 
+    const work = observeSyncWork(syncSession(TEST_USER));
     fireEvent.click(back);
     await waitFor(() => {
       expect(history.location.pathname).toBe('/test');
     });
+    await work.finish();
+    expect(work.syncAll).toHaveBeenCalledTimes(1);
   });
 
   it("opens a user's data, read-only, on their page", async () => {
     const {history} = await renderAppAt('/admin', {act: true});
     await usersTable();
+    const work = observeSyncWork(syncSession(TEST_USER, 'alice'));
 
     await choose('7', 'View data');
 
     await waitFor(() => expect(history.location.pathname).toMatch(/^\/alice/));
     expect(await screen.findByText('Read-only: alice')).toBeInTheDocument();
+    await work.finish();
+    expect(work.syncAll).toHaveBeenCalledTimes(1);
     expect(patches).toHaveLength(0);
   });
 

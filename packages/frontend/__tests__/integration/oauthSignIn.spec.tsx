@@ -4,10 +4,11 @@
  * `CookiesProvider`) has loaded: the entries page must see it, not take the
  * missing cookie for a sign-out and send the user back to sign in again.
  */
-import {screen} from '@testing-library/react';
+import {cleanup, screen} from '@testing-library/react';
 import {type MockInstance, vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
 import {serveMockApi} from '../util/msw';
+import {observeSyncWork} from '../util/observeSyncWork';
 import {store, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
@@ -20,13 +21,17 @@ function storeCookie(cookie: string) {
 }
 
 let consoleWarn: MockInstance<typeof console.warn>;
+let work: ReturnType<typeof observeSyncWork>;
 beforeEach(() => {
   // The mock API announces each request; the callback logs its scope.
   vi.spyOn(console, 'log').mockImplementation(() => {});
   vi.spyOn(console, 'info').mockImplementation(() => {});
   consoleWarn = vi.spyOn(console, 'warn');
+  work = observeSyncWork(TEST_USER);
 });
-afterEach(() => {
+afterEach(async () => {
+  await work.finish();
+  cleanup();
   storeCookie('LoggedIn=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/');
 });
 
@@ -54,6 +59,8 @@ describe('Signing in', () => {
 
       // The user's data syncs: they are still signed in.
       expect(await screen.findByText('test-tag-1')).toBeInTheDocument();
+      await work.finish();
+      expect(work.syncAll).toHaveBeenCalled();
       expect(store.loggedInUser).toBe(TEST_USER);
       expect(document.getElementById('signInPage')).toBeNull();
       expect(consoleWarn).not.toHaveBeenCalledWith('Cookie logout occurred.');

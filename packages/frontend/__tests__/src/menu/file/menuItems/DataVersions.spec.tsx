@@ -4,15 +4,18 @@
  * another), and any exported.
  */
 import {backupSchema} from '@commandsnippets/api-shared/responses';
-import {screen, waitFor, within} from '@testing-library/react';
+import {act, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import invariant from 'invariant';
 import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
+import * as backupData from '../../../../../src/lib/data/backup';
 import {heldVersion} from '../../../../../src/lib/sync/dataVersion';
 import {syncSession} from '../../../../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../../../../util/assignLoggedInCookie';
+import {mockResult} from '../../../../util/mockResult';
 import {API, serveMockApi, server} from '../../../../util/msw';
+import {observeSyncWork} from '../../../../util/observeSyncWork';
 import {restoreElsewhere} from '../../../../util/restoreElsewhere';
 import {signIn, TEST_USER} from '../../../../util/signIn';
 import {renderAppAt} from '../../../../util/TestAppRouter';
@@ -58,13 +61,13 @@ beforeEach(() => {
   signIn();
   assignLoggedInCookie();
   vi.spyOn(console, 'log').mockImplementation(() => {});
-  vi.spyOn(console, 'warn').mockImplementation(() => {});
 });
 
 async function openVersions() {
+  const work = observeSyncWork(TEST_USER);
   renderAppAt('/test/test-tag-1');
   await screen.findByText('entry-1-subject');
-  await syncSession(TEST_USER).sync.syncAll();
+  await work.finish();
   const user = userEvent.setup();
   await user.click(screen.getByRole('menu', {name: 'File'}));
   await user.click(screen.getByText('Data Versions'));
@@ -102,8 +105,11 @@ describe('Data Versions', () => {
   });
 
   it('makes a version active again after a warning, and holds it here', async () => {
+    const errors = vi.spyOn(console, 'error');
     await restoreElsewhere();
     const user = await openVersions();
+    const activating = vi.spyOn(backupData, 'activateVersion');
+    const work = observeSyncWork(TEST_USER);
     const {db} = syncSession(TEST_USER);
     await waitFor(async () => expect(await heldVersion(db, TEST_USER)).toBe(2));
 
@@ -111,11 +117,16 @@ describe('Data Versions', () => {
     expect(await screen.findByText('Switch to version 1?')).toBeInTheDocument();
     expect(screen.getByText(/you can switch back/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', {name: 'Switch'}));
+    await act(async () => {
+      await mockResult(activating, 0);
+    });
+    await work.finish();
 
     expect(
       await (await row(1)).findByText('Version 1 · Active')
     ).toBeInTheDocument();
     expect(await heldVersion(db, TEST_USER)).toBe(1);
+    expect(errors).not.toHaveBeenCalled();
   });
 
   it('changes nothing when the switch is cancelled', async () => {
@@ -166,7 +177,6 @@ describe('Data Versions', () => {
   });
 
   it('says a delete was made when only the list could not be read again', async () => {
-    vi.spyOn(console, 'error').mockImplementation(() => {});
     await restoreElsewhere();
     let listFails = false;
     server.use(
@@ -198,7 +208,6 @@ describe('Data Versions', () => {
   });
 
   it('says a switch was made when this copy could not follow it', async () => {
-    vi.spyOn(console, 'error').mockImplementation(() => {});
     await restoreElsewhere();
     const user = await openVersions();
     vi.spyOn(syncSession(TEST_USER).sync, 'adopt').mockRejectedValueOnce(
@@ -220,7 +229,6 @@ describe('Data Versions', () => {
   });
 
   it('says why the API refused', async () => {
-    vi.spyOn(console, 'error').mockImplementation(() => {});
     await restoreElsewhere();
     const detail = 'The active data version cannot be deleted.';
     server.use(

@@ -2,19 +2,18 @@ import {act, fireEvent, screen, waitFor, within} from '@testing-library/react';
 import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
-import {syncSession} from '../../src/lib/sync/session';
+import {signedOutDataCleanedUp} from '../../src/lib/state/appState';
+import {publicSyncSession, syncSession} from '../../src/lib/sync/session';
+import * as sync from '../../src/lib/sync/sync';
 import {apiClientMethods} from '../util/apiClientMethods';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {mockIntersectionObserver} from '../util/intersectionObserver';
+import {mockResult} from '../util/mockResult';
 import {API, serveMockApi, server} from '../util/msw';
 import {signIn, store, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
 serveMockApi();
-beforeEach(() => {
-  vi.spyOn(console, 'log').mockImplementation(() => {});
-  vi.spyOn(console, 'warn').mockImplementation(() => {});
-});
 const signInHere = () => {
   signIn();
   assignLoggedInCookie();
@@ -150,17 +149,24 @@ describe('infinite scrolling', () => {
     await waitFor(() => expect(observer.observers).toHaveLength(1));
     const first = observer.latest();
     act(() => first.intersect());
+    const destinationSync = vi.spyOn(engine, 'syncAll');
     act(() => history.push('/test?entries=all'));
     await waitFor(() =>
       expect(screen.queryByRole('list', {name: 'Reuses'})).toBeNull()
     );
     await act(async () => {
       gate.resolve();
-      await reads.mock.results[1]?.value;
+      await mockResult(reads, 1);
     });
     act(() => first.intersect());
     expect(reads.mock.calls.map(([, page]) => page)).toEqual([1, 2]);
     expect(screen.queryByRole('list', {name: 'Reuses'})).toBeNull();
+    // The destination entries page starts its own collection sync. Join
+    // that actual operation before shared teardown closes the database.
+    await waitFor(() => expect(destinationSync).toHaveBeenCalledTimes(1));
+    await act(async () => {
+      await mockResult(destinationSync);
+    });
   });
 
   it('prioritizes a queued reconnect refresh over further automatic pages', async () => {
@@ -201,11 +207,19 @@ describe('infinite scrolling', () => {
     const observer = mockIntersectionObserver();
     signInHere();
     await seedReuses(51);
+    const engine = syncSession(TEST_USER).sync;
+    const original = engine.entryReuses.bind(engine);
+    const reads = vi.spyOn(engine, 'entryReuses');
     const pages = vi.spyOn(apiClientMethods, 'getEntryReuses');
     renderAppAt('/test/activity/reuses');
     await list();
     await waitFor(() => expect(observer.observers).toHaveLength(1));
     const first = observer.latest();
+    const gate = Promise.withResolvers<void>();
+    reads.mockImplementationOnce(async (...args) => {
+      await gate.promise;
+      return original(...args);
+    });
     server.use(http.get(`${API}/entry_reuses`, () => HttpResponse.error()));
     await act(() => syncSession(TEST_USER).sync.adopt(2));
     await waitFor(() =>
@@ -214,6 +228,16 @@ describe('infinite scrolling', () => {
     act(() => first.intersect());
     expect(pages.mock.calls.filter(([, page]) => page > 1)).toHaveLength(0);
     expect(first.disconnect).toHaveBeenCalled();
+    // Replacing the version starts another read even though the old rows
+    // and observer are already gone. Finish that read before teardown.
+    expect(reads).toHaveBeenCalledTimes(2);
+    await act(async () => {
+      gate.resolve();
+      await expect(mockResult(reads, 1)).rejects.toThrow('fetch failed');
+    });
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'The reuses could not be read.'
+    );
   });
 });
 
@@ -222,6 +246,9 @@ it('opens from View, combines entries newest first, and returns after drilling i
   await apiClient.forVersion(1).reuseEntry('1', 'first');
   await apiClient.forVersion(1).reuseEntry('1', 'second');
   await apiClient.forVersion(1).reuseEntry('2', 'third');
+  const engine = syncSession(TEST_USER).sync;
+  const syncs = vi.spyOn(engine, 'syncAll');
+  const reads = vi.spyOn(engine, 'entryReuses');
   const {history} = renderAppAt('/test?entries=all');
   fireEvent.click(await screen.findByRole('menu', {name: 'View'}));
   fireEvent.click(await screen.findByRole('menuitem', {name: 'All reuses'}));
@@ -251,10 +278,25 @@ it('opens from View, combines entries newest first, and returns after drilling i
   expect(`${history.location.pathname}${history.location.search}`).toBe(
     '/test?entries=all'
   );
+  // Entries -> history -> entry -> history -> entries each starts a sync;
+  // navigation and visible rows do not mean those operations have finished.
+  await waitFor(() => expect(syncs).toHaveBeenCalledTimes(5));
+  await act(async () => {
+    await Promise.all(
+      syncs.mock.results.map((_, index) => mockResult(syncs, index))
+    );
+    // The detail reader can still finish after its page has unmounted.
+    await Promise.all(
+      reads.mock.results.map((_, index) => mockResult(reads, index))
+    );
+  });
 });
 
 it('opens all reuses from the individual history', async () => {
   signInHere();
+  const engine = syncSession(TEST_USER).sync;
+  const syncs = vi.spyOn(engine, 'syncAll');
+  const reads = vi.spyOn(engine, 'entryReuses');
   renderAppAt('/test/entries/1');
   fireEvent.click(await screen.findByRole('link', {name: 'All reuses'}));
   expect(
@@ -265,6 +307,14 @@ it('opens all reuses from the individual history', async () => {
       'No reuses yet. Copy an entry to start your history.'
     )
   ).toBeInTheDocument();
+  // Both the entry page and its history destination start collection syncs.
+  await waitFor(() => expect(syncs).toHaveBeenCalledTimes(2));
+  await act(async () => {
+    await Promise.all([mockResult(syncs), mockResult(syncs, 1)]);
+    await Promise.all(
+      reads.mock.results.map((_, index) => mockResult(reads, index))
+    );
+  });
 });
 
 it('shows the whole history in manageable batches', async () => {
@@ -303,7 +353,6 @@ it('retries initial errors and refreshes copies from another device', async () =
 
 it('offers Retry when the first sync cannot determine a data version offline', async () => {
   signInHere();
-  vi.spyOn(console, 'error').mockImplementation(() => {});
   server.use(http.all(`${API}/*`, () => HttpResponse.error()));
   renderAppAt('/test/activity/reuses');
   const warning = await screen.findByRole('alert');
@@ -354,6 +403,7 @@ it('coalesces reconnects during a read and refreshes only the newest page', asyn
   signInHere();
   const engine = syncSession(TEST_USER).sync;
   await engine.syncAll();
+  const syncs = vi.spyOn(engine, 'syncAll');
   const original = engine.entryReuses.bind(engine);
   const gate = Promise.withResolvers<void>();
   const reads = vi
@@ -364,6 +414,10 @@ it('coalesces reconnects during a read and refreshes only the newest page', asyn
     });
   renderAppAt('/test/activity/reuses');
   await waitFor(() => expect(reads).toHaveBeenCalledTimes(1));
+  await waitFor(() => expect(syncs).toHaveBeenCalledTimes(1));
+  await act(async () => {
+    await mockResult(syncs);
+  });
   act(() => {
     window.dispatchEvent(new Event('online'));
     window.dispatchEvent(new Event('online'));
@@ -372,9 +426,15 @@ it('coalesces reconnects during a read and refreshes only the newest page', asyn
   await apiClient.forVersion(1).reuseEntry('2', 'while-reading');
   await act(async () => {
     gate.resolve();
-    await gate.promise;
+    await mockResult(reads);
   });
   await waitFor(() => expect(reads).toHaveBeenCalledTimes(2));
+  // The first answer already contains the new row; seeing it does not
+  // settle the queued refresh or the reconnect's collection sync.
+  await waitFor(() => expect(syncs).toHaveBeenCalledTimes(2));
+  await act(async () => {
+    await Promise.all([mockResult(reads, 1), mockResult(syncs, 1)]);
+  });
   expect(
     within(await list()).getByRole('link', {name: 'entry-2-subject'})
   ).toBeInTheDocument();
@@ -412,12 +472,21 @@ it('retains a reuse of a deleted entry without linking to a missing page', async
 it('clears displayed history when a different data version is adopted', async () => {
   signInHere();
   await apiClient.forVersion(1).reuseEntry('1', 'old-version');
+  const engine = syncSession(TEST_USER).sync;
+  const reads = vi.spyOn(engine, 'entryReuses');
   renderAppAt('/test/activity/reuses');
   await list();
   server.use(http.get(`${API}/entry_reuses`, () => HttpResponse.error()));
-  await act(() => syncSession(TEST_USER).sync.adopt(2));
+  await act(() => engine.adopt(2));
   await waitFor(() =>
     expect(screen.queryByRole('list', {name: 'Reuses'})).toBeNull()
+  );
+  await waitFor(() => expect(reads).toHaveBeenCalledTimes(2));
+  await act(async () => {
+    await expect(mockResult(reads, 1)).rejects.toThrow('fetch failed');
+  });
+  expect(await screen.findByRole('alert')).toHaveTextContent(
+    'The reuses could not be read.'
   );
 });
 
@@ -426,6 +495,14 @@ it.each(['guest', 'other user', 'staff'])(
   async viewer => {
     if (viewer !== 'guest') signInHere();
     if (viewer === 'staff') store.setIsStaff(true);
+    const owner = viewer === 'guest' ? TEST_USER : 'alice';
+    const session =
+      viewer === 'staff'
+        ? syncSession(TEST_USER, owner)
+        : publicSyncSession(owner);
+    const destinationSync = vi.spyOn(session.sync, 'syncAll');
+    const tagChecks = vi.spyOn(sync, 'isTagSynced');
+    const tagSyncs = vi.spyOn(session.sync, 'syncTag');
     const requests = vi.fn();
     server.use(
       http.get(`${API}/entry_reuses`, () => {
@@ -442,6 +519,23 @@ it.each(['guest', 'other user', 'staff'])(
     expect(screen.queryByRole('heading', {name: 'All reuses'})).toBeNull();
     fireEvent.click(screen.getByRole('menu', {name: 'View'}));
     expect(screen.queryByRole('menuitem', {name: 'All reuses'})).toBeNull();
+    // The redirect opens public/staff entries rather than private history.
+    // Let that destination's real sync finish before checking for requests.
+    await waitFor(() => expect(destinationSync).toHaveBeenCalledTimes(1));
+    await act(async () => {
+      await mockResult(destinationSync);
+    });
+    // Staff also auto-select Alice's private tag. Its freshness check can
+    // start a tag sync independently of the completed collection sync.
+    if (viewer === 'staff') {
+      await waitFor(() => expect(tagChecks).toHaveBeenCalledTimes(1));
+      await act(async () => {
+        if (!(await mockResult(tagChecks))) {
+          expect(tagSyncs).toHaveBeenCalledTimes(1);
+          await mockResult(tagSyncs);
+        }
+      });
+    }
     expect(requests).not.toHaveBeenCalled();
   }
 );
@@ -449,7 +543,29 @@ it.each(['guest', 'other user', 'staff'])(
 it('signs out and removes the private history when the cookie is cleared', async () => {
   signIn();
   assignLoggedInCookie('');
+  const session = syncSession(TEST_USER);
+  const flush = vi.spyOn(session.sync, 'flush');
+  const syncs = vi.spyOn(session.sync, 'syncAll');
+  const errors = vi.spyOn(console, 'error');
   renderAppAt('/test/activity/reuses');
   await waitFor(() => expect(store.loggedInUser).toBeNull());
   expect(screen.queryByRole('heading', {name: 'All reuses'})).toBeNull();
+  // Cookie logout intentionally closes this session during mount, before
+  // its collection effect finishes. Assert that interruption, not silence.
+  expect(session.db.hasBeenClosed()).toBe(true);
+  expect(flush).toHaveBeenCalledTimes(1);
+  await waitFor(() => expect(syncs).toHaveBeenCalledTimes(1));
+  await act(async () => {
+    await expect(mockResult(flush)).rejects.toMatchObject({
+      name: 'DatabaseClosedError',
+    });
+    await expect(mockResult(syncs)).rejects.toMatchObject({
+      name: 'DatabaseClosedError',
+    });
+    await signedOutDataCleanedUp();
+  });
+  expect(errors).toHaveBeenCalledExactlyOnceWith(
+    'ERROR: sync failed:',
+    expect.objectContaining({name: 'DatabaseClosedError'})
+  );
 });

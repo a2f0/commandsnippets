@@ -1,14 +1,24 @@
-import {act, fireEvent, screen} from '@testing-library/react';
+import {act, cleanup, fireEvent, screen} from '@testing-library/react';
+import {vi} from 'vitest';
 
+import * as adminApi from '../../../../src/lib/api/adminApi';
 import {assignLoggedInCookie} from '../../../util/assignLoggedInCookie';
+import {mockResult} from '../../../util/mockResult';
 import {serveMockApi} from '../../../util/msw';
-import {signIn, store} from '../../../util/signIn';
+import {observeSyncWork} from '../../../util/observeSyncWork';
+import {signIn, store, TEST_USER} from '../../../util/signIn';
 import {renderAppAt} from '../../../util/TestAppRouter';
 
 serveMockApi();
+let work: ReturnType<typeof observeSyncWork>;
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
+  work = observeSyncWork(TEST_USER);
+});
+afterEach(async () => {
+  cleanup();
+  await work.finish();
 });
 
 describe('ModeTabs', () => {
@@ -34,16 +44,25 @@ describe('ModeTabs', () => {
     expect(adminTab).toHaveAttribute('aria-selected', 'false');
     expect(adminTab).toHaveAttribute('href', '/admin');
 
-    fireEvent.click(adminTab);
+    const access = vi.spyOn(adminApi, 'getStaffStatus');
+    await act(async () => fireEvent.click(adminTab));
 
     expect(history.location.pathname).toBe('/admin');
+    // The lazy module and its access check outlive the synchronous URL change.
+    expect(await screen.findByRole('heading', {name: 'Admin'})).toBeVisible();
+    await act(async () => {
+      expect(access).toHaveBeenCalledTimes(1);
+      await mockResult(access);
+    });
   });
 
   it('keeps the page when the selected tab is clicked again', async () => {
     act(() => store.setIsStaff(true));
     const {history} = await renderAppAt('/test/test', {act: true});
 
-    fireEvent.click(screen.getByRole('tab', {name: 'User'}));
+    await act(async () =>
+      fireEvent.click(screen.getByRole('tab', {name: 'User'}))
+    );
 
     // Not /test: the tag shown stays.
     expect(history.location.pathname).toBe('/test/test');

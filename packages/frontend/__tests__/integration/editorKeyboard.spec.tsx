@@ -2,23 +2,47 @@ import {act, cleanup, fireEvent, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import invariant from 'invariant';
 import {vi} from 'vitest';
+import * as copying from '../../src/lib/data/copyEntry';
+import * as writes from '../../src/lib/data/writes';
 import {syncSession} from '../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
+import {mockResult} from '../util/mockResult';
 import {serveMockApi} from '../util/msw';
+import {observeSyncWork} from '../util/observeSyncWork';
 import {signIn, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
 serveMockApi();
+let finishWork: () => Promise<void>;
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
+  const syncWork = observeSyncWork(TEST_USER);
+  const copied = vi.spyOn(copying, 'copyEntry');
+  const reused = vi.spyOn(writes, 'reuseEntry');
+  finishWork = async () => {
+    // Clipboard completion does not join identity checks or the reuse write.
+    // Join those started operations before their follow-up sync and DB reset.
+    await act(async () => {
+      await Promise.all(
+        copied.mock.results.map((_, index) => mockResult(copied, index))
+      );
+      await Promise.all(
+        reused.mock.results.map((_, index) => mockResult(reused, index))
+      );
+    });
+    await syncWork.finish();
+  };
   Object.defineProperty(navigator, 'clipboard', {
     value: {writeText: vi.fn().mockResolvedValue(undefined)},
     configurable: true,
   });
 });
 
-afterEach(() => cleanup());
+afterEach(async () => {
+  cleanup();
+  await finishWork();
+});
 
 it.each(['Save', 'Cancel', 'Escape'])(
   'restores list navigation after closing a tag rename with %s',
@@ -70,7 +94,7 @@ it.each(['tag', 'entry'])(
     const field = byId(
       kind === 'tag' ? 'tagEditTagName2' : 'textEntryEdit1Body'
     );
-    act(() => field.focus());
+    await act(async () => field.focus());
     expect(
       fireEvent.keyDown(field, {key: 'ArrowLeft', code: 'ArrowLeft'})
     ).toBe(true);
@@ -154,10 +178,10 @@ it.each(overlaps)(
     const survivor = close === 'first' ? second : first;
     const survivorKind = close === 'first' ? secondKind : firstKind;
     fireEvent.click(survivor.field);
-    act(() => survivor.field.focus());
+    await act(async () => survivor.field.focus());
     fireEvent.click(closing.cancel);
     expect(closing.field).not.toBeInTheDocument();
-    act(() => survivor.field.focus());
+    await act(async () => survivor.field.focus());
 
     expect(
       fireEvent.keyDown(survivor.field, {key: 'Enter', code: 'Enter'})
@@ -169,10 +193,9 @@ it.each(overlaps)(
     expect(survivor.field).toHaveValue('draft stays here');
     expect(history.location.pathname).toBe('/test/test-tag-1');
     expect(copy).not.toHaveBeenCalled();
-    const tabAllowed = fireEvent.keyDown(survivor.field, {
-      key: 'Tab',
-      code: 'Tab',
-    });
+    const tabAllowed = await act(async () =>
+      fireEvent.keyDown(survivor.field, {key: 'Tab', code: 'Tab'})
+    );
     if (survivorKind === 'entry') {
       expect(tabAllowed).toBe(false);
       expect(survivor.save).toHaveFocus();
@@ -212,7 +235,7 @@ it.each([
     await renderAppAt('/test/test-tag-1', {act: true});
     await screen.findByText('entry-1-subject');
     const older = await openEditor('tag', 2);
-    act(() => older.field.focus());
+    await act(async () => older.field.focus());
     if (source === 'file') {
       fireEvent.click(byId('file-menu-button'));
     } else if (source === 'row') {
@@ -237,10 +260,10 @@ it.each([
     expect(
       fireEvent.keyDown(field, {key: 'ArrowLeft', code: 'ArrowLeft'})
     ).toBe(true);
-    fireEvent.keyDown(field, {key: 'Tab', code: 'Tab'});
+    await act(async () => fireEvent.keyDown(field, {key: 'Tab', code: 'Tab'}));
     expect(byId(`${id}${kind === 'entry' ? 'Body' : 'Save'}`)).toHaveFocus();
     fireEvent.click(byId(`${id}Cancel`));
-    act(() => older.field.focus());
+    await act(async () => older.field.focus());
     expect(fireEvent.keyDown(older.field, {key: 'Enter', code: 'Enter'})).toBe(
       true
     );
@@ -260,7 +283,7 @@ it('lets list clicks and pane keys work with an editor still mounted, then resum
   await waitFor(() =>
     expect(copy).toHaveBeenCalledExactlyOnceWith('entry-1-body')
   );
-  act(() => editor.field.focus());
+  await act(async () => editor.field.focus());
   expect(
     fireEvent.keyDown(editor.field, {key: 'ArrowLeft', code: 'ArrowLeft'})
   ).toBe(true);
@@ -278,10 +301,11 @@ it('cycles only the focused entry when an older editor is still open', async () 
   const second = await openEditor('entry', 2);
   for (const editor of [first, second, first]) {
     fireEvent.click(editor.field);
-    act(() => editor.field.focus());
-    expect(fireEvent.keyDown(editor.field, {key: 'Tab', code: 'Tab'})).toBe(
-      false
+    await act(async () => editor.field.focus());
+    const allowed = await act(async () =>
+      fireEvent.keyDown(editor.field, {key: 'Tab', code: 'Tab'})
     );
+    expect(allowed).toBe(false);
     expect(editor.save).toHaveFocus();
   }
 });
@@ -303,7 +327,7 @@ it('leaves Enter in a row-created entry body to the editor', async () => {
   fireEvent.click(await screen.findByRole('menuitem', {name: 'New Entry'}));
   const body = byId('textEntryNew-1-topBody');
   fireEvent.click(body);
-  act(() => body.focus());
+  await act(async () => body.focus());
 
   const allowed = fireEvent.keyDown(body, {key: 'Enter', code: 'Enter'});
 

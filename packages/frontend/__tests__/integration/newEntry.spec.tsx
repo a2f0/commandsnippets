@@ -3,22 +3,29 @@
  * IndexedDB database and listed at once, in the tag shown when there is one.
  */
 import {TEXT_ENTRY_SUBJECT_MAX_LENGTH} from '@commandsnippets/api-shared';
-import {act, fireEvent, screen, waitFor} from '@testing-library/react';
+import {act, cleanup, fireEvent, screen, waitFor} from '@testing-library/react';
 import invariant from 'invariant';
 import {vi} from 'vitest';
 import {syncSession} from '../../src/lib/sync/session';
 import {apiClientMethods} from '../util/apiClientMethods';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {serveMockApi} from '../util/msw';
+import {observeSyncWork} from '../util/observeSyncWork';
 import {signIn, store, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
 serveMockApi();
+let finishSync: () => Promise<void>;
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
+  finishSync = observeSyncWork(TEST_USER).finish;
   // The mock API announces each request.
   vi.spyOn(console, 'log').mockImplementation(() => {});
+});
+afterEach(async () => {
+  cleanup();
+  await finishSync();
 });
 
 /** The element `#id`, which must be rendered. */
@@ -41,25 +48,27 @@ async function saveNewEntry(subject: string) {
 }
 
 /** The stored entry with `subject`, and the tags it is in. */
-async function storedEntry(subject: string) {
-  const {db} = syncSession(TEST_USER);
-  const entry = await db.entries
-    .filter(stored => stored.attributes.subject === subject)
-    .first();
-  invariant(entry, `${subject} is stored`);
-  const junctions = await db.junctions
-    .where('[owner+relationships.text_entry.data.id]')
-    .equals([TEST_USER, entry.id])
-    .toArray();
-  return {
-    entry,
-    tags: junctions.map(({relationships}) => relationships.tag.data.id),
-  };
+function storedEntry(subject: string) {
+  return act(async () => {
+    const {db} = syncSession(TEST_USER);
+    const entry = await db.entries
+      .filter(stored => stored.attributes.subject === subject)
+      .first();
+    invariant(entry, `${subject} is stored`);
+    const junctions = await db.junctions
+      .where('[owner+relationships.text_entry.data.id]')
+      .equals([TEST_USER, entry.id])
+      .toArray();
+    return {
+      entry,
+      tags: junctions.map(({relationships}) => relationships.tag.data.id),
+    };
+  });
 }
 
 describe('A new entry', () => {
   it('saved from the untagged entries is stored in no tag, and listed there', async () => {
-    renderAppAt('/test?entries=untagged');
+    await renderAppAt('/test?entries=untagged', {act: true});
     // (The mock API's entries are all in tag 1: the list starts empty.)
     await screen.findByText('test-tag-1');
     const tagEntry = vi.spyOn(apiClientMethods, 'tagEntry');
@@ -73,7 +82,7 @@ describe('A new entry', () => {
   });
 
   it("saved from a tag's entries is stored in it, and listed there", async () => {
-    renderAppAt('/test/test-tag-1');
+    await renderAppAt('/test/test-tag-1', {act: true});
     await screen.findByText('entry-1-subject');
     const tagEntry = vi.spyOn(apiClientMethods, 'tagEntry');
 
@@ -92,7 +101,7 @@ describe('A new entry', () => {
   });
 
   it('saved twice before it is stored (a double click) is stored once', async () => {
-    renderAppAt('/test?entries=untagged');
+    await renderAppAt('/test?entries=untagged', {act: true});
     await screen.findByText('test-tag-1');
 
     await saveNewEntry('twice-subject');
@@ -101,14 +110,16 @@ describe('A new entry', () => {
     expect(await screen.findByText('twice-subject')).toBeInTheDocument();
     await waitFor(() => expect(store.entryNew).toBeNull());
     const {db} = syncSession(TEST_USER);
-    const stored = await db.entries
-      .filter(row => row.attributes.subject === 'twice-subject')
-      .count();
+    const stored = await act(async () =>
+      db.entries
+        .filter(row => row.attributes.subject === 'twice-subject')
+        .count()
+    );
     expect(stored).toBe(1);
   });
 
   it('that failed to save stays open, and saves once corrected', async () => {
-    renderAppAt('/test?entries=untagged');
+    await renderAppAt('/test?entries=untagged', {act: true});
     await screen.findByText('test-tag-1');
     const failed = vi.spyOn(console, 'error').mockImplementation(() => {});
 

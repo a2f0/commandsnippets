@@ -32,6 +32,7 @@ import {
   serveMockApi,
   server,
 } from '../../../../util/msw';
+import {observeSyncWork} from '../../../../util/observeSyncWork';
 import {restoreElsewhere} from '../../../../util/restoreElsewhere';
 import {signIn, TEST_USER} from '../../../../util/signIn';
 import {renderAppAt} from '../../../../util/TestAppRouter';
@@ -116,16 +117,16 @@ serveMockApi();
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
-  // The mock API announces each request; a flush that fails warns.
+  // Hide request debug logs, but keep warnings and errors visible.
   vi.spyOn(console, 'log').mockImplementation(() => {});
-  vi.spyOn(console, 'warn').mockImplementation(() => {});
 });
 
 async function renderEntries() {
+  const work = observeSyncWork(TEST_USER);
   renderAppAt('/test/test-tag-1');
   await screen.findByText('entry-1-subject');
   // All of the user's data is here: the warning counts it.
-  await syncSession(TEST_USER).sync.syncAll();
+  await work.finish();
 }
 
 /** File > Restore Backup, then choose `file`. */
@@ -141,33 +142,42 @@ async function chooseFile(file: File) {
   return user;
 }
 
-const liveSubjects = async () => {
-  const {db} = syncSession(TEST_USER);
-  return (
-    await db.entries
-      .where('owner')
-      .equals(TEST_USER)
-      .filter(row => !row.attributes.is_deleted)
-      .toArray()
-  )
-    .map(row => row.attributes.subject)
-    .sort();
-};
+const liveSubjects = () =>
+  act(async () => {
+    const {db} = syncSession(TEST_USER);
+    return (
+      await db.entries
+        .where('owner')
+        .equals(TEST_USER)
+        .filter(row => !row.attributes.is_deleted)
+        .toArray()
+    )
+      .map(row => row.attributes.subject)
+      .sort();
+  });
 
-const liveTagNames = async () => {
-  const {db} = syncSession(TEST_USER);
-  return (
-    await db.tags
-      .where('owner')
-      .equals(TEST_USER)
-      .filter(row => !row.attributes.is_deleted)
-      .toArray()
-  )
-    .map(row => row.attributes.name)
-    .sort();
-};
+const liveTagNames = () =>
+  act(async () => {
+    const {db} = syncSession(TEST_USER);
+    return (
+      await db.tags
+        .where('owner')
+        .equals(TEST_USER)
+        .filter(row => !row.attributes.is_deleted)
+        .toArray()
+    )
+      .map(row => row.attributes.name)
+      .sort();
+  });
 
 describe('Restore Backup', () => {
+  const readVersions = () =>
+    act(async () =>
+      dataVersionListDocumentSchema.parse(
+        await (await fetch(`${API}/user/data_versions`)).json()
+      )
+    );
+
   it.each([false, true])(
     'ignores an older file after choosing another (cancel: %s)',
     async cancel => {
@@ -245,6 +255,7 @@ describe('Restore Backup', () => {
   });
 
   it("replaces the user's data with the backup's once confirmed", async () => {
+    const errors = vi.spyOn(console, 'error');
     await renderEntries();
     const requests = restoreRequests();
     const user = await chooseFile(fileOf(backup));
@@ -271,10 +282,10 @@ describe('Restore Backup', () => {
     await waitFor(() =>
       expect(screen.queryByText('Backup restored')).toBeNull()
     );
+    expect(errors).not.toHaveBeenCalled();
   });
 
   it('says the backup was restored when this copy could not take it up', async () => {
-    vi.spyOn(console, 'error').mockImplementation(() => {});
     await renderEntries();
     const requests = restoreRequests();
     vi.spyOn(syncSession(TEST_USER).sync, 'adopt').mockRejectedValueOnce(
@@ -297,8 +308,10 @@ describe('Restore Backup', () => {
     await renderEntries();
     const session = syncSession(TEST_USER);
     offlineForWrites();
-    await createEntry(session, 'queued-subject', 'body');
-    await expect(session.sync.flush()).rejects.toThrow();
+    await act(async () => {
+      await createEntry(session, 'queued-subject', 'body');
+      await expect(session.sync.flush()).rejects.toThrow();
+    });
     server.resetHandlers();
     const posted = recordRequests(({method}, path) =>
       method === 'POST' ? path : undefined
@@ -311,7 +324,7 @@ describe('Restore Backup', () => {
 
     expect(await screen.findByText('Backup restored')).toBeInTheDocument();
     expect(posted).toEqual(['/api/v1/entries', '/api/v1/user/restore']);
-    expect(await session.db.outbox.count()).toBe(0);
+    expect(await act(async () => session.db.outbox.count())).toBe(0);
     // Sent before the restore, which then deleted it with the rest.
     expect(await liveSubjects()).toEqual([
       'restored-subject',
@@ -320,11 +333,13 @@ describe('Restore Backup', () => {
   });
 
   it('restores nothing while queued writes cannot be sent', async () => {
-    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const error = vi.spyOn(console, 'error');
     await renderEntries();
     const requests = restoreRequests();
     offlineForWrites();
-    await createEntry(syncSession(TEST_USER), 'unsent-subject', 'body');
+    await act(async () =>
+      createEntry(syncSession(TEST_USER), 'unsent-subject', 'body')
+    );
 
     await chooseFile(fileOf(backup));
 
@@ -337,7 +352,6 @@ describe('Restore Backup', () => {
   });
 
   it('says why the API refused the backup', async () => {
-    vi.spyOn(console, 'error').mockImplementation(() => {});
     await renderEntries();
     const detail =
       'Invalid backup at /tags/0/name: Ensure this field has no more than 24 characters.';
@@ -377,7 +391,6 @@ describe('Restore Backup', () => {
     ['another format', {...backup, format: 'something-else'}],
     ['another version', {...backup, version: 2}],
   ])('refuses a file that is %s, sending nothing', async (_name, content) => {
-    vi.spyOn(console, 'error').mockImplementation(() => {});
     await renderEntries();
     const requests = restoreRequests();
 
@@ -407,6 +420,7 @@ describe('Restore Backup', () => {
   });
 
   it('restores over the version its copy is of, then holds the new one', async () => {
+    const errors = vi.spyOn(console, 'error');
     await renderEntries();
     const named = recordRequests(({headers}, path) =>
       path === '/api/v1/user/restore'
@@ -421,67 +435,64 @@ describe('Restore Backup', () => {
     expect(await screen.findByText(/as version 2/)).toBeInTheDocument();
     expect(named).toEqual(['1']);
     const {db} = syncSession(TEST_USER);
-    expect(await heldVersion(db, TEST_USER)).toBe(2);
+    expect(await act(async () => heldVersion(db, TEST_USER))).toBe(2);
     // The version before is kept, there to switch back to.
-    const {data} = dataVersionListDocumentSchema.parse(
-      await (await fetch(`${API}/user/data_versions`)).json()
-    );
+    const {data} = await readVersions();
     expect(
       data.map(({attributes}) => [attributes.version, attributes.active])
     ).toEqual([
       [2, true],
       [1, false],
     ]);
+    expect(errors).not.toHaveBeenCalled();
   });
 
   it('restores nothing over a version made active elsewhere since', async () => {
-    vi.spyOn(console, 'error').mockImplementation(() => {});
     await renderEntries();
     const user = await chooseFile(fileOf(backup));
     await screen.findByText('Restore this backup?');
     // Another device restores meanwhile: version 2 is active, not 1.
-    await restoreElsewhere(backup);
+    await act(async () => restoreElsewhere(backup));
     const requests = restoreRequests();
 
     await user.click(screen.getByRole('button', {name: 'Restore backup'}));
 
     expect(await screen.findByText('Restore failed')).toBeInTheDocument();
     expect(requests.map(({version}) => version)).toEqual(['1']);
-    const {data} = dataVersionListDocumentSchema.parse(
-      await (await fetch(`${API}/user/data_versions`)).json()
-    );
+    const {data} = await readVersions();
     expect(data).toHaveLength(2);
   });
 
   it('restores nothing over a version a sync here took up after the warning', async () => {
-    vi.spyOn(console, 'error').mockImplementation(() => {});
     await renderEntries();
+    const work = observeSyncWork(TEST_USER);
     const user = await chooseFile(fileOf(backup));
     await screen.findByText('Restore this backup?');
     // Another device restores, and this one syncs it: the data here is of
     // version 2 now, which the warning was not about.
-    await restoreElsewhere(backup);
+    await act(async () => restoreElsewhere(backup));
     const {db, sync} = syncSession(TEST_USER);
-    await sync.syncAll();
-    expect(await heldVersion(db, TEST_USER)).toBe(2);
+    await act(async () => sync.syncAll());
+    await work.finish();
+    expect(await act(async () => heldVersion(db, TEST_USER))).toBe(2);
     const requests = restoreRequests();
 
     await user.click(screen.getByRole('button', {name: 'Restore backup'}));
 
     expect(await screen.findByText('Restore failed')).toBeInTheDocument();
     expect(requests.map(({version}) => version)).toEqual(['1']);
-    const {data} = dataVersionListDocumentSchema.parse(
-      await (await fetch(`${API}/user/data_versions`)).json()
-    );
+    const {data} = await readVersions();
     expect(data).toHaveLength(2);
   });
 
   it('restores only into the account the user was warned about', async () => {
-    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const error = vi.spyOn(console, 'error');
     await renderEntries();
     const {db} = syncSession(TEST_USER);
     const bindTo = (account: string) =>
-      db.cursors.put({owner: TEST_USER, key: OWNER_ID_KEY, after: account});
+      act(async () =>
+        db.cursors.put({owner: TEST_USER, key: OWNER_ID_KEY, after: account})
+      );
     // Warned about the data of the account it is bound to then...
     await bindTo('99');
     const subjects = await liveSubjects();

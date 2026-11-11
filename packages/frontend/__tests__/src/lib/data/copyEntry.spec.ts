@@ -86,7 +86,7 @@ it.each(['accepts', 'rejects'] as const)(
     expect(reuse).not.toHaveBeenCalled();
     expect(failed).toHaveBeenCalledExactlyOnceWith(
       outcome === 'accepts'
-        ? 'Failed to count the entry copy:'
+        ? 'Failed to capture the entry copy identity:'
         : 'Failed to copy the entry:',
       outcome === 'accepts' ? captureFailure : clipboardFailure
     );

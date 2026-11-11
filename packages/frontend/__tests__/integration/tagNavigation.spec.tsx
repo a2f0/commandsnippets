@@ -1,5 +1,5 @@
 import {tagCreateAttributesSchema} from '@commandsnippets/api-shared/requests';
-import {act, cleanup, fireEvent, screen, waitFor} from '@testing-library/react';
+import {cleanup, fireEvent, screen, waitFor} from '@testing-library/react';
 import invariant from 'invariant';
 import {HttpResponse, http} from 'msw/http';
 
@@ -10,6 +10,7 @@ import {syncSession} from '../../src/lib/sync/session';
 import {testUser} from '../../src/msw/fixtures';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {serveMockApi, server} from '../util/msw';
+import {observeSyncWork} from '../util/observeSyncWork';
 import {signIn, store, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
@@ -41,9 +42,19 @@ function byId(id: string): HTMLElement {
   return element;
 }
 
+/** Join actual page work, including tag checks that schedule a later sync. */
+function observeCollectionSync(user = TEST_USER, collections = 1) {
+  const {syncAll, finish} = observeSyncWork(user);
+  return async () => {
+    await waitFor(() => expect(syncAll).toHaveBeenCalledTimes(collections));
+    await finish();
+  };
+}
+
 it.each(['C#', 'a/b', 'a%20b'])(
   'keeps the selected tag reachable after renaming it to %s',
   async name => {
+    const settled = observeCollectionSync();
     const {history} = await renderAppAt('/test/test-tag-1', {act: true});
     await screen.findByText('entry-1-subject');
     expect(tagCreateAttributesSchema.safeParse({name}).success).toBe(true);
@@ -67,6 +78,7 @@ it.each(['C#', 'a/b', 'a%20b'])(
         tag: name,
       })
     );
+    await settled();
   }
 );
 
@@ -75,6 +87,7 @@ it.each(['click', 'keyboard', 'first tag'])(
   async method => {
     const name = 'C#/literal%20';
     await apiClient.forVersion(1).updateTag('1', name);
+    const settled = observeCollectionSync();
     const {history} = await renderAppAt(
       method === 'first tag' ? '/test' : '/test/test-tag-2',
       {act: true}
@@ -94,6 +107,7 @@ it.each(['click', 'keyboard', 'first tag'])(
       })
     );
     expect(await screen.findByText('entry-1-subject')).toBeInTheDocument();
+    await settled();
   }
 );
 
@@ -104,6 +118,8 @@ it.each(['test', 'oauth/github'])(
     const name = 'C#/literal%20';
     await apiClient.forVersion(1).updateTag('1', name);
     signInAs(user);
+    // Entry detail and its destination entries page each start a collection.
+    const settled = observeCollectionSync(user, 2);
     const root = `/${encodeURIComponent(user)}`;
     const {history} = await renderAppAt(`${root}/entries/1`, {act: true});
     const link = (await screen.findByText(name)).closest('a');
@@ -122,8 +138,6 @@ it.each(['test', 'oauth/github'])(
         ],
       ]);
     }
-    await act(async () => syncSession(user).sync.syncAll());
-
     fireEvent.click(link);
 
     expect(link).toHaveAttribute('href', `${root}/${encodeURIComponent(name)}`);
@@ -135,7 +149,7 @@ it.each(['test', 'oauth/github'])(
     expect(history.location.search).toBe('');
     expect(history.location.hash).toBe('');
     expect(await screen.findByText('entry-1-subject')).toBeInTheDocument();
-    await act(async () => syncSession(user).sync.syncAll());
+    await settled();
   }
 );
 
@@ -146,6 +160,7 @@ it.each(['click', 'keyboard', 'first tag'])(
     const name = 'C#/literal%20';
     await apiClient.forVersion(1).updateTag('1', name);
     signInAs(user);
+    const settled = observeCollectionSync(user);
     const root = `/${encodeURIComponent(user)}`;
     const {history} = await renderAppAt(
       method === 'first tag' ? root : `${root}/test-tag-2`,
@@ -168,5 +183,6 @@ it.each(['click', 'keyboard', 'first tag'])(
       })
     );
     expect(await screen.findByText('entry-1-subject')).toBeInTheDocument();
+    await settled();
   }
 );

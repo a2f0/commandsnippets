@@ -1,4 +1,4 @@
-import React, {useRef} from 'react';
+import React from 'react';
 import {useMounted} from '../../hooks/useMounted';
 import {useSaveError} from '../../hooks/useSaveError';
 import type {ITagJsonApi} from '../../lib/api/responses/types';
@@ -31,42 +31,36 @@ const TagEdit = ({
   const session = useSession();
   const mounted = useMounted();
   const saveError = useSaveError('update tag');
-  const saving = useRef(false);
 
-  const handleSave = async (tagName: string) => {
-    if (session === null || saving.current) {
-      return;
-    }
-    saving.current = true;
-    saveError.clear();
+  const handleSave = (tagName: string) => {
+    if (session === null) return;
     const generation = sessionsEndedCount();
     const path = currentPath();
     const sameSession = () =>
       generation === sessionsEndedCount() &&
       useAppState.getState().loggedInUser === session.username;
-    try {
-      const identity = await captureTagRenameIdentity(session);
-      const renamed = await renameTag(session, object.id, tagName, identity);
-      if (renamed === null) return;
-      try {
-        // Closing belongs to the saved editor, not the optional route follow-up.
-        if (mounted.current) {
-          handleSaveParent();
+    void saveError.save(
+      async () => {
+        const identity = await captureTagRenameIdentity(session);
+        const renamed = await renameTag(session, object.id, tagName, identity);
+        return {identity, renamed};
+      },
+      async ({identity, renamed}) => {
+        if (renamed === null) return;
+        try {
+          // Close this editor before the optional route follow-up.
+          if (mounted.current) handleSaveParent();
+          if (!sameSession()) return;
+          const current = await isCurrentTagRename(session, renamed, identity);
+          if (current && sameSession() && currentPath() === path) {
+            handleStoredParent(renamed);
+          }
+        } catch (error) {
+          // Persistence succeeded; a callback failure must not report it unsaved.
+          console.error('Failed to finish the saved tag rename:', error);
         }
-        if (!sameSession()) return;
-        const current = await isCurrentTagRename(session, renamed, identity);
-        if (current && sameSession() && currentPath() === path) {
-          handleStoredParent(renamed);
-        }
-      } catch (error) {
-        // Persistence succeeded; a callback failure must not report it unsaved.
-        console.error('Failed to finish the saved tag rename:', error);
       }
-    } catch (error) {
-      saveError.failed(error);
-    } finally {
-      saving.current = false;
-    }
+    );
   };
 
   return (
@@ -81,6 +75,7 @@ const TagEdit = ({
       onSave={handleSave}
       onCancel={handleCancelEditParent}
       error={saveError.error}
+      saving={saveError.saving}
     />
   );
 };

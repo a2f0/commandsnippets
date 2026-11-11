@@ -4,12 +4,16 @@
  * highlighted from the first.
  */
 import {act, fireEvent, screen, waitFor} from '@testing-library/react';
+import invariant from 'invariant';
 import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
 import {appMode} from '../../src/lib/shared';
+import {syncSession} from '../../src/lib/sync/session';
+import * as syncReads from '../../src/lib/sync/sync';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
+import {mockResult} from '../util/mockResult';
 import {API, serveMockApi, server} from '../util/msw';
-import {signIn, store} from '../util/signIn';
+import {signIn, store, TEST_USER} from '../util/signIn';
 import {seed, tag} from '../util/storeFixtures';
 import {renderAppAt} from '../util/TestAppRouter';
 
@@ -42,13 +46,93 @@ const WAIT = {timeout: 10_000};
 vi.setConfig({testTimeout: 30_000});
 
 serveMockApi();
+let finishOfflineWork: (tagIds: string[]) => Promise<void>;
+let expectedTags: string[];
+const unavailable = vi.fn(() => HttpResponse.error());
+afterEach(async () => {
+  await finishOfflineWork(expectedTags);
+});
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
   vi.spyOn(console, 'log').mockImplementation(() => {});
-  vi.spyOn(console, 'warn').mockImplementation(() => {});
-  vi.spyOn(console, 'error').mockImplementation(() => {});
+  vi.spyOn(console, 'warn');
+  vi.spyOn(console, 'error');
+  unavailable.mockClear();
+  expectedTags = ['3'];
+  finishOfflineWork = observeOfflineWork();
 });
+
+/** Only this fixture's intentional network failures, never DB interruption. */
+function observeOfflineWork() {
+  const session = syncSession(TEST_USER);
+  const engine = session.sync;
+  const flush = vi.spyOn(engine, 'flush');
+  const syncAll = vi.spyOn(engine, 'syncAll');
+  const syncTag = vi.spyOn(engine, 'syncTag');
+  const readiness = vi.spyOn(syncReads, 'isTagSynced');
+  const operations = {flush, syncAll, syncTag, readiness};
+  const joined = new Set<Promise<unknown>>();
+  const failures: {operation: string; reason: unknown}[] = [];
+  return async (tagIds: string[]) => {
+    for (;;) {
+      const pending: {operation: string; promise: Promise<unknown>}[] = [];
+      for (const [operation, spy] of Object.entries(operations)) {
+        for (let index = 0; index < spy.mock.results.length; index++) {
+          const promise = mockResult<Promise<unknown>>(spy, index);
+          if (joined.has(promise)) continue;
+          joined.add(promise);
+          pending.push({operation: `${operation}:${index}`, promise});
+        }
+      }
+      if (pending.length === 0) break;
+      await act(async () => {
+        const results = await Promise.allSettled(pending.map(p => p.promise));
+        for (const [index, result] of results.entries()) {
+          if (result.status !== 'rejected') continue;
+          const work = pending[index];
+          invariant(work, 'the rejected offline operation was observed');
+          failures.push({operation: work.operation, reason: result.reason});
+        }
+      });
+    }
+    expect(
+      failures.toSorted((a, b) => a.operation.localeCompare(b.operation))
+    ).toEqual(
+      [
+        'flush:0',
+        'syncAll:0',
+        ...tagIds.map((_, index) => `syncTag:${index}`),
+      ].map(operation => ({
+        operation,
+        reason: expect.objectContaining({
+          name: 'TypeError',
+          message: 'fetch failed',
+          cause: expect.objectContaining({type: 'error'}),
+        }),
+      }))
+    );
+    expect(flush).toHaveBeenCalledTimes(1);
+    expect(syncAll).toHaveBeenCalledTimes(1);
+    expect(syncTag.mock.calls).toEqual(tagIds.map(id => [id]));
+    expect(readiness.mock.calls).toEqual(
+      tagIds.map(id => [session.db, TEST_USER, id])
+    );
+    expect(unavailable).toHaveBeenCalledTimes(tagIds.length + 2);
+    const warning = failures.filter(work => work.operation === 'flush:0');
+    expect(console.warn).toHaveBeenCalledExactlyOnceWith(
+      'WARNING: queued writes not sent yet:',
+      warning[0]?.reason
+    );
+    const errors = failures.filter(work => work.operation !== 'flush:0');
+    expect(console.error).toHaveBeenCalledTimes(errors.length);
+    expect(vi.mocked(console.error).mock.calls).toEqual(
+      expect.arrayContaining(
+        errors.map(work => ['ERROR: sync failed:', work.reason])
+      )
+    );
+  };
+}
 
 const highlighted = () =>
   screen
@@ -64,11 +148,12 @@ async function showTags(): Promise<void> {
     )
   );
   // The list as the database holds it: no sync changes it meanwhile.
-  server.use(http.all(`${API}/*`, () => HttpResponse.error()));
+  server.use(http.all(`${API}/*`, unavailable));
   renders.lists = 0;
   renders.rows = 0;
   renderAppAt('/test/name-3');
   await screen.findByText(`name-${COUNT}`, undefined, WAIT);
+  await finishOfflineWork(expectedTags);
 }
 
 it('renders the list once for each list read, and each row once', async () => {
@@ -108,6 +193,7 @@ it('highlights the tag chosen with the arrow keys until the tag selected changes
   // A click on the tag shown highlights it again after the arrow keys.
   fireEvent.keyDown(document, {key: 'ArrowDown', code: 'ArrowDown'});
   expect(highlighted()).toEqual(['tag-8']);
+  expectedTags = ['3', '7'];
   fireEvent.click(screen.getByText('name-7'));
   expect(highlighted()).toEqual(['tag-7']);
 });

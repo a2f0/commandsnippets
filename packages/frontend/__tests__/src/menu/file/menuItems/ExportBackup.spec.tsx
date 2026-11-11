@@ -8,7 +8,7 @@ import {
   EXPECTED_USER_ID_HEADER,
 } from '@commandsnippets/api-shared/messages';
 import {backupSchema} from '@commandsnippets/api-shared/responses';
-import {screen, waitFor} from '@testing-library/react';
+import {act, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
@@ -25,6 +25,7 @@ import {
   serveMockApi,
   server,
 } from '../../../../util/msw';
+import {observeSyncWork} from '../../../../util/observeSyncWork';
 import {signIn, TEST_USER} from '../../../../util/signIn';
 import {renderAppAt} from '../../../../util/TestAppRouter';
 
@@ -76,12 +77,14 @@ beforeEach(() => {
   downloads = captureDownloads();
   // The mock API announces each request; a flush that fails warns.
   vi.spyOn(console, 'log').mockImplementation(() => {});
-  vi.spyOn(console, 'warn').mockImplementation(() => {});
+  vi.spyOn(console, 'warn');
 });
 
 async function renderEntries() {
+  const work = observeSyncWork(TEST_USER);
   renderAppAt('/test/test-tag-1');
   await screen.findByText('entry-1-subject');
+  await work.finish();
 }
 
 async function exportBackup() {
@@ -141,11 +144,14 @@ describe('Export Backup', () => {
   });
 
   it('sends the writes queued here first, so the backup holds them', async () => {
+    const errors = vi.spyOn(console, 'error');
     await renderEntries();
     const session = syncSession(TEST_USER);
     offlineForWrites();
-    await createEntry(session, 'queued-subject', 'body');
-    await expect(session.sync.flush()).rejects.toThrow();
+    await act(async () => {
+      await createEntry(session, 'queued-subject', 'body');
+      await expect(session.sync.flush()).rejects.toThrow();
+    });
     server.resetHandlers();
 
     await exportBackup();
@@ -157,15 +163,16 @@ describe('Export Backup', () => {
     expect(queued).toBeDefined();
     expect(isLocalId(queued?.id ?? 'local-')).toBe(false);
     expect(await session.db.outbox.count()).toBe(0);
+    expect(errors).not.toHaveBeenCalled();
   });
 
   it('saves nothing while queued writes cannot be sent', async () => {
-    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const error = vi.spyOn(console, 'error');
     await renderEntries();
     const session = syncSession(TEST_USER);
     const backupsRead = backupRequests();
     offlineForWrites();
-    await createEntry(session, 'unsent-subject', 'body');
+    await act(() => createEntry(session, 'unsent-subject', 'body'));
 
     await exportBackup();
 
@@ -176,7 +183,7 @@ describe('Export Backup', () => {
   });
 
   it('says when the backup cannot be read, until dismissed', async () => {
-    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'error');
     await renderEntries();
     server.use(http.get(`${API}/user/backup`, () => HttpResponse.error()));
 
@@ -199,7 +206,7 @@ describe('Export Backup', () => {
   });
 
   it('refuses a backup that breaks the contract', async () => {
-    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'error');
     await renderEntries();
     server.use(
       http.get(`${API}/user/backup`, () =>
@@ -214,10 +221,10 @@ describe('Export Backup', () => {
   });
 
   it('asks as the account the data is bound to, saving nothing for another of the name', async () => {
-    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const error = vi.spyOn(console, 'error');
     await renderEntries();
     const session = syncSession(TEST_USER);
-    await session.sync.flush();
+    await act(() => session.sync.flush());
     // The data is bound to an account deleted since, whose name the account
     // now signed in (the mock API's, 1) has taken.
     await session.db.cursors.put({
@@ -239,7 +246,7 @@ describe('Export Backup', () => {
   });
 
   it("saves nothing when the API answers with another account's backup", async () => {
-    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const error = vi.spyOn(console, 'error');
     await renderEntries();
     server.use(
       http.get(`${API}/user/backup`, () =>

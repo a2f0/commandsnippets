@@ -14,7 +14,8 @@ import {useApiVersion} from '../../../../../src/lib/api/apiVersion';
 import {AboutDialog} from '../../../../../src/menu/help/menuItems/AboutDialog';
 import {assignLoggedInCookie} from '../../../../util/assignLoggedInCookie';
 import {serveMockApi} from '../../../../util/msw';
-import {signIn} from '../../../../util/signIn';
+import {observeSyncWork} from '../../../../util/observeSyncWork';
+import {signIn, TEST_USER} from '../../../../util/signIn';
 import {renderAppAt} from '../../../../util/TestAppRouter';
 
 serveMockApi();
@@ -24,6 +25,14 @@ beforeEach(() => {
 });
 
 describe('Help Menu', () => {
+  let syncWork: ReturnType<typeof observeSyncWork>;
+  beforeEach(() => {
+    syncWork = observeSyncWork(TEST_USER);
+  });
+  afterEach(async () => {
+    await syncWork.finish();
+    expect(syncWork.syncAll).toHaveBeenCalledTimes(1);
+  });
   it('Is clickable', async () => {
     const user = userEvent.setup();
     renderAppAt('/test/test');

@@ -21,6 +21,8 @@ interface ITagFormProps {
   cycleFields?: boolean;
   /** Why the last save failed (none: it did not). */
   error?: string | null;
+  /** Freeze the submitted draft until its save finishes; Cancel stays available. */
+  saving?: boolean;
 }
 
 /** The name field, Save and Cancel of a new tag's form and a tag's editor. */
@@ -31,8 +33,10 @@ export const TagForm = ({
   onCancel,
   cycleFields = false,
   error = null,
+  saving = false,
 }: ITagFormProps) => {
-  const owner = useEditorOwnership(appMode.tagEditor, true);
+  const owner = useEditorOwnership(appMode.tagEditor, true, saving);
+
   useEditFieldCycle(owner, cycleFields);
   const [name, setName] = useState<string>(initialName);
 
@@ -55,6 +59,7 @@ export const TagForm = ({
       }}
     >
       <StyledTextFieldTags
+        readOnly={saving}
         value={name}
         id={ids.name}
         onChange={event => {
@@ -70,6 +75,8 @@ export const TagForm = ({
         <Grid sx={{paddingRight: '1px'}} size={{xs: 6}}>
           <StyledTagButton
             id={ids.save}
+            disabled={saving}
+            aria-busy={saving}
             onClick={() => {
               onSave(name);
             }}

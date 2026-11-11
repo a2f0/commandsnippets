@@ -4,10 +4,23 @@ import {loggedInCookieNames} from '../../src/lib/auth/authUtils';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {stubEnvironment} from '../util/environment';
 import {serveMockApi} from '../util/msw';
-import {signIn} from '../util/signIn';
+import {observeSyncWork} from '../util/observeSyncWork';
+import {signIn, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
 serveMockApi();
+let syncWork: ReturnType<typeof observeSyncWork>;
+afterEach(async () => {
+  await syncWork.finish();
+  expect(syncWork.syncAll).toHaveBeenCalledTimes(1);
+});
+
+// Observe after an environment override, before the app starts its session.
+function renderMenuBar() {
+  syncWork = observeSyncWork(TEST_USER);
+  return renderAppAt('/test/test', {act: true});
+}
+
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
@@ -30,7 +43,7 @@ describe('MenuBar', () => {
 
   describe('Rendering', () => {
     it('renders logo with correct styling', async () => {
-      await renderAppAt('/test/test', {act: true});
+      await renderMenuBar();
 
       const logo = await screen.findByRole('img', {
         name: 'Command Snippets Logo',
@@ -49,7 +62,7 @@ describe('MenuBar', () => {
     it.each(MENUS)(
       'renders the %s button, labelled, opening its menu',
       async (name, id, menu) => {
-        await renderAppAt('/test/test', {act: true});
+        await renderMenuBar();
 
         const button = await screen.findByRole('menu', {name});
         expect(button).toHaveAttribute('id', id);
@@ -75,7 +88,7 @@ describe('MenuBar', () => {
           .join('; ')
       );
 
-      await renderAppAt('/test/test', {act: true});
+      await renderMenuBar();
 
       expect(
         await screen.findByRole('menu', {name: 'File'})

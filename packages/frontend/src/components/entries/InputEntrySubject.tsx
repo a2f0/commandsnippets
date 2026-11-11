@@ -9,6 +9,7 @@ interface IProps {
   placeholder: string;
   valueParent: string;
   id: string;
+  readOnly?: boolean;
 }
 
 const InputEntrySubject = ({
@@ -16,6 +17,7 @@ const InputEntrySubject = ({
   valueParent,
   placeholder,
   id,
+  readOnly = false,
 }: IProps) => {
   const [value, setValue] = useState<string>(valueParent);
   const theme: Theme = useTheme();
@@ -45,6 +47,7 @@ const InputEntrySubject = ({
       type="text"
       slotProps={{
         htmlInput: {
+          readOnly,
           style: {
             fontSize: 13,
             paddingLeft: 4,

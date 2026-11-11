@@ -45,34 +45,36 @@ const byId = (id: string): HTMLElement => {
 
 /** Press Tab where the focus is; whether the browser may still move it. */
 const pressTab = () =>
-  fireEvent.keyDown(document.activeElement ?? document, {
-    key: 'Tab',
-    code: 'Tab',
-  });
+  act(async () =>
+    fireEvent.keyDown(document.activeElement ?? document, {
+      key: 'Tab',
+      code: 'Tab',
+    })
+  );
 
 describe.each(['new', 'edit'] as const)('EntryForm (%s)', kind => {
-  it('opens at its subject, and Tab moves through its fields in turn', () => {
+  it('opens at its subject, and Tab moves through its fields in turn', async () => {
     renderForm(kind);
     expect(document.activeElement).toBe(byId('formSubject'));
 
     for (const field of ['Body', 'Save', 'Cancel', 'Subject', 'Body']) {
       // The form moves the focus itself, in place of the browser.
-      expect(pressTab()).toBe(false);
+      expect(await pressTab()).toBe(false);
       expect(document.activeElement).toBe(byId(`form${field}`));
     }
   });
 
-  it('leaves Tab to the lists outside the entry editor', () => {
+  it('leaves Tab to the lists outside the entry editor', async () => {
     renderForm(kind);
     act(() => store.setAppMode(appMode.entriesList));
 
-    expect(pressTab()).toBe(true);
+    expect(await pressTab()).toBe(true);
     expect(document.activeElement).toBe(byId('formSubject'));
   });
 
-  it('closes with the next editor to open at its subject, in the entry list', () => {
+  it('closes with the next editor to open at its subject, in the entry list', async () => {
     const {unmount} = renderForm(kind);
-    pressTab();
+    await pressTab();
     expect(document.activeElement).toBe(byId('formBody'));
 
     unmount();
