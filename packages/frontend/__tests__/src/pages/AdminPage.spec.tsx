@@ -2,6 +2,7 @@ import {type AdminUser, CODES} from '@commandsnippets/api-shared';
 import {act, fireEvent, screen, waitFor, within} from '@testing-library/react';
 import invariant from 'invariant';
 import {HttpResponse, http} from 'msw/http';
+import * as adminApi from '../../../src/lib/api/adminApi';
 
 import {
   errorDocument,
@@ -386,6 +387,39 @@ describe('AdminPage', () => {
       await screen.findByText('You do not have access to this page.')
     ).toBeInTheDocument();
     expect(screen.queryByRole('table', {name: 'Users'})).toBeNull();
+  });
+
+  it('ignores a forbidden mutation from the previous admin identity', async () => {
+    const old = Promise.withResolvers<adminApi.AdminUser>();
+    const mutation = vi
+      .spyOn(adminApi, 'setUserActive')
+      .mockReturnValueOnce(old.promise);
+    const view = await renderAppAt('/admin', {act: true});
+    try {
+      await usersTable();
+      await choose('7', 'Deactivate');
+      await confirm('Deactivate');
+      await waitFor(() => expect(mutation).toHaveBeenCalledTimes(1));
+
+      act(() => store.setLoggedInUser('replacement-user'));
+      await usersTable();
+      expect(store.isStaff).toBe(true);
+      await act(async () => {
+        old.reject(new adminApi.AdminForbiddenError());
+        await old.promise.catch(() => undefined);
+      });
+
+      expect(store.loggedInUser).toBe('replacement-user');
+      expect(store.isStaff).toBe(true);
+      expect(screen.getByRole('table', {name: 'Users'})).toBeInTheDocument();
+      expect(
+        screen.queryByText('You do not have access to this page.')
+      ).toBeNull();
+    } finally {
+      old.reject(new adminApi.AdminForbiddenError());
+      await old.promise.catch(() => undefined);
+      view.unmount();
+    }
   });
 
   it('reloads after a change, so a status filter stays accurate', async () => {

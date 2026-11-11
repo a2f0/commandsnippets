@@ -18,6 +18,7 @@ import userEvent from '@testing-library/user-event';
 import invariant from 'invariant';
 import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
+import * as backupData from '../../../../../src/lib/data/backup';
 import {createEntry} from '../../../../../src/lib/data/writes';
 import {OWNER_ID_KEY} from '../../../../../src/lib/db/database';
 import {useAppState} from '../../../../../src/lib/state/appState';
@@ -167,6 +168,49 @@ const liveTagNames = async () => {
 };
 
 describe('Restore Backup', () => {
+  it.each([false, true])(
+    'ignores an older file after choosing another (cancel: %s)',
+    async cancel => {
+      await renderAppAt('/admin', {act: true});
+      await screen.findByRole('table', {name: 'Users'});
+      vi.spyOn(backupData, 'restoreTarget').mockResolvedValue({
+        accountId: '1',
+        version: 1,
+      });
+      vi.spyOn(backupData, 'liveCounts').mockResolvedValue({
+        tags: 3,
+        entries: 5,
+      });
+      const old = Promise.withResolvers<string>();
+      const slowFile = fileOf(backup, 'old.json');
+      vi.spyOn(slowFile, 'text').mockReturnValueOnce(old.promise);
+      const requests = restoreRequests();
+
+      await chooseFile(slowFile);
+      const user = await chooseFile(
+        fileOf({...backup, user: {id: '43', username: 'new-file'}})
+      );
+      await screen.findByText(/The backup of new-file's data/);
+      if (cancel) {
+        await user.click(screen.getByRole('button', {name: 'Cancel'}));
+        await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+      }
+      await act(async () => {
+        old.resolve(JSON.stringify(backup));
+        await old.promise;
+      });
+
+      if (cancel) expect(screen.queryByRole('dialog')).toBeNull();
+      else
+        expect(
+          screen.getByText(/The backup of new-file's data/)
+        ).toBeInTheDocument();
+      expect(
+        screen.queryByText(/The backup of someone-else's data/)
+      ).toBeNull();
+      expect(requests).toEqual([]);
+    }
+  );
   it('warns what it replaces and what is kept, and changes nothing when cancelled', async () => {
     await renderEntries();
     const subjects = await liveSubjects();
