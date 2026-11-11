@@ -31,51 +31,54 @@ describe('Tab Switching Behavior', () => {
     });
     invariant('activate' in google, 'the new tab should be a BiDi context');
 
-    // Switch to Google window (URL may contain query params).
-    await google.activate();
-    await expect(google).toHaveUrl(/^https:\/\/www\.google\.com/);
-    await browser.waitUntil(
-      async () =>
-        (await app.execute(() => document.visibilityState)) === 'hidden'
-    );
+    try {
+      // Switch to Google window (URL may contain query params).
+      await google.activate();
+      await expect(google).toHaveUrl(/^https:\/\/www\.google\.com/);
+      await browser.waitUntil(
+        async () =>
+          (await app.execute(() => document.visibilityState)) === 'hidden'
+      );
 
-    // Switch back to our app
-    await app.activate();
-    await browser.waitUntil(
-      async () =>
-        (await app.execute(() => document.visibilityState)) === 'visible'
-    );
-    await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
-    await expect(BasePage.tagsEntriesList).toBeDisplayed();
+      // Switch back to our app
+      await app.activate();
+      await browser.waitUntil(
+        async () =>
+          (await app.execute(() => document.visibilityState)) === 'visible'
+      );
+      await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
+      await expect(BasePage.tagsEntriesList).toBeDisplayed();
 
-    // Initial loading reads the tags once and the entries count plus one page.
-    await browser.toBeRequestedTimes(
-      'GET',
-      'http://localhost:9001/api/v1/tags',
-      1
-    );
-    await browser.toBeRequestedTimes(
-      'GET',
-      'http://localhost:9001/api/v1/entries',
-      2
-    );
+      // Initial loading reads the tags once and the entries count plus one page.
+      await browser.toBeRequestedTimes(
+        'GET',
+        'http://localhost:9001/api/v1/tags',
+        1
+      );
+      await browser.toBeRequestedTimes(
+        'GET',
+        'http://localhost:9001/api/v1/entries',
+        2
+      );
 
-    // Verify basic functionality persists after window switch
-    await expect(BasePage.tags).toBeElementsArrayOfSize(4);
-    await expect(BasePage.entrySearch).toBeExisting();
+      // Verify basic functionality persists after window switch
+      await expect(BasePage.tags).toBeElementsArrayOfSize(4);
+      await expect(BasePage.entrySearch).toBeExisting();
 
-    // Test one more window switch to verify state persistence
-    await google.activate();
-    await expect(google).toHaveUrl(/^https:\/\/www\.google\.com/);
-    await app.activate();
-    await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
+      // Test one more window switch to verify state persistence
+      await google.activate();
+      await expect(google).toHaveUrl(/^https:\/\/www\.google\.com/);
+      await app.activate();
+      await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
 
-    // Verify app state persists across window switches
-    await expect(BasePage.tagsEntriesList).toBeDisplayed();
-    await expect(BasePage.tags).toBeElementsArrayOfSize(4);
-    await expect(BasePage.entrySearch).toBeExisting();
+      // Verify app state persists across window switches
+      await expect(BasePage.tagsEntriesList).toBeDisplayed();
+      await expect(BasePage.tags).toBeElementsArrayOfSize(4);
+      await expect(BasePage.entrySearch).toBeExisting();
 
-    expect(browser.currentTestErrors).toHaveLength(0);
-    await google.closeWindow();
+      expect(browser.currentTestErrors).toHaveLength(0);
+    } finally {
+      await google.closeWindow();
+    }
   });
 });

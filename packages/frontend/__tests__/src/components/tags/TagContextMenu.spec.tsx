@@ -43,7 +43,9 @@ const Row = ({deleteTag}: {deleteTag: () => void}) => {
 };
 
 describe('TagContextMenu', () => {
-  beforeEach(() => vi.spyOn(console, 'error'));
+  beforeEach(() => {
+    vi.spyOn(console, 'error');
+  });
 
   it("deletes with the row's latest handler, not the one it mounted with", async () => {
     const first = vi.fn();

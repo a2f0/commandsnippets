@@ -14,6 +14,10 @@ afterEach(() => {
 
 test.each([
   ['scripts/testing/runUnitTests.sh', ['x', 'vitest', '--no-watch']],
+  [
+    'scripts/testing/runBrowserAcquisition.sh',
+    ['--no-env-file', 'run', 'test:browser-acquisition'],
+  ],
   ['scripts/testing/runWebdriverTests.sh', ['run', 'ci-headless']],
   [
     'packages/frontend/scripts/testing/runSpec.sh',

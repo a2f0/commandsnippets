@@ -28,6 +28,7 @@
     "agents:sync": "agent-tool skills install --apply && agent-tool permissions install --apply",
     "agents:check": "agent-tool skills check && agent-tool permissions check",
     "test:unit": "sh scripts/testing/runUnitTests.sh",
+    "test:browser-acquisition": "sh scripts/testing/runBrowserAcquisition.sh",
     "test:browser": "sh scripts/testing/runWebdriverTests.sh",
     "timings:push": "sh scripts/git/showPushGateTimings.sh",
     "check": "agent-tool run-group scripts/testing/verify.json"

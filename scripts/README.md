@@ -10,7 +10,7 @@ review, and PR mechanics come from the exact-pinned `@a2f0/agent-tool`;
 | `git/hooks/` | Commit-message and conditional pre-push hooks; `bun run hooks:install` / `bun run hooks:check` |
 | `git/` | Push-specific timing history; `bun run timings:push -- --head <sha>` |
 | `lib/` | Timing helpers shared by the push gate and its history viewer |
-| `testing/` | Frontend test launchers; `bun run test:unit` / `bun run test:browser` |
+| `testing/` | Frontend test launchers; `bun run test:unit`, `bun run test:browser`, `bun run test:browser-acquisition` |
 
 The push timing helpers remain local because they record the actual remote,
 every pushed ref, failed/unfinished steps, and the last 20 runs. Generic checks

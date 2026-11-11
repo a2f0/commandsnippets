@@ -88,7 +88,7 @@ conditions allow removal.
 
 For the Puppeteer override, verify the installed `@wdio/utils` resolution rather
 than only the root manifest. Run the frontend's `test:browser-acquisition` on
-macOS and the Ubuntu WebdriverIO runner: it forces Chrome and Chromedriver into
+macOS and the Ubuntu acquisition job: it forces Chrome and Chromedriver into
 an empty private cache, then reuses the resolved build without archive downloads.
 `BROWSER_ACQUISITION_VERSION` selects an exact build for comparisons; without it,
 the cold run resolves the stable channel once. A normal browser suite can select
