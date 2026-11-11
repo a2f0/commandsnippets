@@ -4,6 +4,8 @@ import {vi} from 'vitest';
 import * as tagRename from '../../src/lib/data/tagRename';
 import * as writes from '../../src/lib/data/writes';
 import {useAppState} from '../../src/lib/state/appState';
+import {boundAccount} from '../../src/lib/sync/accountBinding';
+import {remap} from '../../src/lib/sync/adopt';
 import {
   claimData,
   endSyncSession,
@@ -12,6 +14,7 @@ import {
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {serveMockApi} from '../util/msw';
 import {signIn, TEST_USER} from '../util/signIn';
+import {testUser} from '../util/storeFixtures';
 import {renderAppAt} from '../util/TestAppRouter';
 
 serveMockApi();
@@ -134,7 +137,8 @@ function pauseWrite(kind: Editor['kind'], when: 'before' | 'after' = 'before') {
     finish: () =>
       act(async () => {
         resume.resolve();
-        await result;
+        await result?.catch(() => undefined);
+        // The editor handles failed writes; still wait for its completion path.
         // The persisted-rename check reads IndexedDB after the write resolves.
         // Await that real read too, so absence-of-navigation assertions are final.
         await Promise.all(followUp.mock.results.map(read => read.value));
@@ -149,6 +153,145 @@ async function stored(kind: Editor['kind'], value: string) {
   }
   return db.tags.filter(row => row.attributes.name === value).count();
 }
+
+it.each([
+  ['unbound', 'none'],
+  ['bound before first sync', 'none'],
+  ['bound before first sync', 'before'],
+  ['bound before first sync', 'after'],
+])(
+  'follows the first locally created selected tag while %s, remapped %s persistence',
+  async (binding, rekey) => {
+    const session = syncSession(TEST_USER);
+    vi.spyOn(session.sync, 'flush').mockResolvedValue(undefined);
+    vi.spyOn(session.sync, 'syncAll').mockResolvedValue(undefined);
+    vi.spyOn(session.sync, 'syncTag').mockResolvedValue(undefined);
+    if (binding === 'bound before first sync') {
+      await claimData(TEST_USER, testUser.id);
+    }
+    const {history} = await renderAppAt('/test?entries=all', {act: true});
+    fireEvent.click(byId('file-menu-button'));
+    fireEvent.click(await screen.findByRole('menuitem', {name: 'New Tag'}));
+    fireEvent.change(byId('tagNewTopTextField'), {
+      target: {value: 'first local tag'},
+    });
+    fireEvent.click(byId('tagNewTopSave'));
+    fireEvent.click(await screen.findByText('first local tag'));
+    expect(history.location.pathname).toBe('/test/first%20local%20tag');
+    const [object] = await session.db.tags.toArray();
+    invariant(object, 'the first local tag was created');
+    expect(object.relationships.user.data.id).toBe('');
+    expect(await boundAccount(session.db, TEST_USER)).toBe(
+      binding === 'unbound' ? undefined : testUser.id
+    );
+    const editor: Editor = {
+      kind: 'renameTag',
+      label: 'first local tag',
+      menu: 'Edit Tag',
+      field: `tagEditTagName${object.id}`,
+      save: `tagEditSave${object.id}`,
+      cancel: `tagEditCancel${object.id}`,
+    };
+    const pending = pauseWrite(
+      'renameTag',
+      rekey === 'before' ? 'before' : 'after'
+    );
+    try {
+      fireEvent.change(await openEditor(editor), {
+        target: {value: 'renamed / offline'},
+      });
+      await act(async () => {
+        fireEvent.click(byId(editor.save));
+        await pending.entered;
+      });
+      if (rekey !== 'before')
+        expect(await stored('renameTag', 'renamed / offline')).toBe(1);
+      if (rekey !== 'none') {
+        await act(async () =>
+          session.db.transaction(
+            'rw',
+            [session.db.tags, session.db.junctions, session.db.outbox],
+            async () => {
+              await remap(session.db, {
+                owner: TEST_USER,
+                type: 'Tag',
+                from: object.id,
+                to: '101',
+              });
+              await session.db.tags.update([TEST_USER, '101'], {
+                relationships: {user: {data: {type: 'User', id: testUser.id}}},
+              });
+            }
+          )
+        );
+        expect(
+          screen.getByDisplayValue('renamed / offline')
+        ).toBeInTheDocument();
+      }
+      await pending.finish();
+      expect(document.getElementById(editor.field)).toBeNull();
+      expect(screen.queryByDisplayValue('renamed / offline')).toBeNull();
+      expect(history.location.pathname).toBe('/test/renamed%20%2F%20offline');
+      expect(await screen.findByText('renamed / offline')).toBeInTheDocument();
+      expect(await stored('renameTag', 'renamed / offline')).toBe(1);
+      expect(
+        (
+          await session.db.tags.get([
+            TEST_USER,
+            rekey === 'none' ? object.id : '101',
+          ])
+        )?.attributes.name
+      ).toBe('renamed / offline');
+      expect(await session.db.outbox.count()).toBe(2);
+    } finally {
+      await pending.finish();
+    }
+  }
+);
+
+it('never writes a held rename into a replacement account before persistence', async () => {
+  const {history} = await renderAppAt('/test/test-tag-1', {act: true});
+  await screen.findByText('entry-1-subject');
+  const session = syncSession(TEST_USER);
+  await act(async () => session.sync.flush());
+  vi.spyOn(session.sync, 'flush').mockResolvedValue(undefined);
+  vi.spyOn(session.sync, 'syncAll').mockResolvedValue(undefined);
+  vi.spyOn(session.sync, 'syncTag').mockResolvedValue(undefined);
+  const original = await session.db.tags.get([TEST_USER, '1']);
+  invariant(original, 'the selected tag is stored');
+  const failed = vi.spyOn(console, 'error').mockImplementation(() => {});
+  const pending = pauseWrite('renameTag');
+  try {
+    fireEvent.change(await openEditor(selectedTagEditor), {
+      target: {value: 'old account draft'},
+    });
+    await act(async () => {
+      fireEvent.click(byId(selectedTagEditor.save));
+      await pending.entered;
+    });
+    await act(async () => {
+      await claimData(TEST_USER, 'replacement-account');
+      await session.db.tags.put({
+        ...original,
+        relationships: {
+          user: {data: {type: 'User', id: 'replacement-account'}},
+        },
+      });
+    });
+    await pending.finish();
+    expect((await session.db.tags.get([TEST_USER, '1']))?.attributes.name).toBe(
+      'test-tag-1'
+    );
+    expect(await session.db.outbox.count()).toBe(0);
+    expect(history.location.pathname).toBe('/test/test-tag-1');
+    expect(failed).toHaveBeenCalledExactlyOnceWith(
+      'Failed to update tag:',
+      expect.objectContaining({name: 'AccountChangedError'})
+    );
+  } finally {
+    await pending.finish();
+  }
+});
 
 it.each(editors)(
   '$kind completion leaves a cancelled-and-reopened editor intact',

@@ -1,5 +1,7 @@
 import {appMode} from '../shared';
 
+export type ListMode = appMode.tagsList | appMode.entriesList;
+
 export interface EditorOwner {
   readonly id: symbol;
   readonly mode: appMode.entryEditor | appMode.tagEditor;
@@ -7,14 +9,14 @@ export interface EditorOwner {
 
 /** Editors are ordered by their most recent open/focus, newest first. */
 export type EditorOwnership =
-  | {status: 'released'; mode: appMode; editors: readonly EditorOwner[]}
+  | {status: 'released'; mode: ListMode; editors: readonly EditorOwner[]}
   | {status: 'editing'; active: EditorOwner; others: readonly EditorOwner[]};
 
 export type EditorOwnershipEvent =
   | {type: 'open'; editor: EditorOwner}
   | {type: 'focus'; id: symbol}
   | {type: 'close'; id: symbol}
-  | {type: 'release'; mode: appMode};
+  | {type: 'release'; mode: ListMode};
 
 export const initialEditorOwnership: EditorOwnership = {
   status: 'released',

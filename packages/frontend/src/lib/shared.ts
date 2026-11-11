@@ -15,19 +15,6 @@ export enum activeSearch {
   entries = 2,
 }
 
-export enum activeEntryEditField {
-  subject = 1,
-  body = 2,
-  save = 3,
-  cancel = 4,
-}
-
-export enum activeTagEditField {
-  name = 1,
-  save = 2,
-  cancel = 3,
-}
-
 export interface IMouse {
   mouseX: number | null;
   mouseY: number | null;

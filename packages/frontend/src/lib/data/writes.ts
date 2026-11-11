@@ -33,13 +33,15 @@ import {UserMismatchError} from '../api/errors';
 import type {QueuedWrite, RowKey, Stored} from '../db/database';
 import {timed} from '../metrics/timings';
 import {leaveForeignSession} from '../state/appState';
-import {AccountChangedError} from '../sync/accountBinding';
+import {AccountChangedError, assertBound} from '../sync/accountBinding';
+import {assertHeld} from '../sync/dataVersion';
 import {localId} from '../sync/localIds';
 import {madeNow, nextMade} from '../sync/made';
 import {enqueue} from '../sync/outbox';
 import {type SyncSession, withDataLock} from '../sync/session';
 import {SyncUserError} from '../sync/sync';
 import {idNow, junctionOf, rowNamed, tagJunctions} from './queries';
+import type {TagRenameIdentity} from './tagRename';
 
 /**
  * A write the API would refuse (a blank or too long field, a tag name the
@@ -253,16 +255,26 @@ export async function createTag(
   });
 }
 
-/** Rename tag `tagId` (null when there is no such tag). */
+/**
+ * Rename tag `tagId` (null when absent). An editor's captured identity guards
+ * its delayed write against account or known data-version replacement.
+ */
 export async function renameTag(
   session: SyncSession,
   tagId: string,
-  rawName: string
+  rawName: string,
+  identity?: TagRenameIdentity
 ): Promise<Tag | null> {
   const {db, owner} = session;
   refuseReadOnly(session);
   const {name = ''} = checked(tagUpdateAttributesSchema, {name: rawName});
   return write(session, async () => {
+    // Recheck the captured account inside the write transaction: a sign-in
+    // between capture and persistence must never edit its replacement rows.
+    if (identity !== undefined) {
+      await assertBound(db, owner, identity.accountId);
+      await assertHeld(db, owner, identity.version);
+    }
     const tag = await rowNamed(db.tags, owner, tagId);
     if (tag === undefined) {
       return {writes: [], result: null};

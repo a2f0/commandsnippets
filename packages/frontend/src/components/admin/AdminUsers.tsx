@@ -15,6 +15,7 @@ import {
 } from '../../lib/api/adminApi';
 import {UserMismatchError} from '../../lib/api/errors';
 import {navigate} from '../../lib/router/navigation';
+import {userPath} from '../../lib/router/route';
 import type {IMouse} from '../../lib/shared';
 import {leaveForeignSession} from '../../lib/state/appState';
 import {AdminConfirmDialog, type PendingChange} from './AdminConfirmDialog';
@@ -143,7 +144,7 @@ function useUserMenu(confirm: (change: PendingChange) => void) {
   const onAction = useCallback(
     (target: AdminUser, action: AdminUserAction) => {
       if (action === 'viewData') {
-        navigate(`/${encodeURIComponent(target.username)}`);
+        navigate(userPath(target.username));
       } else {
         confirm({user: target, action});
       }

@@ -59,11 +59,14 @@ it.each(['C#', 'a/b', 'a%20b'])(
     );
     await waitFor(() => expect(document.getElementById('tagEdit1')).toBeNull());
 
-    expect(routeOf(history.location.pathname)).toEqual({
-      page: 'user',
-      user: TEST_USER,
-      tag: name,
-    });
+    // Closing precedes the fallible follow-up read; wait for its own outcome.
+    await waitFor(() =>
+      expect(routeOf(history.location.pathname)).toEqual({
+        page: 'user',
+        user: TEST_USER,
+        tag: name,
+      })
+    );
   }
 );
 

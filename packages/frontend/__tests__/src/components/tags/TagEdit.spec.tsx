@@ -5,7 +5,9 @@ import {I18nextProvider} from 'react-i18next';
 import {vi} from 'vitest';
 import {TagEdit} from '../../../../src/components/tags/TagEdit';
 import {i18n} from '../../../../src/i18n/i18n';
+import * as tagRename from '../../../../src/lib/data/tagRename';
 import {InvalidWriteError} from '../../../../src/lib/data/writes';
+import * as sessions from '../../../../src/lib/sync/session';
 import {darkTheme} from '../../../../src/theme/themes';
 import {signIn} from '../../../util/signIn';
 import {tag} from '../../../util/storeFixtures';
@@ -38,7 +40,7 @@ function renderEditor() {
       </ThemeProvider>
     </I18nextProvider>
   );
-  return {onSave, onCancel};
+  return {onSave, onStored, onCancel};
 }
 
 const byId = (id: string): HTMLElement => {
@@ -48,7 +50,7 @@ const byId = (id: string): HTMLElement => {
 };
 
 describe('TagEdit', () => {
-  it('saves the name the field holds, with the renamed tag', async () => {
+  it('saves the name the field holds and closes without passing a row', async () => {
     const renamed = tag('2', {name: 'renamed'});
     renameTag.mockResolvedValue(renamed);
     const {onSave} = renderEditor();
@@ -57,14 +59,28 @@ describe('TagEdit', () => {
 
     fireEvent.click(byId('tagEditSave2'));
 
+    await waitFor(() => expect(onSave).toHaveBeenCalledExactlyOnceWith());
     expect(renameTag).toHaveBeenCalledExactlyOnceWith(
       expect.anything(),
       '2',
-      'renamed'
+      'renamed',
+      {accountId: undefined, version: undefined}
     );
-    await waitFor(() =>
-      expect(onSave).toHaveBeenCalledExactlyOnceWith(renamed)
-    );
+  });
+
+  it('closes the same mounted form when the session generation changed after saving', async () => {
+    const generation = vi
+      .spyOn(sessions, 'sessionsEndedCount')
+      .mockReturnValue(1);
+    const pending = Promise.withResolvers<ReturnType<typeof tag>>();
+    renameTag.mockReturnValue(pending.promise);
+    const {onSave, onStored} = renderEditor();
+    fireEvent.click(byId('tagEditSave2'));
+    await waitFor(() => expect(renameTag).toHaveBeenCalledOnce());
+    generation.mockReturnValue(2);
+    await act(async () => pending.resolve(tag('2', {name: 'stored'})));
+    expect(onSave).toHaveBeenCalledExactlyOnceWith();
+    expect(onStored).not.toHaveBeenCalled();
   });
 
   it('stays open when the tag is gone', async () => {
@@ -73,6 +89,7 @@ describe('TagEdit', () => {
     const {onSave} = renderEditor();
 
     fireEvent.click(byId('tagEditSave2'));
+    await waitFor(() => expect(renameTag).toHaveBeenCalledOnce());
     // After the editor's own handling of the answer.
     await act(async () => {
       await renamed;
@@ -80,6 +97,28 @@ describe('TagEdit', () => {
 
     expect(renameTag).toHaveBeenCalledOnce();
     expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it('does not start an unguarded write when identity capture fails', async () => {
+    const failure = new Error('identity unavailable');
+    const failed = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(tagRename, 'captureTagRenameIdentity').mockRejectedValueOnce(
+      failure
+    );
+    const {onSave, onStored} = renderEditor();
+    fireEvent.click(byId('tagEditSave2'));
+    await waitFor(() =>
+      expect(byId('tagEdit2Error')).toHaveTextContent(
+        'Not saved: identity unavailable'
+      )
+    );
+    expect(renameTag).not.toHaveBeenCalled();
+    expect(onSave).not.toHaveBeenCalled();
+    expect(onStored).not.toHaveBeenCalled();
+    expect(failed).toHaveBeenCalledExactlyOnceWith(
+      'Failed to update tag:',
+      failure
+    );
   });
 
   it('stays open with the name and says why when the save fails', async () => {

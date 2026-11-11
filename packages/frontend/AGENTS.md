@@ -64,6 +64,8 @@ touches before making it, and keep them current. The rules most changes meet:
   on successful persistence, not on the follow-up read's success. Test the
   selected-tag route, a cancelled/reopened draft's next save, and a failed
   follow-up read without reporting the stored write as unsaved.
+  Capture the database account/version at Save and recheck inside the write
+  transaction: a local row's blank user relationship is not its identity.
 - Both form kinds share `lib/state/editorOwnership.ts` and
   `hooks/useEditorOwnership.ts`: open/focus/close events own keyboard mode;
   explicit list navigation releases it. Scope Tab to the owning form, not

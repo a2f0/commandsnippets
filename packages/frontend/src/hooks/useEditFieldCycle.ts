@@ -1,31 +1,5 @@
-import type {FocusEvent, RefObject} from 'react';
-import {activeEntryEditField, activeTagEditField} from '../lib/shared';
-import {type AppState, useAppState} from '../lib/state/appState';
+import type {RefObject} from 'react';
 import {useDocumentKeydown} from './useDocumentKeydown';
-
-interface IEditFields<Field> {
-  order: readonly Field[];
-  setActive: (state: AppState, field: Field) => void;
-}
-
-export const entryEditFields: IEditFields<activeEntryEditField> = {
-  order: [
-    activeEntryEditField.subject,
-    activeEntryEditField.body,
-    activeEntryEditField.save,
-    activeEntryEditField.cancel,
-  ],
-  setActive: (state, field) => state.setActiveEntryEditField(field),
-};
-
-export const tagEditFields: IEditFields<activeTagEditField> = {
-  order: [
-    activeTagEditField.name,
-    activeTagEditField.save,
-    activeTagEditField.cancel,
-  ],
-  setActive: (state, field) => state.setActiveTagEditField(field),
-};
 
 /** Only this form's controls, not MUI's hidden textarea sizing mirror. */
 const controlsOf = (root: HTMLDivElement | null) =>
@@ -36,8 +10,7 @@ const controlsOf = (root: HTMLDivElement | null) =>
   );
 
 /** Tab cycles only the owning form; focus never follows another form's field. */
-export function useEditFieldCycle<Field>(
-  fields: IEditFields<Field>,
+export function useEditFieldCycle(
   owner: {ref: RefObject<HTMLDivElement | null>; ownsKeyboard: () => boolean},
   enabled = true
 ) {
@@ -58,12 +31,4 @@ export function useEditFieldCycle<Field>(
     event.preventDefault();
     event.stopPropagation();
   });
-
-  return (event: FocusEvent<HTMLDivElement>) => {
-    const index = controlsOf(owner.ref.current).indexOf(event.target);
-    const field = fields.order[index];
-    if (field !== undefined && owner.ownsKeyboard()) {
-      fields.setActive(useAppState.getState(), field);
-    }
-  };
 }

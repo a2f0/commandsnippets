@@ -469,22 +469,28 @@ writing its type by hand.
 - **Libraries**: Material UI, Emotion (styled components), React DnD
   (reordering), i18next (`src/i18n/`)
 
-## Routing
+## Editor lifetimes and keyboard ownership
 
 Editor completion has two owners. Only the still-mounted editor may close
 its own form; pending writes are not cancelled by closing it. A persisted
 selected-tag rename also corrects its URL, even after Cancel or Escape, but
 only when the original path/query, session generation, username, bound
-account and stored renamed tag still match. `lib/data/tagRename.ts` checks
-the account and stored row without exposing IndexedDB to UI components.
-A failed or ineligible follow-up read skips route correction, never closing:
-the successful write closes its still-mounted editor before that read. A
-replacement draft stays open and remains saveable.
+account and stored renamed tag still match. `lib/data/tagRename.ts` captures
+the bound account and held data version at Save, without exposing IndexedDB
+to UI components. `renameTag` rechecks that snapshot inside its write
+transaction, before changing the row or queuing a write. Its follow-up read
+checks the account, known version and current row, including ID remaps. A
+blank user relationship on a first-local tag is only a placeholder, not an
+account identity. Unknown initial versions permit first adoption, as other
+local writes do; known version replacement refuses the old write.
+A failed or ineligible follow-up read skips only route correction: the
+successful write closes its still-mounted editor before that read, even if
+the session has since ended. A replacement draft stays open and remains saveable.
 
 Both form kinds share the pure `transitionEditorOwnership` in
 `lib/state/editorOwnership.ts`. `editing` carries the active form and the other
 registered forms in focus/open order; `released` carries the explicitly chosen
-mode and any still-mounted forms. Open/focus claims ownership, close removes
+list mode and any still-mounted forms. Open/focus claims ownership, close removes
 only that instance, and release yields to list navigation. Closing the active
 form restores its most recently focused survivor or, if none remains, that
 kind's list mode. Closing a background form never changes the current owner.
@@ -496,6 +502,8 @@ their focus. Initial draft autofocus runs in a passive effect, after closing
 menus restore focus. `useEditFieldCycle` cycles only the owner's controls,
 not every form sharing a global active-field value. Entry and new-tag Tab
 cycles, native rename Tab, and explicit pane/list navigation remain distinct.
+
+## Routing
 
 The app's own router, `src/lib/router/` (no React Router: its hooks render
 every component that calls them on any change of the URL, `React.memo` or

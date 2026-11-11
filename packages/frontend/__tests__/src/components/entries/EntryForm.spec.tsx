@@ -1,5 +1,5 @@
 import {ThemeProvider} from '@mui/material/styles';
-import {act, fireEvent, render} from '@testing-library/react';
+import {act, cleanup, fireEvent, render} from '@testing-library/react';
 import invariant from 'invariant';
 import {I18nextProvider} from 'react-i18next';
 import {vi} from 'vitest';
@@ -8,15 +8,12 @@ import {
   type IEntryFormProps,
 } from '../../../../src/components/entries/EntryForm';
 import {i18n} from '../../../../src/i18n/i18n';
-import {activeEntryEditField, appMode} from '../../../../src/lib/shared';
+import {appMode} from '../../../../src/lib/shared';
 import {darkTheme} from '../../../../src/theme/themes';
 import {signIn, store} from '../../../util/signIn';
 
-beforeEach(() => {
-  signIn();
-  // As the menus and the context menus open an editor.
-  act(() => store.setAppMode(appMode.entryEditor));
-});
+beforeEach(() => signIn());
+afterEach(() => cleanup());
 
 /** A form of `kind` with the id `form`, opened on a subject and body. */
 function renderForm(
@@ -70,19 +67,19 @@ describe.each(['new', 'edit'] as const)('EntryForm (%s)', kind => {
     act(() => store.setAppMode(appMode.entriesList));
 
     expect(pressTab()).toBe(true);
-    expect(store.activeEntryEditField).toBe(activeEntryEditField.subject);
     expect(document.activeElement).toBe(byId('formSubject'));
   });
 
   it('closes with the next editor to open at its subject, in the entry list', () => {
     const {unmount} = renderForm(kind);
     pressTab();
-    expect(store.activeEntryEditField).toBe(activeEntryEditField.body);
+    expect(document.activeElement).toBe(byId('formBody'));
 
     unmount();
 
-    expect(store.activeEntryEditField).toBe(activeEntryEditField.subject);
     expect(store.appMode).toBe(appMode.entriesList);
+    renderForm(kind);
+    expect(document.activeElement).toBe(byId('formSubject'));
   });
 
   it('saves what its fields hold', () => {

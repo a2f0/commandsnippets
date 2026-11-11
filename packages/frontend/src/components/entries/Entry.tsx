@@ -383,10 +383,10 @@ const newEntryForm = (
 
 /** Opens a new entry's form above the row. */
 function useNewEntryAbove(rowKey: string) {
-  return useCallback(() => {
-    const state = useAppState.getState();
-    state.setEntryNew(`textEntry-${rowKey}-top`);
-  }, [rowKey]);
+  return useCallback(
+    () => useAppState.getState().setEntryNew(`textEntry-${rowKey}-top`),
+    [rowKey]
+  );
 }
 
 /**

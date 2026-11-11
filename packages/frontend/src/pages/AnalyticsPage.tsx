@@ -22,6 +22,7 @@ import {useOwner, useSession, useTags} from '../lib/data/hooks';
 import {useCollectionSync} from '../lib/data/useSync';
 import {currentPath, navigate, useSearchParam} from '../lib/router/navigation';
 import {Navigate} from '../lib/router/Router';
+import {userPath} from '../lib/router/route';
 import {leaveForeignSession} from '../lib/state/appState';
 import {heldVersion} from '../lib/sync/dataVersion';
 import type {SyncSession} from '../lib/sync/session';
@@ -149,7 +150,7 @@ const Dashboard = ({
     <DetailPage
       id="analyticsPage"
       backId="analyticsBack"
-      backTo={`/${encodeURIComponent(session.owner)}?entries=all`}
+      backTo={`${userPath(session.owner)}?entries=all`}
       backLabel={t('back')}
       syncStatus={syncStatus}
     >
@@ -203,11 +204,6 @@ const AnalyticsContent = () => {
 export const AnalyticsPage = () => {
   const owner = useOwner();
   if (owner === null || owner.readOnly)
-    return (
-      <Navigate
-        to={owner ? `/${encodeURIComponent(owner.owner)}` : '/'}
-        replace
-      />
-    );
+    return <Navigate to={owner ? userPath(owner.owner) : '/'} replace />;
   return <AnalyticsContent key={owner.owner} />;
 };

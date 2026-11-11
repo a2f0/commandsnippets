@@ -113,9 +113,7 @@ function openTag(user: string | undefined, tag: ITagJsonApi) {
 /** The tag's editor: open or not; a save renames the tag shown too. */
 function useTagEdit(tag: ITagJsonApi, user: string | undefined) {
   const [isEditing, setIsEditing] = useState(false);
-  const begin = useCallback(() => {
-    setIsEditing(true);
-  }, []);
+  const begin = useCallback(() => setIsEditing(true), []);
   const cancel = () => setIsEditing(false);
   // The tag shown follows its new name.
   const followRename = (renamed: ITagJsonApi) => {

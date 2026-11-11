@@ -18,6 +18,7 @@ import {
   entryPath,
   reusesPath,
   tagPath,
+  userPath,
 } from '../lib/router/route';
 import {useAppState} from '../lib/state/appState';
 import {isLocalId} from '../lib/sync/outbox';
@@ -300,7 +301,7 @@ const EntryPageContent = () => {
     <DetailPage
       backId="entryBack"
       id="entryPage"
-      backTo={returnPath ?? `/${encodeURIComponent(owner)}`}
+      backTo={returnPath ?? userPath(owner)}
       backLabel={
         returnPath?.split('?')[0] === analyticsPath(owner)
           ? t('backToAnalytics')

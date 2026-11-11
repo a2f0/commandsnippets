@@ -38,7 +38,10 @@ describe('TagSearchField', () => {
     renderField().unmount();
     renderField().unmount();
     act(() => {
-      store.setAppMode(appMode.entryEditor);
+      store.sendEditorOwnership({
+        type: 'open',
+        editor: {id: Symbol('entry'), mode: appMode.entryEditor},
+      });
       store.setTagSearchString('abc');
     });
 

@@ -1,4 +1,6 @@
+import {expectTypeOf} from 'vitest';
 import {appMode} from '../../../../src/lib/shared';
+import type {AppActions} from '../../../../src/lib/state/appState';
 import {
   type EditorOwner,
   type EditorOwnership,
@@ -18,7 +20,7 @@ const editing = (
   ...others: EditorOwner[]
 ): EditorOwnership => ({status: 'editing', active, others});
 const released = (
-  mode: appMode,
+  mode: appMode.tagsList | appMode.entriesList,
   ...editors: EditorOwner[]
 ): EditorOwnership => ({status: 'released', mode, editors});
 type Case = [string, EditorOwnership, EditorOwnershipEvent, EditorOwnership];
@@ -151,6 +153,19 @@ const cases: Case[] = [
     released(appMode.entriesList, entry),
   ],
 ];
+
+it('allows only list modes when the keyboard is released', () => {
+  type ListMode = appMode.tagsList | appMode.entriesList;
+  expectTypeOf<
+    Extract<EditorOwnership, {status: 'released'}>['mode']
+  >().toEqualTypeOf<ListMode>();
+  expectTypeOf<
+    Extract<EditorOwnershipEvent, {type: 'release'}>['mode']
+  >().toEqualTypeOf<ListMode>();
+  expectTypeOf<
+    Parameters<AppActions['setAppMode']>[0]
+  >().toEqualTypeOf<ListMode>();
+});
 
 it.each(cases)('%s', (_name, state, event, expected) => {
   const before = registeredEditors(state);

@@ -3,10 +3,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import {useTheme} from '@mui/material/styles';
 import {useEffect, useRef, useState} from 'react';
-import {
-  entryEditFields,
-  useEditFieldCycle,
-} from '../../hooks/useEditFieldCycle';
+import {useEditFieldCycle} from '../../hooks/useEditFieldCycle';
 import {useEditorOwnership} from '../../hooks/useEditorOwnership';
 import {useTypedTranslation} from '../../i18n/hooks';
 import {needsScrollingIntoView} from '../../lib/scroll';
@@ -63,7 +60,7 @@ export const EntryForm = ({
     }
   }, [kind, theme]);
 
-  const onFocus = useEditFieldCycle(entryEditFields, owner);
+  useEditFieldCycle(owner);
 
   const handleCancel = () => {
     setBody(initialBody);
@@ -88,7 +85,6 @@ export const EntryForm = ({
       id={id}
       ref={owner.ref}
       onFocusCapture={owner.onFocusCapture}
-      onFocus={onFocus}
       sx={{
         ml: theme => `${theme.main.dragIndicatorWidth}px`,
       }}

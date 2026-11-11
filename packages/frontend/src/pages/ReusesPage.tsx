@@ -6,6 +6,7 @@ import {useTypedTranslation} from '../i18n/hooks';
 import {useOwner, useSession} from '../lib/data/hooks';
 import {useCollectionSync} from '../lib/data/useSync';
 import {Navigate} from '../lib/router/Router';
+import {userPath} from '../lib/router/route';
 
 const ReusesContent = () => {
   useCookieLogout();
@@ -17,7 +18,7 @@ const ReusesContent = () => {
     <DetailPage
       backId="reusesBack"
       id="reusesPage"
-      backTo={`/${encodeURIComponent(session.owner)}?entries=all`}
+      backTo={`${userPath(session.owner)}?entries=all`}
       backLabel={t('entryBack')}
       syncStatus={syncStatus}
     >
@@ -39,11 +40,6 @@ const ReusesContent = () => {
 export const ReusesPage = () => {
   const owner = useOwner();
   if (owner === null || owner.readOnly)
-    return (
-      <Navigate
-        to={owner ? `/${encodeURIComponent(owner.owner)}` : '/'}
-        replace
-      />
-    );
+    return <Navigate to={owner ? userPath(owner.owner) : '/'} replace />;
   return <ReusesContent key={owner.owner} />;
 };

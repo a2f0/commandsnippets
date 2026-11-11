@@ -3,7 +3,10 @@ import {useMounted} from '../../hooks/useMounted';
 import {useSaveError} from '../../hooks/useSaveError';
 import type {ITagJsonApi} from '../../lib/api/responses/types';
 import {useSession} from '../../lib/data/hooks';
-import {isCurrentTagRename} from '../../lib/data/tagRename';
+import {
+  captureTagRenameIdentity,
+  isCurrentTagRename,
+} from '../../lib/data/tagRename';
 import {renameTag} from '../../lib/data/writes';
 import {currentPath} from '../../lib/router/navigation';
 import {useAppState} from '../../lib/state/appState';
@@ -13,7 +16,7 @@ import {TagForm} from './TagForm';
 interface ITagEdit {
   object: ITagJsonApi;
   /** Close this editor after its rename is stored, never a replacement. */
-  handleSaveParent: (renamed: ITagJsonApi) => void;
+  handleSaveParent: () => void;
   /** Follow the stored rename even if the editor was closed meanwhile. */
   handleStoredParent: (renamed: ITagJsonApi) => void;
   handleCancelEditParent: () => void;
@@ -29,7 +32,7 @@ const TagEdit = ({
   const mounted = useMounted();
   const saveError = useSaveError('update tag');
 
-  const handleSave = (tagName: string) => {
+  const handleSave = async (tagName: string) => {
     if (session === null) {
       return;
     }
@@ -39,23 +42,22 @@ const TagEdit = ({
     const sameSession = () =>
       generation === sessionsEndedCount() &&
       useAppState.getState().loggedInUser === session.username;
-    renameTag(session, object.id, tagName)
-      .then(async renamed => {
-        if (renamed === null || !sameSession()) return;
-        // Closing belongs to the saved editor, not the optional route follow-up.
-        if (mounted.current) {
-          handleSaveParent(renamed);
-        }
-        const current = await isCurrentTagRename(
-          session,
-          renamed,
-          object.relationships.user.data.id
-        );
-        if (current && sameSession() && currentPath() === path) {
-          handleStoredParent(renamed);
-        }
-      })
-      .catch(saveError.failed);
+    try {
+      const identity = await captureTagRenameIdentity(session);
+      const renamed = await renameTag(session, object.id, tagName, identity);
+      if (renamed === null) return;
+      // Closing belongs to the saved editor, not the optional route follow-up.
+      if (mounted.current) {
+        handleSaveParent();
+      }
+      if (!sameSession()) return;
+      const current = await isCurrentTagRename(session, renamed, identity);
+      if (current && sameSession() && currentPath() === path) {
+        handleStoredParent(renamed);
+      }
+    } catch (error) {
+      saveError.failed(error);
+    }
   };
 
   return (

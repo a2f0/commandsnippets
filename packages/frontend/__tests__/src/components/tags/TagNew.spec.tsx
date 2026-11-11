@@ -1,12 +1,12 @@
 import {ThemeProvider} from '@mui/material/styles';
-import {act, fireEvent, render, waitFor} from '@testing-library/react';
+import {act, cleanup, fireEvent, render, waitFor} from '@testing-library/react';
 import invariant from 'invariant';
 import {I18nextProvider} from 'react-i18next';
 import {vi} from 'vitest';
 import {TagNew} from '../../../../src/components/tags/TagNew';
 import {i18n} from '../../../../src/i18n/i18n';
 import {InvalidWriteError} from '../../../../src/lib/data/writes';
-import {activeTagEditField, appMode} from '../../../../src/lib/shared';
+
 import {darkTheme} from '../../../../src/theme/themes';
 import {signIn, store} from '../../../util/signIn';
 import {tag} from '../../../util/storeFixtures';
@@ -22,12 +22,12 @@ beforeEach(() => {
   signIn();
   createTag.mockResolvedValue(tag('5', {name: 'fresh'}));
   // As File > New Tag opens the form.
-  act(() => {
-    store.setAppMode(appMode.tagEditor);
-    store.setTagNew('top');
-  });
+  act(() => store.setTagNew('top'));
 });
-afterEach(() => createTag.mockReset());
+afterEach(() => {
+  cleanup();
+  createTag.mockReset();
+});
 
 function renderForm() {
   return render(
@@ -80,13 +80,10 @@ describe('TagNew', () => {
       });
 
     tab();
-    expect(store.activeTagEditField).toBe(activeTagEditField.save);
     expect(document.activeElement).toBe(byId('tagNewTopSave'));
     tab();
-    expect(store.activeTagEditField).toBe(activeTagEditField.cancel);
     expect(document.activeElement).toBe(byId('tagNewTopCancel'));
     tab();
-    expect(store.activeTagEditField).toBe(activeTagEditField.name);
     expect(document.activeElement).toBe(byId('tagNewTopTextField'));
   });
 
@@ -138,9 +135,12 @@ describe('TagNew', () => {
 
   it('closes with the next form to open at its name', () => {
     const {unmount} = renderForm();
+    fireEvent.keyDown(byId('tagNewTopTextField'), {key: 'Tab', code: 'Tab'});
+    expect(document.activeElement).toBe(byId('tagNewTopSave'));
 
     unmount();
 
-    expect(store.activeTagEditField).toBe(activeTagEditField.name);
+    renderForm();
+    expect(document.activeElement).toBe(byId('tagNewTopTextField'));
   });
 });
