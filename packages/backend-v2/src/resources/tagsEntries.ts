@@ -9,6 +9,7 @@ import {type TagTextEntry, tagsEntries, type User} from '../db/schema';
 import type {AppEnv} from '../env';
 import {methodNotAllowed} from '../lib/errors';
 import {parseResource} from '../lib/jsonapi/request';
+import {requireSql} from '../lib/sqlConditions';
 import {versionOf} from './dataVersions';
 import {changedMeanwhile, clientUpdated, retryWrite} from './lww';
 import {tagEntryOrdering} from './orderings';
@@ -63,9 +64,11 @@ tagEntryRoutes.post('/reorder', c =>
     ...tagTextEntryResource,
     ...tagEntryOrdering,
     // A tag's junctions are of its version: one of another is no row here.
-    ranked: and(
-      tagEntryOrdering.ranked,
-      eq(tagsEntries.version, versionOf(c, requireUser(c)))
+    ranked: requireSql(
+      and(
+        tagEntryOrdering.ranked,
+        eq(tagsEntries.version, versionOf(c, requireUser(c)))
+      )
     ),
   })
 );
