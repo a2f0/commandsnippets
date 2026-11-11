@@ -47,7 +47,8 @@ Bun reads only there:
   run theirs (the WebDriver and ffmpeg binaries, esbuild, workerd). This list
   replaces Bun's default allowlist for every package.
   - `msw`'s would rewrite `public/mockServiceWorker.js`; regenerate that with
-    `bunx msw init public` after upgrading msw.
+    `bunx msw init public --no-save` after upgrading msw; its directory is
+    already recorded in this package's manifest.
 - **`overrides`:** the root `package.json` pins fixed versions of indirect
   dependencies that `bun audit` flags; see
   [dependency maintenance](../../docs/dependencies.md) for those and for

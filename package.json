@@ -33,19 +33,19 @@
     "check": "agent-tool run-group scripts/testing/verify.json"
   },
   "devDependencies": {
-    "@a2f0/agent-tool": "0.1.51",
-    "@biomejs/biome": "2.6.4",
+    "@a2f0/agent-tool": "0.1.53",
+    "@biomejs/biome": "2.6.6",
     "@commitlint/cli": "21.2.4",
     "@commitlint/config-conventional": "21.2.4",
     "@ls-lint/ls-lint": "2.3.2",
     "@tsconfig/strictest": "2.0.8",
     "@types/bun": "1.4.4",
-    "knip": "6.44.1",
+    "knip": "6.45.0",
     "markdownlint-cli2": "0.24.0",
     "typescript": "7.0.2"
   },
   "overrides": {
-    "@puppeteer/browsers": "3.2.6",
+    "@puppeteer/browsers": "3.2.7",
     "serialize-javascript": "7.1.4"
   },
   "trustedDependencies": [

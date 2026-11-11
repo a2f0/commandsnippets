@@ -82,7 +82,7 @@ describe('Infinite reuse history', () => {
   for (const scope of ['all', 'entry']) {
     it(`loads ${scope} reuses by scrolling, without moving existing rows or repeating pages`, async () => {
       if (scope === 'entry') {
-        await $('#entryReuses a').click();
+        await $('#entryReuses > li:first-child a').click();
         await $('#entryPage').waitForDisplayed();
         await browser.waitUntil(async () => (await rendered()) === 50);
       }

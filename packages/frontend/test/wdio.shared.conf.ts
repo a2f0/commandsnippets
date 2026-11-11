@@ -1,6 +1,9 @@
+import ffmpeg from '@ffmpeg-installer/ffmpeg';
 import type {Capabilities} from '@wdio/types';
-import video from 'wdio-video-reporter';
+import video from '@wdio/video-reporter';
 import type {HttpMethod} from '../src/msw/requestCounter';
+
+const videoRenderTimeout = 30000;
 
 // Define LogEntry type to match webdriver's actual type
 type LogEntry = {
@@ -166,7 +169,7 @@ function addClickCommands(browser: Browser): void {
       await this.waitForClickable();
       await this.click({button: 'right'});
     },
-    true
+    {attachToElement: true}
   );
   browser.addCommand(
     'waitAndLeftClick',
@@ -174,7 +177,7 @@ function addClickCommands(browser: Browser): void {
       await this.waitForClickable();
       await this.click();
     },
-    true
+    {attachToElement: true}
   );
 }
 
@@ -225,15 +228,18 @@ export const config: WebdriverIO.Config = {
   connectionRetryTimeout: 90000,
   connectionRetryCount: 3,
   framework: 'mocha',
+  // Let the reporter finish within the existing encoder budget before syncing.
+  reporterSyncTimeout: videoRenderTimeout + 1000,
   reporters: [
     'dot',
     'spec',
     [
       video,
       {
+        ffmpegPath: ffmpeg.path,
         saveAllVideos: false,
         videoSlowdownMultiplier: 3,
-        videoRenderTimeout: 30000,
+        videoRenderTimeout,
       },
     ],
   ],
@@ -246,7 +252,7 @@ export const config: WebdriverIO.Config = {
   before: async (
     _capabilities:
       | Capabilities.RequestedStandaloneCapabilities
-      | Capabilities.RequestedMultiremoteCapabilities,
+      | Capabilities.RequestedMultiRemoteCapabilities,
     _specs: string[],
     browser
   ) => {

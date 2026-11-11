@@ -9,24 +9,20 @@ const STORES = ['tags', 'entries', 'junctions', 'cursors'];
  * one).
  */
 function countRows(): Promise<Record<string, number>> {
-  return browser.executeAsync(
-    (
-      name: string,
-      stores: string[],
-      done: (counts: Record<string, number>) => void
-    ) => {
-      indexedDB.databases().then(databases => {
-        if (!databases.some(database => database.name === name)) {
-          done({});
-          return;
-        }
+  return browser.execute(
+    async (name: string, stores: string[]) => {
+      const databases = await indexedDB.databases();
+      if (!databases.some(database => database.name === name)) {
+        return {};
+      }
+      return new Promise<Record<string, number>>(resolve => {
         const request = indexedDB.open(name);
-        request.onerror = () => done({});
+        request.onerror = () => resolve({});
         request.onsuccess = () => {
           const db = request.result;
           if (stores.some(store => !db.objectStoreNames.contains(store))) {
             db.close();
-            done({});
+            resolve({});
             return;
           }
           const transaction = db.transaction(stores, 'readonly');
@@ -39,7 +35,7 @@ function countRows(): Promise<Record<string, number>> {
           }
           transaction.oncomplete = () => {
             db.close();
-            done(counts);
+            resolve(counts);
           };
         };
       });

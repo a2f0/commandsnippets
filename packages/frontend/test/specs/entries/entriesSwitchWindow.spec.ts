@@ -1,3 +1,4 @@
+import invariant from 'invariant';
 import {BasePage} from '../../pageobjects/base';
 
 describe('Tab Switching Behavior', () => {
@@ -20,15 +21,30 @@ describe('Tab Switching Behavior', () => {
     // Simulate that we have an editing state by checking if entry search is available
     await expect(BasePage.entrySearch).toBeExisting();
 
-    // Test window switching behavior - simplified to focus on core functionality
-    await browser.newWindow('https://www.google.com/');
+    // BiDi commands keep their context; activate tabs to exercise real visibility.
+    const app = (await browser.browsingContexts()).find(page =>
+      page.url.startsWith('http://localhost:8081/')
+    );
+    invariant(app, 'the app browsing context should exist');
+    const google = await browser.newWindow('https://www.google.com/', {
+      type: 'tab',
+    });
+    invariant('activate' in google, 'the new tab should be a BiDi context');
 
-    // Switch to Google window (URL may contain query params)
-    await browser.switchWindow('www.google.com');
-    await expect(browser).toHaveUrl(/^https:\/\/www\.google\.com/);
+    // Switch to Google window (URL may contain query params).
+    await google.activate();
+    await expect(google).toHaveUrl(/^https:\/\/www\.google\.com/);
+    await browser.waitUntil(
+      async () =>
+        (await app.execute(() => document.visibilityState)) === 'hidden'
+    );
 
     // Switch back to our app
-    await browser.switchWindow('http://localhost:8081');
+    await app.activate();
+    await browser.waitUntil(
+      async () =>
+        (await app.execute(() => document.visibilityState)) === 'visible'
+    );
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
     await expect(BasePage.tagsEntriesList).toBeDisplayed();
 
@@ -49,9 +65,9 @@ describe('Tab Switching Behavior', () => {
     await expect(BasePage.entrySearch).toBeExisting();
 
     // Test one more window switch to verify state persistence
-    await browser.switchWindow('google.com');
-    await expect(browser).toHaveUrl(/^https:\/\/www\.google\.com/);
-    await browser.switchWindow('http://localhost:8081');
+    await google.activate();
+    await expect(google).toHaveUrl(/^https:\/\/www\.google\.com/);
+    await app.activate();
     await expect(browser).toHaveUrl('http://localhost:8081/test/test-tag-1');
 
     // Verify app state persists across window switches
@@ -60,5 +76,6 @@ describe('Tab Switching Behavior', () => {
     await expect(BasePage.entrySearch).toBeExisting();
 
     expect(browser.currentTestErrors).toHaveLength(0);
+    await google.closeWindow();
   });
 });

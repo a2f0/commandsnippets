@@ -6,7 +6,7 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {I18nextProvider} from 'react-i18next';
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it, vi} from 'vitest';
 
 import packageJson from '../../../../../package.json';
 import {i18n} from '../../../../../src/i18n/i18n';
@@ -48,19 +48,24 @@ describe('Help Menu', () => {
   });
 });
 
-const renderDialog = () =>
-  render(
-    <I18nextProvider i18n={i18n}>
-      <AboutDialog dialogOpen={true} closeDialog={() => {}} />
-    </I18nextProvider>
+const renderDialog = async () =>
+  act(async () =>
+    render(
+      <I18nextProvider i18n={i18n}>
+        <AboutDialog dialogOpen={true} closeDialog={() => {}} />
+      </I18nextProvider>
+    )
   );
 
 describe('AboutDialog', () => {
-  beforeEach(() => useApiVersion.setState({version: null}));
-
-  it('shows the app and API versions', () => {
+  beforeEach(() => {
+    useApiVersion.setState({version: null});
+    vi.spyOn(console, 'error');
+  });
+  it('shows the app and API versions', async () => {
     useApiVersion.setState({version: '0.2.2'});
-    renderDialog();
+    await renderDialog();
+    expect(screen.getByRole('button', {name: 'Dismiss'})).toHaveFocus();
     expect(
       screen.getByText(`App version: v${packageJson.version}`)
     ).toBeVisible();
@@ -75,18 +80,21 @@ describe('AboutDialog', () => {
     expect(
       screen.getByText('Command Snippets is operated by Tearleads, LLC.')
     ).toBeVisible();
+    expect(console.error).not.toHaveBeenCalled();
   });
 
-  it('says the API version is unknown until the API answers', () => {
-    renderDialog();
+  it('says the API version is unknown until the API answers', async () => {
+    await renderDialog();
     expect(screen.getByText('API version: unknown')).toBeVisible();
+    expect(console.error).not.toHaveBeenCalled();
   });
 
-  it('follows the API to a new version while open', () => {
+  it('follows the API to a new version while open', async () => {
     useApiVersion.setState({version: '0.2.1'});
-    renderDialog();
+    await renderDialog();
     act(() => useApiVersion.setState({version: '0.2.2'}));
     expect(screen.getByText('API version: v0.2.2')).toBeVisible();
+    expect(console.error).not.toHaveBeenCalled();
   });
 
   it('translates its title', async () => {
@@ -94,11 +102,7 @@ describe('AboutDialog', () => {
       await i18n.changeLanguage('es');
     });
     try {
-      render(
-        <I18nextProvider i18n={i18n}>
-          <AboutDialog dialogOpen={true} closeDialog={() => {}} />
-        </I18nextProvider>
-      );
+      await renderDialog();
       expect(screen.getByText('Acerca de Command Snippets')).toBeVisible();
       expect(
         screen.getByRole('link', {name: 'Términos del servicio'})
@@ -108,5 +112,6 @@ describe('AboutDialog', () => {
         await i18n.changeLanguage('en');
       });
     }
+    expect(console.error).not.toHaveBeenCalled();
   });
 });
