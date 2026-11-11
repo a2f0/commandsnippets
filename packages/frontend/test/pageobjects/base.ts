@@ -226,7 +226,7 @@ class Base {
    * Returns all tagsEntries elements. This is a WebdriverIO array-like object.
    */
   get tagsEntries(): ReturnType<WebdriverIO.Browser['$$']> {
-    return $$('div[id^="tagsEntries-"]');
+    return $$('[data-row-kind="entry"][id^="tagsEntries-"]');
   }
   get tagsEntriesContextMenu1(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#tagsEntriesContextMenu-1');
