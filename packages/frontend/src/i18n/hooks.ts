@@ -12,7 +12,9 @@ export function useTypedTranslation<NS extends NamespaceKeys = 'common'>(
   namespace?: NS
 ) {
   const {t, i18n, ready} = useTranslationBase(namespace);
-  const typedT: TypedTFunction<NS> = (key, options) => t(key, options ?? {});
+  // Our key map supplies namespace checking; i18next has no resource augmentation.
+  const typedT: TypedTFunction<NS> = (key, options) =>
+    t<string, Record<string, unknown>, string>(key, options ?? {});
   return {t: typedT, i18n, ready};
 }
 

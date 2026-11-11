@@ -92,7 +92,7 @@ peer dependency):
 ```json
 "dependencies": {
   "@commandsnippets/api-shared": "workspace:*",
-  "zod": "^4.6.5"
+  "zod": "4.6.7"
 }
 ```
 

@@ -134,23 +134,33 @@ describe('public user pages', () => {
   });
 
   it('removes cached entries when hidden, and reloads historical rows when their tag becomes public', async () => {
+    const errors = vi.spyOn(console, 'error');
     await publish();
     renderAppAt('/test?entries=all');
     const subject = 'entry-1-subject';
     expect(await screen.findByText(subject)).toBeInTheDocument();
     const session = publicSyncSession(TEST_USER);
-    await apiClient.forVersion(1).setTagPublic('1', false);
-    await act(async () => session.sync.syncAll());
+    await act(async () => {
+      await apiClient.forVersion(1).setTagPublic('1', false);
+      await session.sync.syncAll();
+    });
     await waitFor(() => expect(screen.queryByText(subject)).toBeNull());
-    expect(
-      await session.db.entries.where('owner').equals(TEST_USER).count()
-    ).toBe(0);
-    await apiClient.forVersion(1).setTagPublic('1', true);
-    await act(async () => session.sync.syncAll());
+    await act(async () => {
+      expect(
+        await session.db.entries.where('owner').equals(TEST_USER).count()
+      ).toBe(0);
+    });
+    await act(async () => {
+      await apiClient.forVersion(1).setTagPublic('1', true);
+      await session.sync.syncAll();
+    });
     expect(await screen.findByText(subject)).toBeInTheDocument();
-    await apiClient.forVersion(1).setEntryPublic('1', false);
-    await act(async () => session.sync.syncAll());
+    await act(async () => {
+      await apiClient.forVersion(1).setEntryPublic('1', false);
+      await session.sync.syncAll();
+    });
     await waitFor(() => expect(screen.queryByText(subject)).toBeNull());
+    expect(errors).not.toHaveBeenCalled();
   });
 
   it('isolates full and public data for the same owner, and rejects writes to public sessions', async () => {

@@ -25,9 +25,8 @@ const config: KnipConfig = {
       ],
       project: ['src/**/*.{ts,tsx}', '__tests__/**/*.{ts,tsx}', 'test/**/*.ts'],
       // WebdriverIO loads its runner, framework, reporters and their types
-      // from names in the config, and the video reporter finds ffmpeg itself.
+      // from names in the config.
       ignoreDependencies: [
-        '@ffmpeg-installer/ffmpeg',
         '@types/mocha',
         '@wdio/dot-reporter',
         '@wdio/local-runner',

@@ -32,12 +32,10 @@ ls:
     .spec.ts: camelcase | pascalcase
     .spec.tsx: camelcase | pascalcase
 
-  # WebdriverIO: one conf per mode, and kebab-case module declarations named
-  # for the packages they type.
+  # WebdriverIO: one conf per mode.
   packages/frontend/test:
     .dir: camelcase
     .ts: camelcase
-    .d.ts: kebabcase
     .shared.conf.ts: regex:wdio
     .headless.conf.ts: regex:wdio
     .json: camelcase

@@ -2,9 +2,9 @@
 
 name: Frontend CI
 # Pull requests run this through `CI` (ci.yml, the required `CI gate`); pushes to
-# the long-lived branches rerun the checks. The static checks, the unit suite and
-# the WebdriverIO suite are separate jobs, so they run in parallel; the caller
-# sees their combined result.
+# the long-lived branches rerun the checks. Static checks, units, browser
+# acquisition and WebdriverIO run independently; the caller sees their combined
+# result, without a download failure preventing the app specs from starting.
 on:
   workflow_dispatch:
   workflow_call:
@@ -22,6 +22,7 @@ on:
       - 'package.json'
       - 'packages/frontend/**'
       - 'packages/api-shared/**'
+      - 'scripts/testing/runBrowserAcquisition.sh'
       - 'scripts/testing/runUnitTests.sh'
       - 'scripts/testing/runWebdriverTests.sh'
       - '.github/actions/setup/**'
@@ -50,6 +51,17 @@ jobs:
       - uses: ./.github/actions/setup
       - name: Unit tests
         run: ../../scripts/testing/runUnitTests.sh
+
+  browser-acquisition:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: packages/frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - name: Browser download (cold and warm)
+        run: ../../scripts/testing/runBrowserAcquisition.sh
 
   webdriver:
     # Pinned: on ubuntu-26.04 (ubuntu-latest since November 2026) every wdio

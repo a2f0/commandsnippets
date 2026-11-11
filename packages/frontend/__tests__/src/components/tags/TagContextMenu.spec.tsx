@@ -1,5 +1,6 @@
 import {ThemeProvider} from '@mui/material/styles';
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -42,6 +43,10 @@ const Row = ({deleteTag}: {deleteTag: () => void}) => {
 };
 
 describe('TagContextMenu', () => {
+  beforeEach(() => {
+    vi.spyOn(console, 'error');
+  });
+
   it("deletes with the row's latest handler, not the one it mounted with", async () => {
     const first = vi.fn();
     const latest = vi.fn();
@@ -51,11 +56,17 @@ describe('TagContextMenu', () => {
     rerender(<Row deleteTag={latest} />);
 
     fireEvent.click(screen.getByRole('button', {name: 'open'}));
-    fireEvent.click(await screen.findByRole('menuitem', {name: 'Delete Tag'}));
+    const deleteItem = await screen.findByRole('menuitem', {
+      name: 'Delete Tag',
+    });
+    await act(async () => {
+      fireEvent.click(deleteItem);
+    });
     fireEvent.click(await screen.findByRole('button', {name: 'Delete'}));
 
     expect(latest).toHaveBeenCalledOnce();
     expect(first).not.toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
   });
 
   it('closes the delete dialog on Escape without deleting', async () => {
@@ -63,11 +74,17 @@ describe('TagContextMenu', () => {
     render(<Row deleteTag={deleteTag} />);
 
     fireEvent.click(screen.getByRole('button', {name: 'open'}));
-    fireEvent.click(await screen.findByRole('menuitem', {name: 'Delete Tag'}));
+    const deleteItem = await screen.findByRole('menuitem', {
+      name: 'Delete Tag',
+    });
+    await act(async () => {
+      fireEvent.click(deleteItem);
+    });
     const dialog = await screen.findByRole('dialog');
     fireEvent.keyDown(dialog, {key: 'Escape'});
 
     await waitForElementToBeRemoved(() => screen.queryByRole('dialog'));
     expect(deleteTag).not.toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
   });
 });

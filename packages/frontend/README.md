@@ -46,8 +46,9 @@ Bun reads only there:
 - **Install scripts:** only the packages in the root's `trustedDependencies`
   run theirs (the WebDriver and ffmpeg binaries, esbuild, workerd). This list
   replaces Bun's default allowlist for every package.
-  - `msw`'s would rewrite `public/mockServiceWorker.js`; regenerate that with
-    `bunx msw init public` after upgrading msw.
+  - `msw`'s would rewrite `public/mockServiceWorker.js`; regenerate it after
+    upgrading msw using the procedure in
+    [dependency maintenance](../../docs/dependencies.md).
 - **`overrides`:** the root `package.json` pins fixed versions of indirect
   dependencies that `bun audit` flags; see
   [dependency maintenance](../../docs/dependencies.md) for those and for

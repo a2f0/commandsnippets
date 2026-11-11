@@ -3,7 +3,15 @@ import {act, render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type React from 'react';
 import {I18nextProvider, useTranslation} from 'react-i18next';
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  expectTypeOf,
+  it,
+  vi,
+} from 'vitest';
 
 import {LanguageSwitcher} from '../../../src/components/LanguageSwitcher';
 import {useTypedTranslation} from '../../../src/i18n/hooks';
@@ -167,6 +175,48 @@ describe('i18n', () => {
     expect(screen.getByText(two)).toBeInTheDocument();
   });
 
+  it('keeps a Spanish million-count label in Spanish', () => {
+    expect(i18n.getFixedT('es', 'tags')('tagCount', {count: 1_000_000})).toBe(
+      '1000000 etiquetas'
+    );
+  });
+
+  it('keeps the typed translator restricted to its namespace keys', () => {
+    type MenuT = ReturnType<typeof useTypedTranslation<'menu'>>['t'];
+    type MenuKey = Parameters<MenuT>[0];
+    expectTypeOf<'logEntry'>().toExtend<MenuKey>();
+    expectTypeOf<'welcome'>().not.toExtend<MenuKey>();
+    expectTypeOf<'logEntry_other'>().not.toExtend<MenuKey>();
+    expectTypeOf<'notATranslation'>().not.toExtend<MenuKey>();
+    expectTypeOf<ReturnType<MenuT>>().toEqualTypeOf<string>();
+  });
+
+  it('keeps interpolated values literal through a language change', async () => {
+    const message = 'A&B <b>x</b> "quoted" /tmp &amp;';
+    const Message = () => {
+      const {t} = useTypedTranslation('common');
+      return (
+        <output data-testid="message">{t('saveFailed', {message})}</output>
+      );
+    };
+    const view = render(
+      <I18nextProvider i18n={i18n}>
+        <Message />
+      </I18nextProvider>
+    );
+    expect(screen.getByTestId('message').textContent).toBe(
+      `Not saved: ${message}`
+    );
+    expect(view.container.querySelector('b')).toBeNull();
+    await act(async () => {
+      await i18n.changeLanguage('es');
+    });
+    expect(screen.getByTestId('message').textContent).toBe(
+      `No guardado: ${message}`
+    );
+    expect(view.container.querySelector('b')).toBeNull();
+  });
+
   it('should handle interpolation correctly', () => {
     // Add a test translation with interpolation
     i18n.addResource('en', 'test', 'greeting', 'Hello {{name}}!');
@@ -302,6 +352,22 @@ describe('i18n as the page loads', () => {
     const loaded = await loadI18n();
     await waitFor(() => expect(loaded.language).toBe('es'));
   });
+
+  it.each([
+    ['es-ES', 'es', 'Bienvenido'],
+    ['fr', 'en', 'Welcome'],
+    ['../../bad', 'en', 'Welcome'],
+  ])(
+    'normalizes saved %s to supported %s',
+    async (saved, language, welcome) => {
+      localStorage.setItem('i18nextLng', saved);
+      const loaded = await loadI18n();
+      await waitFor(() => expect(loaded.isInitialized).toBe(true));
+      expect(loaded.language).toBe(language);
+      expect(loaded.t('welcome')).toBe(welcome);
+      expect(localStorage.getItem('i18nextLng')).toBe(language);
+    }
+  );
 
   it("starts in English with none saved, whatever the browser's", async () => {
     vi.spyOn(navigator, 'language', 'get').mockReturnValue('es-ES');

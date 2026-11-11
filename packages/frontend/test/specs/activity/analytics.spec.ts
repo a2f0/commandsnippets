@@ -1,4 +1,5 @@
-import {$, browser, expect} from '@wdio/globals';
+import {$, $$, browser, expect} from '@wdio/globals';
+import invariant from 'invariant';
 import {BasePage} from '../../pageobjects/base';
 
 describe('Analytics', () => {
@@ -35,12 +36,13 @@ describe('Analytics', () => {
     await $('#view-menu-button').click();
     await $('#view-menu-analytics').click();
     await $('#analyticsPage').waitForDisplayed();
-    await $('#analyticsPage [role="combobox"]').click();
+    // Activity is the first filter; interval and tag are separate comboboxes.
+    const activity = $$('#analyticsPage [role="combobox"]')[0];
+    invariant(activity, 'the activity filter should exist');
+    await activity.click();
     await $('[role="option"][data-value="reused"]').waitForStable();
     await $('[role="option"][data-value="reused"]').click();
-    await expect($('#analyticsPage [role="combobox"]')).toHaveText(
-      'Entries reused'
-    );
+    await expect(activity).toHaveText('Entries reused');
     await $('#analyticsPage svg[role="img"]').waitForDisplayed();
     expect(
       await $('#analyticsPage svg[role="img"] desc').getProperty('textContent')

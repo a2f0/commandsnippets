@@ -40,20 +40,32 @@ does not justify disabling that policy.
 - Upgrade WebdriverIO with every `@wdio/*` runner, framework and reporter, browser
   driver tooling and the video reporter. A permissive peer range cannot replace
   a working browser run.
-- WebdriverIO stays on the latest 9.x group while `wdio-video-reporter` 6.2
-  depends on the 9.x globals, reporters, logger, and types. Revisit 10.x when
-  the reporter supports it, then run the full browser suite and failure-video
-  integration; do not force a mixed runner/reporter major. See the
-  [reporter manifest](https://github.com/webdriverio-community/wdio-video-reporter/blob/v6.2.0/package.json).
+- Use the official `@wdio/video-reporter` with the same WebdriverIO 10.x group,
+  not the community reporter's 9.x dependencies. The
+  [v10 migration](https://webdriver.io/docs/v10-migration) requires promise-based
+  `execute`, explicit custom-command options and held BiDi browsing contexts.
+  Activate tabs to test real visibility; issuing commands on a held context
+  does not activate it. Keep strict selectors enabled and identify the intended
+  element instead of disabling their checks. The ESM-only
+  [video reporter](https://webdriver.io/docs/video-reporter) needs an explicit
+  `ffmpegPath` from the pinned installer and a synchronization deadline beyond
+  its encoding budget. Validate a deliberate real-page failure and decode its
+  nonempty video: passing browser tests or standalone screenshots prove neither
+  reporter completion nor playback. Keep scratch configurations ESM too.
 - MSW 3 uses the [migrated entrypoints](https://mswjs.io/docs/migrations/2.x-to-3.x):
   HTTP exports come from `msw/http` and utilities have individual entrypoints.
   Preserve `onUnhandledFrame` and await `worker.stop()` when adding shutdown.
-  Regenerate `public/mockServiceWorker.js` with the chosen version,
-  then test the HTTP contracts and browser interception on the actual Node and
-  browser runtimes.
-- Keep the backend's `@cloudflare/vitest-plugin`, Wrangler, and Miniflare
-  aligned. Plugin 1.4.6 supports Vitest 5; keep coverage-istanbul on the exact
-  same Vitest release and run both backend coverage gates after changing them.
+  Regenerate `public/mockServiceWorker.js` with the chosen installed version
+  (`bun run agent-tool bun x msw --cwd packages/frontend -- init public --no-save`
+  from the root), then test the HTTP contracts and browser interception on the
+  actual Node and browser runtimes. The directory is already recorded: without
+  `--no-save`, the CLI copies the worker but prompts for manifest changes and
+  can log `ExitPromptError` in a noninteractive run despite exiting zero.
+- Keep the backend's `@cloudflare/vitest-plugin`, Wrangler, Miniflare and workerd
+  aligned with their owners' declared versions, including owner-required
+  prereleases. Keep coverage-istanbul on the exact same Vitest release and run
+  both backend coverage gates after changing them. Validate native workerd
+  companions as part of that graph, not as independent upgrades.
 - The website's `@astrojs/check` 0.9.12 supports TypeScript 5 and 6. Keep its
   TypeScript 6.0.3 pin until the checker supports TypeScript 7's compiler API.
 - Keep one exact Biome version in the root and every package, and match each
@@ -74,6 +86,18 @@ Puppeteer and serialize-javascript overrides, which the frontend needs and the
 root `package.json` declares, until their documented regression and audit
 conditions allow removal.
 
+For the Puppeteer override, verify the installed `@wdio/utils` resolution rather
+than only the root manifest. Run the frontend's `test:browser-acquisition` on
+macOS and the Ubuntu acquisition job: it forces Chrome and Chromedriver into
+an empty private cache, then reuses the resolved build without archive downloads.
+`BROWSER_ACQUISITION_VERSION` selects an exact build for comparisons; without it,
+the cold run resolves the stable channel once. A normal browser suite can select
+system Chrome and miss the download path. Also test relative redirects and
+refused or malformed redirect targets: errors must settle the original request,
+not escape as unhandled errors or leave accepted partial downloads. Revisit the
+override only when the owner's unconstrained resolution retains those fixes and
+passes these checks, the full browser/video suite and the lockfile audit.
+
 The upstream [Braces advisory](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm)
 and [http-cache-semantics advisory](https://github.com/advisories/GHSA-ch52-4w7c-c8xp)
 were withdrawn. Their still-present package versions do not make those withdrawn
@@ -87,16 +111,6 @@ Known constrained transitive dependencies include:
   It is development tooling; do not expose its development server to untrusted
   websites or force an unsupported esbuild major beneath it. Revisit when
   Drizzle Kit removes or updates that legacy integration.
-- The held Cloudflare test/CLI group pins vulnerable Zod and Undici versions:
-  plugin 1.4.6 uses Zod 4.6.5
-  ([GHSA-mrhx-c7xc-m3w5](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5)),
-  and Miniflare pins Undici 7.29.1, affected by advisories including
-  [GHSA-xjj6-f33q-929c](https://github.com/advisories/GHSA-xjj6-f33q-929c).
-  Application contracts use the separate fixed Zod 4.6.7. Revisit the coupled
-  Cloudflare upgrade after complete remote identity and artifact previews;
-  require Zod at least 4.6.6 and Undici at least 7.30.1 and rerun backend
-  coverage, local Worker/browser checks and the complete audit. Do not infer
-  that an updated shared Undici resolution fixes Miniflare's exact nested pin.
 - markdownlint pins RE2JS 2.8.6, affected by
   [GHSA-gg6h-894w-4m9c](https://github.com/advisories/GHSA-gg6h-894w-4m9c),
   and its math extension limits KaTeX to the vulnerable 0.16 line
@@ -104,7 +118,7 @@ Known constrained transitive dependencies include:
   Revisit when the linter supports RE2JS 2.8.7 and KaTeX 0.18.2 or newer;
   validate the repository Markdown corpus rather than force those dependencies
   independently. Avoid processing untrusted Markdown with the affected tooling.
-- WebdriverIO, Mocha, the video reporter and Workbox constrain Glob/Minimatch
+- Mocha, Archiver's file traversal and Workbox still constrain Glob/Minimatch
   below the fixes for
   [GHSA-3g3m-2fjr-6pw4](https://github.com/advisories/GHSA-3g3m-2fjr-6pw4)
   and [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249).
@@ -117,9 +131,12 @@ Known constrained transitive dependencies include:
   do not treat a current direct dependency as evidence of a clean graph.
 
 For already-resolved transitives whose owners permit the fixed versions,
-`bun update <transitive-name>...` refreshes their lockfile resolutions without
-adding direct dependencies. Inspect every remaining nested resolution and
-manifest diff: exact owner pins remain fixed even when the shared copy updates.
+`bun run agent-tool bun update --resolved <transitive-name>...` refreshes their
+lockfile resolutions without adding direct dependencies. The helper requires
+unchanged manifests and non-target resolutions; if a new child is needed,
+prefer a supported owner upgrade instead. Inspect every remaining nested
+resolution: exact owner pins, such as Miniflare's Undici, remain fixed even
+when the shared copy updates.
 Report unavailable registry audits and release metadata as coverage limits,
 separately from any known unresolved advisories.
 

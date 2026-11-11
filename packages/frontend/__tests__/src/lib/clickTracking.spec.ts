@@ -50,7 +50,7 @@ beforeEach(() => {
   vi.resetModules();
   vi.stubEnv('PROD', true);
   vi.stubGlobal('fetch', send);
-  send.mockClear();
+  send.mockReset().mockResolvedValue(new Response(null, {status: 204}));
   localStorage.removeItem('ct:opt-out');
   document.documentElement.removeAttribute('data-ct-disabled');
   Object.defineProperty(navigator, 'webdriver', {
@@ -123,6 +123,70 @@ describe('deployed browser app click collection', () => {
       expect(String(request.body)).not.toMatch(
         /private|secret|snippet text|token/i
       );
+    }
+  );
+
+  it.each(['finish', 'opt out', 'destroy'])(
+    'sends late clicks once while hidden, then %s both requests',
+    async completion => {
+      const first = Promise.withResolvers<Response>();
+      const second = Promise.withResolvers<Response>();
+      send
+        .mockReturnValueOnce(first.promise)
+        .mockReturnValueOnce(second.promise);
+      await start();
+      invariant(tracker, 'Expected the deployed tracker');
+      trustedClick();
+      const flushing = tracker.flush();
+      try {
+        expect(send).toHaveBeenCalledTimes(1);
+        trustedClick();
+        window.dispatchEvent(new Event('pagehide'));
+        vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+        document.dispatchEvent(new Event('visibilitychange'));
+        expect(send).toHaveBeenCalledTimes(2);
+        const ids = send.mock.calls.map(([endpoint, request]) => {
+          invariant(
+            typeof request?.body === 'string',
+            'Expected a JSON payload'
+          );
+          expect(endpoint).toBe('https://ct.a2f0.net/v1/clicks');
+          expect(request).toMatchObject({
+            keepalive: true,
+            credentials: 'omit',
+            referrerPolicy: 'no-referrer',
+          });
+          const body = JSON.parse(request.body);
+          expect(body.events).toEqual([
+            {
+              id: expect.any(String),
+              timestamp: expect.any(Number),
+              app: 'web-app',
+              page: '/',
+              target: 'button',
+              label: null,
+            },
+          ]);
+          expect(request.body).not.toMatch(
+            /private|secret|snippet text|token/i
+          );
+          expect(request.signal?.aborted).toBe(false);
+          return body.events[0].id;
+        });
+        expect(new Set(ids).size).toBe(2);
+        if (completion === 'opt out') tracker.setOptOut(true);
+        if (completion === 'destroy') tracker.destroy();
+        for (const [, request] of send.mock.calls) {
+          expect(request?.signal?.aborted).toBe(completion !== 'finish');
+        }
+      } finally {
+        // Settle every intercepted fetch, including the hidden-page parallel send.
+        second.resolve(new Response(null, {status: 204}));
+        first.resolve(new Response(null, {status: 204}));
+        await Promise.all([second.promise, first.promise, flushing]);
+      }
+      await tracker.flush();
+      expect(send).toHaveBeenCalledTimes(2);
     }
   );
 

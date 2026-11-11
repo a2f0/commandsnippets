@@ -87,7 +87,7 @@ describe('Dark Mode Toggle', () => {
     // Wait for switch to light mode
     await waitFor(() => {
       const color = window.getComputedStyle(document.body).backgroundColor;
-      return color === LIGHT_MODE_BG_COLOR;
+      expect(color).toBe(LIGHT_MODE_BG_COLOR);
     });
 
     const lightColor = window.getComputedStyle(document.body).backgroundColor;
@@ -107,7 +107,7 @@ describe('Dark Mode Toggle', () => {
     // Wait for switch back to dark mode
     await waitFor(() => {
       const color = window.getComputedStyle(document.body).backgroundColor;
-      return color === DARK_MODE_BG_COLOR;
+      expect(color).toBe(DARK_MODE_BG_COLOR);
     });
 
     const darkColor = window.getComputedStyle(document.body).backgroundColor;
@@ -144,7 +144,7 @@ describe('Dark Mode Toggle', () => {
     // Wait for theme to change
     await waitFor(() => {
       const color = window.getComputedStyle(document.body).backgroundColor;
-      return color === LIGHT_MODE_BG_COLOR;
+      expect(color).toBe(LIGHT_MODE_BG_COLOR);
     });
 
     // Open menu again to check if selection persisted

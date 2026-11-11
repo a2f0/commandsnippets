@@ -57,6 +57,12 @@ current variable and secret names before shipping. The job also checks
 `github.workflow`, because a reusable workflow sees its caller's context, so a
 `CI` run can never deploy.
 
+Frontend browser acquisition runs independently of the application browser specs;
+both jobs are required. For a diagnosed transient download-host failure, retain
+the failed log and rerun the complete applicable workflow once on the same commit.
+Do not bypass acquisition, weaken the cold/warm assertions, or treat a focused
+retry as full recovery. A second failure needs investigation, not a retry loop.
+
 Require the aggregate gate rather than individual path-filtered workflows:
 GitHub leaves checks from skipped workflows pending, while skipped jobs count as
 passing.

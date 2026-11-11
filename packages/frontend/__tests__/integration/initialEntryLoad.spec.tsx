@@ -3,7 +3,7 @@ import {act, fireEvent, screen, waitFor} from '@testing-library/react';
 import invariant from 'invariant';
 import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
-import {apiClient} from '../../src/lib/api/apiClient';
+
 import {VERSION_KEY} from '../../src/lib/db/database';
 import {syncSession} from '../../src/lib/sync/session';
 import {onePage} from '../../src/msw/documents';
@@ -198,22 +198,29 @@ it('shows an interrupted load and retries from the saved cursor', async () => {
 });
 
 it('loads entries with an indeterminate bar when the count is unavailable', async () => {
-  vi.spyOn(console, 'warn').mockImplementation(() => {});
-  vi.spyOn(apiClient, 'getEntryCount').mockRejectedValue(
-    new Error('count unavailable')
-  );
+  const errors = vi.spyOn(console, 'error');
+  const warnings = vi.spyOn(console, 'warn');
+  const countRequests: URL[] = [];
   const first = gate();
+  const firstRequested = gate();
   server.use(
     http.get('*/api/v1/entries', async ({request}) => {
       const url = new URL(request.url);
       const after = afterOf(url);
-      invariant(after, 'the entry loader uses cursor pages');
+      // The sync uses a version-bound client, not the apiClient singleton.
+      if (after === null) {
+        countRequests.push(url);
+        return HttpResponse.json({errors: []}, {status: 503});
+      }
+      firstRequested.release();
       await first.promise;
       return HttpResponse.json(keysetPage(url, entries, after));
     })
   );
   const app = renderAppAt('/test?entries=all');
   try {
+    // Reaching the cursor page proves the count request already settled.
+    await act(async () => firstRequested.promise);
     await screen.findByText('Loading entries…', {}, loadingWait);
     expect(screen.getByRole('progressbar')).not.toHaveAttribute(
       'aria-valuenow'
@@ -225,10 +232,21 @@ it('loads entries with an indeterminate bar when the count is unavailable', asyn
       () => expect(screen.queryByRole('progressbar')).not.toBeInTheDocument(),
       loadingWait
     );
-    expect(await syncSession(TEST_USER).db.entries.count()).toBe(205);
     await act(async () => {
+      expect(await syncSession(TEST_USER).db.entries.count()).toBe(205);
       await syncSession(TEST_USER).sync.syncAll();
     });
+    expect(countRequests.length).toBeGreaterThan(0);
+    for (const url of countRequests) {
+      expect(url.searchParams.get('page[size]')).toBe('1');
+    }
+    expect(warnings.mock.calls).toEqual(
+      countRequests.map(() => [
+        'WARNING: could not count entry pages:',
+        expect.any(Error),
+      ])
+    );
+    expect(errors).not.toHaveBeenCalled();
   } finally {
     first.release();
     app.unmount();
