@@ -171,6 +171,13 @@ const liveTagNames = () =>
   });
 
 describe('Restore Backup', () => {
+  const readVersions = () =>
+    act(async () =>
+      dataVersionListDocumentSchema.parse(
+        await (await fetch(`${API}/user/data_versions`)).json()
+      )
+    );
+
   it.each([false, true])(
     'ignores an older file after choosing another (cancel: %s)',
     async cancel => {
@@ -317,7 +324,7 @@ describe('Restore Backup', () => {
 
     expect(await screen.findByText('Backup restored')).toBeInTheDocument();
     expect(posted).toEqual(['/api/v1/entries', '/api/v1/user/restore']);
-    expect(await session.db.outbox.count()).toBe(0);
+    expect(await act(async () => session.db.outbox.count())).toBe(0);
     // Sent before the restore, which then deleted it with the rest.
     expect(await liveSubjects()).toEqual([
       'restored-subject',
@@ -413,6 +420,7 @@ describe('Restore Backup', () => {
   });
 
   it('restores over the version its copy is of, then holds the new one', async () => {
+    const errors = vi.spyOn(console, 'error');
     await renderEntries();
     const named = recordRequests(({headers}, path) =>
       path === '/api/v1/user/restore'
@@ -427,17 +435,16 @@ describe('Restore Backup', () => {
     expect(await screen.findByText(/as version 2/)).toBeInTheDocument();
     expect(named).toEqual(['1']);
     const {db} = syncSession(TEST_USER);
-    expect(await heldVersion(db, TEST_USER)).toBe(2);
+    expect(await act(async () => heldVersion(db, TEST_USER))).toBe(2);
     // The version before is kept, there to switch back to.
-    const {data} = dataVersionListDocumentSchema.parse(
-      await (await fetch(`${API}/user/data_versions`)).json()
-    );
+    const {data} = await readVersions();
     expect(
       data.map(({attributes}) => [attributes.version, attributes.active])
     ).toEqual([
       [2, true],
       [1, false],
     ]);
+    expect(errors).not.toHaveBeenCalled();
   });
 
   it('restores nothing over a version made active elsewhere since', async () => {
@@ -445,16 +452,14 @@ describe('Restore Backup', () => {
     const user = await chooseFile(fileOf(backup));
     await screen.findByText('Restore this backup?');
     // Another device restores meanwhile: version 2 is active, not 1.
-    await restoreElsewhere(backup);
+    await act(async () => restoreElsewhere(backup));
     const requests = restoreRequests();
 
     await user.click(screen.getByRole('button', {name: 'Restore backup'}));
 
     expect(await screen.findByText('Restore failed')).toBeInTheDocument();
     expect(requests.map(({version}) => version)).toEqual(['1']);
-    const {data} = dataVersionListDocumentSchema.parse(
-      await (await fetch(`${API}/user/data_versions`)).json()
-    );
+    const {data} = await readVersions();
     expect(data).toHaveLength(2);
   });
 
@@ -465,20 +470,18 @@ describe('Restore Backup', () => {
     await screen.findByText('Restore this backup?');
     // Another device restores, and this one syncs it: the data here is of
     // version 2 now, which the warning was not about.
-    await restoreElsewhere(backup);
+    await act(async () => restoreElsewhere(backup));
     const {db, sync} = syncSession(TEST_USER);
     await act(async () => sync.syncAll());
     await work.finish();
-    expect(await heldVersion(db, TEST_USER)).toBe(2);
+    expect(await act(async () => heldVersion(db, TEST_USER))).toBe(2);
     const requests = restoreRequests();
 
     await user.click(screen.getByRole('button', {name: 'Restore backup'}));
 
     expect(await screen.findByText('Restore failed')).toBeInTheDocument();
     expect(requests.map(({version}) => version)).toEqual(['1']);
-    const {data} = dataVersionListDocumentSchema.parse(
-      await (await fetch(`${API}/user/data_versions`)).json()
-    );
+    const {data} = await readVersions();
     expect(data).toHaveLength(2);
   });
 
@@ -487,7 +490,9 @@ describe('Restore Backup', () => {
     await renderEntries();
     const {db} = syncSession(TEST_USER);
     const bindTo = (account: string) =>
-      db.cursors.put({owner: TEST_USER, key: OWNER_ID_KEY, after: account});
+      act(async () =>
+        db.cursors.put({owner: TEST_USER, key: OWNER_ID_KEY, after: account})
+      );
     // Warned about the data of the account it is bound to then...
     await bindTo('99');
     const subjects = await liveSubjects();

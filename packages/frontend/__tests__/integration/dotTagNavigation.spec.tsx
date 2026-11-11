@@ -18,6 +18,7 @@ import {Router} from '../../src/lib/router/Router';
 import {syncSession} from '../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {serveMockApi} from '../util/msw';
+import {observeSyncWork} from '../util/observeSyncWork';
 import {signIn, store, TEST_USER} from '../util/signIn';
 
 serveMockApi();
@@ -27,15 +28,17 @@ const unlisten = browser.listen(() => {
   paths.push(browser.location.pathname + browser.location.search);
 });
 const COOKIE_OPTIONS = {path: '/'};
+let settleSync: () => Promise<void>;
 
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
+  settleSync = observeSyncWork(TEST_USER).finish;
 });
 afterEach(async () => {
   // Stop new reads, then drain queued sync work before the shared account reset.
   cleanup();
-  await act(async () => syncSession(TEST_USER).sync.flush());
+  await settleSync();
   browser.replace('/');
 });
 afterAll(unlisten);
@@ -44,10 +47,6 @@ function byId(id: string): HTMLElement {
   const element = document.getElementById(id);
   invariant(element, `#${id} is rendered`);
   return element;
-}
-
-async function settleSync() {
-  await act(async () => syncSession(TEST_USER).sync.syncAll());
 }
 
 /** Unlike memory history, this reads the URL after native normalization. */
