@@ -315,10 +315,10 @@ describe('TestTextEntriesApi', () => {
     // Test main response
     expect(response.status).toBe(201);
     expect(jsonResponse.data.attributes.subject).toBe(
-      payload.data.attributes.subject
+      payload.data.attributes['subject']
     );
     expect(jsonResponse.data.attributes.body).toBe(
-      payload.data.attributes.body
+      payload.data.attributes['body']
     );
 
     // Test included user data
@@ -393,10 +393,10 @@ describe('TestTextEntriesApi', () => {
     // Test main response
     expect(response.status).toBe(200);
     expect(jsonResponse.data.attributes.subject).toBe(
-      payload.data.attributes.subject
+      payload.data.attributes['subject']
     );
     expect(jsonResponse.data.attributes.body).toBe(
-      payload.data.attributes.body
+      payload.data.attributes['body']
     );
 
     // Test included user data

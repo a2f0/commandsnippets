@@ -210,7 +210,7 @@ function useEntryDrag(
   readOnly: boolean,
   {reorder, tagWith}: ReturnType<typeof useEntryWrites>
 ) {
-  const dropRef = useRef<HTMLDivElement>(null);
+  const dropRef = useRef<HTMLElement>(null);
   const {isDragging, handleRef, preview, hover} = useSortableRow({
     type: ItemTypes.ENTRY,
     id,
@@ -253,12 +253,12 @@ const SubjectLine = ({
 }) => (
   <div>
     <DragHandleContainer
-      role="entryDragHandleContainer"
+      data-testid="entryDragHandleContainer"
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
       <DragHandle
-        role="entryDragHandle"
+        data-testid="entryDragHandle"
         ref={handleRef}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
@@ -277,7 +277,7 @@ const SubjectLine = ({
   </div>
 );
 
-/** The entry as the list shows it, when it is not being edited. */
+/** A self-contained snippet: its subject, body, reuse count and tag metadata. */
 const EntryCard = ({
   entry,
   tagNames,
@@ -310,9 +310,8 @@ const EntryCard = ({
       state.entrySelectedID === id && state.appMode === appMode.entriesList
   );
   return (
-    // biome-ignore lint/a11y/noStaticElementInteractions: Custom role 'entry' is required for tests and drag-and-drop, not a standard ARIA role.
-    <div
-      role="entry"
+    <article
+      data-row-kind="entry"
       ref={dropRef}
       style={{opacity: isDragging ? 0 : 1}}
       onContextMenu={onContextMenu}
@@ -344,7 +343,7 @@ const EntryCard = ({
         </div>
         {tagNames.length > 0 && <MemoizedEntryTags names={tagNames} />}
       </EntryContainer>
-    </div>
+    </article>
   );
 };
 

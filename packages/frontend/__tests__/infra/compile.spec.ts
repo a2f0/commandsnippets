@@ -4,6 +4,7 @@ import {
   appendFileSync,
   cpSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   rmSync,
   statSync,
@@ -25,15 +26,17 @@ import {afterAll, beforeAll, expect, it} from 'vitest';
 // checks the changed declaration is current and an unchanged file's is
 // emitted again.
 const root = fileURLToPath(new URL('../..', import.meta.url));
-const SKIPPED = new Set([
-  'node_modules',
-  '.ts-out',
-  'build',
-  'dist',
-  'dev-dist',
-  'logs',
-  '.wrangler',
-  '_results_',
+// Copy only compiler inputs, never local dotenv/configuration or build output.
+const COMPILE_INPUTS = new Set([
+  'src',
+  'test',
+  '__tests__',
+  'types',
+  'public',
+  'package.json',
+  'tsconfig.json',
+  'tsconfig-base.json',
+  'vite.config.ts',
 ]);
 let dir = '';
 
@@ -64,9 +67,20 @@ beforeAll(() => {
   dir = mkdtempSync(join(tmpdir(), 'app-compile-'));
   cpSync(root, dir, {
     recursive: true,
-    filter: source => !SKIPPED.has(relative(root, source).split('/')[0] ?? ''),
+    filter: source => {
+      const parts = relative(root, source).split('/');
+      return (
+        source === root ||
+        (COMPILE_INPUTS.has(parts[0] ?? '') &&
+          parts.every(part => !part.startsWith('.')))
+      );
+    },
   });
   symlinkSync(join(root, 'node_modules'), join(dir, 'node_modules'), 'dir');
+  // Check the copy before any compile can create its expected .ts-out output.
+  expect(readdirSync(dir).sort()).toEqual(
+    [...COMPILE_INPUTS, 'node_modules'].sort()
+  );
 });
 
 afterAll(() => {

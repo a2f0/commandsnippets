@@ -9,6 +9,7 @@ import {type TagTextEntry, tagsEntries, type User} from '../db/schema';
 import type {AppEnv} from '../env';
 import {methodNotAllowed} from '../lib/errors';
 import {parseResource} from '../lib/jsonapi/request';
+import {requireSql} from '../lib/sqlConditions';
 import {versionOf} from './dataVersions';
 import {changedMeanwhile, clientUpdated, retryWrite} from './lww';
 import {tagEntryOrdering} from './orderings';
@@ -43,8 +44,9 @@ export const listTagEntries = (
   listResponse(c, {
     ...tagTextEntryResource,
     user: owner,
-    publicOnly,
-    ...(publicOnly ? {visibility: publicJunction(owner.id)} : {}),
+    ...(publicOnly
+      ? {publicOnly: true, visibility: publicJunction(owner.id)}
+      : {publicOnly: false}),
     query: tagTextEntryListQuerySchema,
     filters: {
       tag__id: value => eq(tagsEntries.tag_id, value),
@@ -63,9 +65,11 @@ tagEntryRoutes.post('/reorder', c =>
     ...tagTextEntryResource,
     ...tagEntryOrdering,
     // A tag's junctions are of its version: one of another is no row here.
-    ranked: and(
-      tagEntryOrdering.ranked,
-      eq(tagsEntries.version, versionOf(c, requireUser(c)))
+    ranked: requireSql(
+      and(
+        tagEntryOrdering.ranked,
+        eq(tagsEntries.version, versionOf(c, requireUser(c)))
+      )
     ),
   })
 );

@@ -2,6 +2,7 @@ import {
   booleanField,
   charField,
   fail,
+  forward,
   QUERY_ERROR,
   reorderAttributesSchema,
   toErrorObject,
@@ -92,13 +93,22 @@ describe('validation fields', () => {
 
 describe('parseOrThrow', () => {
   it('throws only the first error, with its status and pointer', async () => {
+    const first = z.pipe(
+      z.unknown(),
+      z.transform((_, ctx) =>
+        fail(ctx, 'first', {code: 'not_found', status: 404, pointer: '/data'})
+      )
+    );
     const schema = z.pipe(
       z.unknown(),
-      z.transform((_, ctx) => {
-        fail(ctx, 'first', {code: 'not_found', status: 404, pointer: '/data'});
+      z.transform((value, ctx) => {
+        forward(ctx, first.safeParse(value).error?.issues ?? []);
         return fail(ctx, 'second', QUERY_ERROR);
       })
     );
+    expect(
+      schema.safeParse(1).error?.issues.map(issue => issue.message)
+    ).toEqual(['first', 'second']);
     const error = await apiErrorOf(() => parseOrThrow(schema, 1));
     expect(error.status).toBe(404);
     expect(error.errors).toEqual([

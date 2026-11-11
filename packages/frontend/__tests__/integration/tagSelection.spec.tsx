@@ -6,6 +6,7 @@ import * as saving from '../../src/hooks/useSaveError';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {serveMockApi} from '../util/msw';
 import {observeSyncWork} from '../util/observeSyncWork';
+import {getRows} from '../util/rows';
 import {signIn, store, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
@@ -30,8 +31,7 @@ function byId(id: string): HTMLElement {
 }
 
 const highlighted = () =>
-  screen
-    .getAllByRole('tag')
+  getRows('tag')
     .filter(tag => tag.getAttribute('aria-current') === 'true')
     .map(tag => tag.id);
 
@@ -62,10 +62,8 @@ describe('The tag list', () => {
       };
     });
     const {history} = renderAppAt('/test/test-tag-1');
-    await waitFor(() =>
-      expect(screen.getAllByRole('entry').length).toBeGreaterThan(0)
-    );
-    const entries = screen.getAllByRole('entry').length;
+    await waitFor(() => expect(getRows('entry').length).toBeGreaterThan(0));
+    const entries = getRows('entry').length;
 
     fireEvent.contextMenu(screen.getByText('test-tag-1'));
     fireEvent.click(await waitFor(() => byId('tag-context-menu-1-edit-tag')));
@@ -76,7 +74,7 @@ describe('The tag list', () => {
       expect(history.location.pathname).toBe('/test/renamed')
     );
     expect(await screen.findByText('renamed')).toBeInTheDocument();
-    expect(screen.getAllByRole('entry')).toHaveLength(entries);
+    expect(getRows('entry')).toHaveLength(entries);
     // The save includes the post-persistence route correction, not just its write.
     expect(saves).toHaveLength(1);
     await act(async () => {

@@ -67,7 +67,9 @@ async function decideSignOut(username: string | null): Promise<void> {
     const {db, sync} = syncSession(username);
     await Promise.race([
       sync.flush().catch(() => undefined),
-      new Promise(resolve => setTimeout(resolve, signOutTiming.flushWaitMs)),
+      new Promise(resolve => {
+        setTimeout(resolve, signOutTiming.flushWaitMs);
+      }),
     ]);
     unsent = await queuedCount(db, username);
   } catch (error: unknown) {

@@ -41,10 +41,13 @@ export const listTags = (c: Context<AppEnv>, owner: User, publicOnly = false) =>
   listResponse(c, {
     ...tagResource,
     user: owner,
-    publicOnly,
     ...(publicOnly
-      ? {visibility: publicTag(owner.id), fields: publicTagFields(owner.id)}
-      : {}),
+      ? {
+          publicOnly: true,
+          visibility: publicTag(owner.id),
+          fields: publicTagFields(owner.id),
+        }
+      : {publicOnly: false}),
     query: tagListQuerySchema,
     filters: {
       name: value => eq(tags.name, value),

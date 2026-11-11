@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "hooks:install": "agent-tool hooks install --apply",
-    "lint": "biome check biome.json commitlint.config.mts knip.config.ts package.json scripts terraform/scripts tsconfig.base.json tsconfig.scripts.json && bun run lint:knip && bun run lint:markdown && bun run lint:binary-files",
+    "lint": "biome check --error-on-warnings biome.json commitlint.config.mts knip.config.ts package.json scripts terraform/scripts tsconfig.base.json tsconfig.scripts.json && bun run lint:knip && bun run lint:markdown && bun run lint:binary-files",
     "lint:knip": "knip --workspace .",
     "lint:files": "ls-lint",
     "lint:markdown": "markdownlint-cli2 '**/*.md'",

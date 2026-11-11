@@ -125,7 +125,9 @@ describe.each(['staging', 'production'])('the %s build', mode => {
         if (Date.now() > deadline) {
           throw error;
         }
-        await new Promise(resolve => setTimeout(resolve, 250));
+        await new Promise(resolve => {
+          setTimeout(resolve, 250);
+        });
       }
     }
   }, 180_000);
@@ -133,11 +135,13 @@ describe.each(['staging', 'production'])('the %s build', mode => {
   afterAll(async () => {
     const pid = server?.pid;
     if (server !== undefined && pid !== undefined) {
-      const exited = new Promise(resolve => server?.once('exit', resolve));
+      const exited = new Promise(resolve => {
+        server?.once('exit', resolve);
+      });
       process.kill(-pid, 'SIGTERM');
-      const timeout = new Promise(resolve =>
-        setTimeout(() => resolve('timeout'), 5_000)
-      );
+      const timeout = new Promise(resolve => {
+        setTimeout(() => resolve('timeout'), 5_000);
+      });
       if ((await Promise.race([exited, timeout])) === 'timeout') {
         process.kill(-pid, 'SIGKILL');
       }

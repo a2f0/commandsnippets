@@ -34,7 +34,7 @@ const GoogleCallback = () => {
 };
 
 /**
- * Silence every console method and return a function that renders all the
+ * Observe every console method and return a function that renders all the
  * arguments they were called with (errors with their message, stack and
  * cause) as one string.
  */
@@ -47,11 +47,8 @@ function captureConsole(): () => string {
     vi.spyOn(console, 'trace'),
     vi.spyOn(console, 'warn'),
   ];
-  for (const spy of spies) {
-    spy.mockImplementation(() => {});
-  }
-  const dirSpy = vi.spyOn(console, 'dir').mockImplementation(() => {});
-  const tableSpy = vi.spyOn(console, 'table').mockImplementation(() => {});
+  const dirSpy = vi.spyOn(console, 'dir');
+  const tableSpy = vi.spyOn(console, 'table');
   return () =>
     [...spies, dirSpy, tableSpy]
       .flatMap(spy => spy.mock.calls.flat())
@@ -143,5 +140,82 @@ describe('useOAuth', () => {
     expect(output).toContain('google authentication error:');
     expect(output).toContain('Google login failed: Unauthorized');
     expect(output).not.toContain(code);
+  });
+
+  it.each(['read', 'remove', 'history'] as const)(
+    'reports a callback %s failure and signs out without exchanging the code',
+    async operation => {
+      openCallback('github', `code=${code}&state=xyz`);
+      const failure = new Error(`Callback ${operation} unavailable`);
+      const failingOperation =
+        operation === 'history'
+          ? vi.spyOn(window.history, 'pushState')
+          : vi.spyOn(
+              Storage.prototype,
+              operation === 'read' ? 'getItem' : 'removeItem'
+            );
+      failingOperation.mockImplementationOnce(() => {
+        throw failure;
+      });
+      const login = vi.spyOn(apiClient, 'githubLogin');
+
+      await renderCallback(GithubCallback);
+      await waitFor(() => expect(store.loggedInUser).toBeNull());
+
+      expect(login).not.toHaveBeenCalled();
+      expect(console.error).toHaveBeenCalledWith(
+        'github authentication error:',
+        failure
+      );
+      expect(consoleOutput()).not.toContain(code);
+    }
+  );
+
+  it.each([null, 'mismatch'])(
+    'refuses an invalid stored state: %s',
+    async state => {
+      openCallback('github', `code=${code}&state=xyz`);
+      if (state === null) window.sessionStorage.removeItem('oauth_state');
+      else window.sessionStorage.setItem('oauth_state', state);
+      const login = vi.spyOn(apiClient, 'githubLogin');
+
+      await renderCallback(GithubCallback);
+      expect(store.loggedInUser).toBeNull();
+      expect(login).not.toHaveBeenCalled();
+      expect(console.error).toHaveBeenCalledExactlyOnceWith(
+        'Invalid OAuth state - potential CSRF attack'
+      );
+      expect(consoleOutput()).not.toContain(code);
+    }
+  );
+
+  it('reports a failed sign-out persistence without another unhandled rejection', async () => {
+    openCallback('github', `code=${code}&state=xyz`);
+    const callbackFailure = new Error('Session storage unavailable');
+    const resetFailure = new Error('Sign-out storage unavailable');
+    vi.spyOn(Storage.prototype, 'getItem')
+      .mockImplementationOnce(() => {
+        throw callbackFailure;
+      })
+      .mockImplementationOnce(() => {
+        throw resetFailure;
+      });
+    const login = vi.spyOn(apiClient, 'githubLogin');
+
+    await renderCallback(GithubCallback);
+    await waitFor(() =>
+      expect(console.error).toHaveBeenCalledWith(
+        'Failed to finish github authentication:',
+        resetFailure
+      )
+    );
+
+    expect(store.loggedInUser).toBeNull();
+    expect(login).not.toHaveBeenCalled();
+    expect(console.error).toHaveBeenCalledWith(
+      'github authentication error:',
+      callbackFailure
+    );
+    expect(consoleOutput()).not.toContain(code);
   });
 });

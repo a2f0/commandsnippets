@@ -89,7 +89,9 @@ describe('the dev server', () => {
   afterAll(async () => {
     const pid = server?.pid;
     if (server !== undefined && pid !== undefined) {
-      const exited = new Promise(resolve => server?.once('exit', resolve));
+      const exited = new Promise(resolve => {
+        server?.once('exit', resolve);
+      });
       process.kill(-pid, 'SIGTERM');
       const timeout = Bun.sleep(5_000).then(() => 'timeout');
       if ((await Promise.race([exited, timeout])) === 'timeout') {

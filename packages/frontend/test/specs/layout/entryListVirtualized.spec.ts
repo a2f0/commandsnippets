@@ -99,7 +99,7 @@ describe('A long, virtualized entry list', () => {
     // Drag entry 1 by its handle, scroll to the end of the list mid-drag,
     // and drop it on test-tag-2.
     const kept = await BasePage.dragAndDrop(
-      '#tagsEntries-1 [role="entryDragHandle"]',
+      '#tagsEntries-1 [data-testid="entryDragHandle"]',
       '#tag-2',
       {whileDragging: scrollToEnd}
     );

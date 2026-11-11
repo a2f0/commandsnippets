@@ -83,7 +83,9 @@ describe('TagList', () => {
       fireEvent.dragStart(handle);
       fireEvent.dragEnter(rowAt(tags, 0));
       fireEvent.dragOver(rowAt(tags, 0));
-      await new Promise(res => setTimeout(res, 0));
+      await new Promise(res => {
+        setTimeout(res, 0);
+      });
     });
     const after = expectRows('tag', names(1, 2, 3, 4));
     // Dropping it onto itself, as the screen does in a real drag.

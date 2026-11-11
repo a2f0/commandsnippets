@@ -7,6 +7,7 @@ import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {mockResult} from '../util/mockResult';
 import {serveMockApi, server} from '../util/msw';
 import {observeSyncWork} from '../util/observeSyncWork';
+import {getRows} from '../util/rows';
 import {signIn, store, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
@@ -37,7 +38,9 @@ afterEach(() => {
  * the microtasks of a turn of the event loop have run: before the next turn.
  */
 function settle() {
-  return new Promise(resolve => setImmediate(resolve));
+  return new Promise(resolve => {
+    setImmediate(resolve);
+  });
 }
 
 const syncError = [
@@ -60,9 +63,9 @@ describe('The entry lists', () => {
       store.setEntrySearchString('entry-3');
     });
 
-    await waitFor(() => expect(screen.getAllByRole('entry')).toHaveLength(1));
+    await waitFor(() => expect(getRows('entry')).toHaveLength(1));
     // The search's match is highlighted: the subject spans elements.
-    expect(screen.getByRole('entry')).toHaveTextContent('entry-3-subject');
+    expect(getRows('entry')[0]).toHaveTextContent('entry-3-subject');
     expect(reads).not.toHaveBeenCalled();
     await work.finish();
     expect(work.syncAll).toHaveBeenCalledTimes(1);

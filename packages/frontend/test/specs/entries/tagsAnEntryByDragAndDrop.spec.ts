@@ -12,7 +12,7 @@ describe('Entry Drag and Drop', () => {
 
     // Drag entry 1, by its handle, onto test-tag-2
     await BasePage.dragAndDrop(
-      '#tagsEntries-1 [role="entryDragHandle"]',
+      '#tagsEntries-1 [data-testid="entryDragHandle"]',
       '#tag-2'
     );
     await browser.waitUntil(

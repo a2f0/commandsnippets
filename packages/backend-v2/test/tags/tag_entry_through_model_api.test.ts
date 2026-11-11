@@ -1,4 +1,7 @@
-import {beforeEach, describe, expect, it} from 'vitest';
+import {env} from 'cloudflare:workers';
+import * as orm from 'drizzle-orm';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {tagEntryOrdering} from '../../src/resources/orderings';
 import {
   type Base,
   json,
@@ -115,6 +118,68 @@ describe('TestTagsEntriesApi', () => {
 
     // Verify order was changed
     expect(after2?.order).toBeLessThan(after1?.order as number);
+  });
+
+  it('refuses a missing ranked conjunction before reorder writes', async () => {
+    const tag = await tagFactory({user: base.user1});
+    const first = await tagTextEntryFactory({
+      text_entry: await textEntryFactory({user: base.user1}),
+      tag,
+      user: base.user1,
+      order: 1,
+    });
+    const second = await tagTextEntryFactory({
+      text_entry: await textEntryFactory({user: base.user1}),
+      tag,
+      user: base.user1,
+      order: 2,
+    });
+    const snapshot = () =>
+      Promise.all([
+        refreshJunction(first.id),
+        refreshJunction(second.id),
+        refreshEntry(first.text_entry_id),
+        refreshEntry(second.text_entry_id),
+        refreshTag(tag.id),
+      ]);
+    const before = await snapshot();
+    const logged = vi.spyOn(console, 'error');
+    const prepared = vi.spyOn(env.DB, 'prepare');
+    const missingConjunction = vi.fn(() => {
+      // Authentication already recorded last_active. Observe only the route.
+      prepared.mockClear();
+      return undefined;
+    });
+    const conjunction = orm.and;
+    const and = vi
+      .spyOn(orm, 'and')
+      .mockImplementation((...conditions) =>
+        conditions[0] === tagEntryOrdering.ranked
+          ? missingConjunction()
+          : conjunction(...conditions)
+      );
+
+    const response = await base.user1Client.post(
+      '/api/v1/tags_entries/reorder',
+      reorderDocument('TagTextEntryThroughModel', second.id, first.id)
+    );
+    and.mockRestore();
+
+    expect(missingConjunction).toHaveBeenCalledExactlyOnceWith();
+    expect(
+      prepared.mock.calls.filter(([query]) =>
+        /\b(?:insert|update|delete)\b/i.test(query)
+      ).length
+    ).toBe(0);
+    prepared.mockRestore();
+    expect(await snapshot()).toEqual(before);
+    expect(response.status).toBe(500);
+    expect(await json(response)).toEqual({
+      errors: [
+        {detail: 'A server error occurred.', status: '500', code: 'error'},
+      ],
+    });
+    expect(logged.mock.calls).toEqual([['Error: Expected a SQL condition']]);
   });
 
   it('test_reorder_fails_if_not_top_owner', async () => {

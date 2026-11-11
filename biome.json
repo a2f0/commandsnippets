@@ -33,12 +33,20 @@
         }
       },
       "suspicious": {
+        "noFocusedTests": "error",
+        "noSkippedTests": "error",
         "noImportCycles": {
           "level": "error",
           "options": {
             "ignoreTypes": false
           }
         }
+      },
+      "nursery": {
+        "noFloatingPromises": "error",
+        "noMisusedPromises": "error",
+        "usePromiseRejectErrors": "error",
+        "noPromiseExecutorReturn": "error"
       },
       "complexity": {
         "useLiteralKeys": "off",

@@ -10,6 +10,7 @@ import {
 } from '../../src/lib/metrics/timings';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {serveMockApi} from '../util/msw';
+import {getRows, queryRows} from '../util/rows';
 import {signIn} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
@@ -27,7 +28,7 @@ function watchListsShown(): Array<{target: string; entries: number}> {
   const shown: Array<{target: string; entries: number}> = [];
   const listShown = timings.listShown;
   vi.spyOn(timings, 'listShown').mockImplementation(target => {
-    shown.push({target, entries: screen.queryAllByRole('entry').length});
+    shown.push({target, entries: queryRows('entry').length});
     listShown(target);
   });
   return shown;
@@ -49,7 +50,7 @@ const tagInList = (name: string) =>
   waitFor(() => {
     const tag = screen
       .getAllByText(name)
-      .map(label => label.closest('[role="tag"]'))
+      .map(label => label.closest('[data-row-kind="tag"]'))
       .find(element => element !== null);
     invariant(tag, `${name} is in the tag list`);
     return tag;
@@ -65,7 +66,7 @@ describe('Switching tags', () => {
     // Tag 2 has no entries; tag 1 has some.
     renderAppAt('/test/test-tag-2');
     await screen.findByText('test-tag-1');
-    await waitFor(() => expect(screen.queryAllByRole('entry')).toHaveLength(0));
+    await waitFor(() => expect(queryRows('entry')).toHaveLength(0));
     clearMetrics();
     const listsShown = watchListsShown();
 
@@ -73,7 +74,7 @@ describe('Switching tags', () => {
 
     const interaction: Interaction = await paintedSwitch('test-tag-1');
     expect(interaction.name).toBe('tag switch');
-    const rows = screen.getAllByRole('entry').length;
+    const rows = getRows('entry').length;
     expect(rows).toBeGreaterThan(0);
     const during = timingsOf(metricsSnapshot(), interaction).filter(
       ({start}) => start <= (interaction.painted ?? 0)
@@ -117,9 +118,7 @@ describe('Switching tags', () => {
   it('from all the entries, is timed to the paint of the tag’s own', async () => {
     const {history} = renderAppAt('/test?entries=all');
     await tagInList('test-tag-1');
-    await waitFor(() =>
-      expect(screen.queryAllByRole('entry').length).toBeGreaterThan(0)
-    );
+    await waitFor(() => expect(queryRows('entry').length).toBeGreaterThan(0));
     clearMetrics();
     const listsShown = watchListsShown();
 
@@ -129,7 +128,7 @@ describe('Switching tags', () => {
     await waitFor(() =>
       expect(history.location.pathname).toBe('/test/test-tag-1')
     );
-    const rows = screen.getAllByRole('entry').length;
+    const rows = getRows('entry').length;
     expect(rows).toBeGreaterThan(0);
     // Not with no rows, while its tag was still being read (the tag query
     // answering with the last list's, none): with the tag's own.
