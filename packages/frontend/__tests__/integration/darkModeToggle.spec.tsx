@@ -1,10 +1,17 @@
 import {act, fireEvent, screen, waitFor, within} from '@testing-library/react';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {serveMockApi} from '../util/msw';
-import {signIn} from '../util/signIn';
+import {observeSyncWork} from '../util/observeSyncWork';
+import {signIn, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
 serveMockApi();
+let syncWork: ReturnType<typeof observeSyncWork>;
+// Finish the mounted fixture before MSW removes its handlers and DB reset.
+afterEach(async () => {
+  await syncWork.finish();
+  expect(syncWork.syncAll).toHaveBeenCalledTimes(1);
+});
 
 // Define color constants for better maintainability
 const DARK_MODE_BG_COLOR = 'rgb(18, 18, 18)';
@@ -25,6 +32,7 @@ describe('Dark Mode Toggle', () => {
     assignLoggedInCookie();
 
     signIn();
+    syncWork = observeSyncWork(TEST_USER);
   });
 
   it('successfully toggles from dark to light mode', async () => {

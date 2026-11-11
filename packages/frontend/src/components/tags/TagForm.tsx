@@ -1,6 +1,6 @@
 import Alert from '@mui/material/Alert';
 import Grid from '@mui/material/Grid';
-import {useState} from 'react';
+import {useRef, useState} from 'react';
 import {useEditFieldCycle} from '../../hooks/useEditFieldCycle';
 import {useEditorOwnership} from '../../hooks/useEditorOwnership';
 import {appMode} from '../../lib/shared';
@@ -21,6 +21,8 @@ interface ITagFormProps {
   cycleFields?: boolean;
   /** Why the last save failed (none: it did not). */
   error?: string | null;
+  /** Freeze the submitted draft until its save finishes; Cancel stays available. */
+  saving?: boolean;
 }
 
 /** The name field, Save and Cancel of a new tag's form and a tag's editor. */
@@ -31,8 +33,10 @@ export const TagForm = ({
   onCancel,
   cycleFields = false,
   error = null,
+  saving = false,
 }: ITagFormProps) => {
   const owner = useEditorOwnership(appMode.tagEditor, true);
+  const nameRef = useRef<HTMLInputElement>(null);
   useEditFieldCycle(owner, cycleFields);
   const [name, setName] = useState<string>(initialName);
 
@@ -55,6 +59,10 @@ export const TagForm = ({
       }}
     >
       <StyledTextFieldTags
+        ref={input => {
+          nameRef.current = input;
+          if (input !== null) input.readOnly = saving;
+        }}
         value={name}
         id={ids.name}
         onChange={event => {
@@ -67,11 +75,26 @@ export const TagForm = ({
         </Alert>
       )}
       <Grid container spacing={0}>
-        <Grid sx={{paddingRight: '1px'}} size={{xs: 6}}>
+        <Grid
+          component="fieldset"
+          disabled={saving}
+          aria-busy={saving}
+          sx={{
+            m: 0,
+            p: 0,
+            border: 0,
+            minWidth: 0,
+            paddingRight: '1px',
+            opacity: saving ? 0.5 : 1,
+          }}
+          size={{xs: 6}}
+        >
           <StyledTagButton
             id={ids.save}
             onClick={() => {
               onSave(name);
+              // Keep Escape and Tab in the draft when Save becomes disabled.
+              nameRef.current?.focus();
             }}
           >
             Save

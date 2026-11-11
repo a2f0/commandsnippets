@@ -4,7 +4,10 @@ import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
 import {UserProfileCircle} from '../../../src/components/UserProfileCircle';
 import {apiClient} from '../../../src/lib/api/apiClient';
+import {signedOutDataCleanedUp} from '../../../src/lib/state/appState';
+import * as signOutWarning from '../../../src/lib/state/signOutWarning';
 import {darkTheme} from '../../../src/theme/themes';
+import {mockResult} from '../../util/mockResult';
 import {serveMockApi, server} from '../../util/msw';
 import {store} from '../../util/signIn';
 
@@ -19,6 +22,17 @@ const renderWithContext = (loggedInUser: string | null = 'testuser') => {
 
 // Setup MSW server
 serveMockApi();
+
+async function clickLogout(button: HTMLElement) {
+  const requested = vi.spyOn(signOutWarning, 'requestSignOut');
+  await act(async () => {
+    fireEvent.click(button);
+    expect(requested).toHaveBeenCalledTimes(1);
+    // The menu closes before the queue read, request and database cleanup.
+    await mockResult(requested);
+    await signedOutDataCleanedUp();
+  });
+}
 
 describe('UserProfileCircle', () => {
   beforeEach(() => {
@@ -165,20 +179,17 @@ describe('UserProfileCircle', () => {
 
       // Click logout
       const logoutButton = screen.getByText('Logout');
-      await act(async () => {
-        fireEvent.click(logoutButton);
-      });
+      await clickLogout(logoutButton);
 
       // Verify menu is closed after logout
       await waitFor(() => {
         expect(screen.queryByText('Logout')).not.toBeInTheDocument();
       });
+      expect(store.loggedInUser).toBeNull();
     });
 
     it('handles logout errors gracefully and still closes menu', async () => {
-      const consoleErrorSpy = vi
-        .spyOn(console, 'error')
-        .mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error');
 
       // Override the logout handler to return an error
       server.use(
@@ -200,13 +211,11 @@ describe('UserProfileCircle', () => {
 
       // Click logout
       const logoutButton = screen.getByText('Logout');
-      await act(async () => {
-        fireEvent.click(logoutButton);
-      });
+      await clickLogout(logoutButton);
 
       // Verify error was logged
       await waitFor(() => {
-        expect(consoleErrorSpy).toHaveBeenCalledWith(
+        expect(consoleErrorSpy).toHaveBeenCalledExactlyOnceWith(
           'Logout error:',
           expect.any(Error)
         );
@@ -218,9 +227,7 @@ describe('UserProfileCircle', () => {
     });
 
     it('ensures menu closes via finally block even if logout throws', async () => {
-      const consoleErrorSpy = vi
-        .spyOn(console, 'error')
-        .mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error');
 
       // Make apiClient.logout throw immediately
       const logoutSpy = vi
@@ -240,13 +247,11 @@ describe('UserProfileCircle', () => {
 
       // Click logout
       const logoutButton = screen.getByText('Logout');
-      await act(async () => {
-        fireEvent.click(logoutButton);
-      });
+      await clickLogout(logoutButton);
 
       // Verify error was logged
       await waitFor(() => {
-        expect(consoleErrorSpy).toHaveBeenCalledWith(
+        expect(consoleErrorSpy).toHaveBeenCalledExactlyOnceWith(
           'Logout error:',
           expect.objectContaining({message: 'Network failure'})
         );

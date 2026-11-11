@@ -1,4 +1,4 @@
-import React, {useRef} from 'react';
+import React from 'react';
 import {useMounted} from '../../hooks/useMounted';
 import {useSaveError} from '../../hooks/useSaveError';
 import {useSession} from '../../lib/data/hooks';
@@ -16,25 +16,16 @@ const EntryNew = ({id, tagId}: IEntryNewProps) => {
   const appConfig = useAppConfig();
   const session = useSession();
   const mounted = useMounted();
-  // One save at a time: another click (or Enter) before the entry is stored
-  // and the form closes would store a second entry.
-  const saving = useRef(false);
   const saveError = useSaveError('create entry');
 
   const handleSave = (subject: string, body: string) => {
-    if (session === null || saving.current) {
-      return;
-    }
-    saving.current = true;
-    saveError.clear();
-    createEntry(session, subject, body, tagId)
-      .then(() => {
+    if (session === null) return;
+    void saveError.save(
+      () => createEntry(session, subject, body, tagId),
+      () => {
         if (mounted.current) appConfig.setEntryNew(null);
-      })
-      .catch(saveError.failed)
-      .finally(() => {
-        saving.current = false;
-      });
+      }
+    );
   };
 
   const handleCancel = () => {
@@ -50,6 +41,7 @@ const EntryNew = ({id, tagId}: IEntryNewProps) => {
       onSave={handleSave}
       onCancel={handleCancel}
       error={saveError.error}
+      saving={saveError.saving}
     />
   );
 };

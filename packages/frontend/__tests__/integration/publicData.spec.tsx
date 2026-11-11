@@ -66,9 +66,11 @@ describe('public user pages', () => {
         (await own.db.entries.get(['test', '1']))?.attributes.is_public
       ).toBe(true)
     );
-    await own.sync.flush();
     const publicSession = publicSyncSession(TEST_USER);
-    await publicSession.sync.syncAll();
+    await act(async () => {
+      await own.sync.flush();
+      await publicSession.sync.syncAll();
+    });
     expect(
       await publicSession.db.entries.where('owner').equals(TEST_USER).count()
     ).toBe(1);
@@ -81,8 +83,10 @@ describe('public user pages', () => {
         (await own.db.entries.get(['test', '1']))?.attributes.is_public
       ).toBe(false)
     );
-    await own.sync.flush();
-    await publicSession.sync.syncAll();
+    await act(async () => {
+      await own.sync.flush();
+      await publicSession.sync.syncAll();
+    });
     expect(
       await publicSession.db.entries.where('owner').equals(TEST_USER).count()
     ).toBe(0);

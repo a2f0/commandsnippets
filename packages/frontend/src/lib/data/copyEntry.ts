@@ -76,7 +76,10 @@ export async function copyEntry(
   const captured = await capturing;
   if (session !== null && captured !== null) {
     if (captured.status === 'failed') {
-      console.error('Failed to count the entry copy:', captured.error);
+      console.error(
+        'Failed to capture the entry copy identity:',
+        captured.error
+      );
       return false;
     }
     void reuseEntry(session, entryId, captured.identity).catch(

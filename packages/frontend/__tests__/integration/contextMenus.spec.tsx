@@ -1,15 +1,26 @@
 /** The tags' and entries' context menus: rendered only while open. */
-import {fireEvent, screen, waitFor} from '@testing-library/react';
+import {act, fireEvent, screen, waitFor} from '@testing-library/react';
+import {vi} from 'vitest';
+import * as writes from '../../src/lib/data/writes';
 import {appMode} from '../../src/lib/shared';
 import {syncSession} from '../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
+import {mockResult} from '../util/mockResult';
 import {serveMockApi} from '../util/msw';
+import {observeSyncWork} from '../util/observeSyncWork';
 import {signIn, store, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
 serveMockApi();
+let syncWork: ReturnType<typeof observeSyncWork>;
+// Finish the mounted fixture before MSW removes its handlers and DB reset.
+afterEach(async () => {
+  await syncWork.finish();
+  expect(syncWork.syncAll).toHaveBeenCalledTimes(1);
+});
 beforeEach(() => {
   signIn();
+  syncWork = observeSyncWork(TEST_USER);
   assignLoggedInCookie();
 });
 
@@ -55,6 +66,7 @@ describe('Context menus', () => {
   });
 
   it("offer to make a tag private once it is public, from the tag's own state", async () => {
+    const setTagPublic = vi.spyOn(writes, 'setTagPublic');
     renderAppAt('/test/test-tag-1');
     const tag = await screen.findByText('test-tag-1');
     const own = syncSession(TEST_USER);
@@ -77,5 +89,12 @@ describe('Context menus', () => {
         false
       )
     );
+    expect(setTagPublic).toHaveBeenCalledTimes(2);
+    await act(async () => {
+      await Promise.all([
+        mockResult(setTagPublic, 0),
+        mockResult(setTagPublic, 1),
+      ]);
+    });
   });
 });

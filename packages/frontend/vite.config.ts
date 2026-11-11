@@ -251,6 +251,8 @@ export default defineConfig(({command, mode}) => {
     server: devServer,
     test: {
       globals: true,
+      // Agent-mode minimal reporting must not hide passing-test diagnostics.
+      silent: false,
       environment: 'jsdom',
       setupFiles: ['fake-indexeddb/auto', '__tests__/setup.ts'],
       include: ['__tests__/**/*.{test,spec}.{ts,tsx}'],

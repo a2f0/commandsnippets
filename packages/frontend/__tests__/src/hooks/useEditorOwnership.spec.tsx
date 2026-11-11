@@ -134,12 +134,14 @@ it('a remount cannot inherit the prior form field or registration', () => {
   ).toHaveLength(1);
 });
 
-it('cycles the focused tag form rather than every same-kind form', () => {
+it('cycles the focused tag form rather than every same-kind form', async () => {
   const first = mountForm('tag', 'first');
   const second = mountForm('tag', 'second');
   for (const form of [first, second, first]) {
-    act(() => form.control('Name').focus());
-    fireEvent.keyDown(form.control('Name'), {key: 'Tab', code: 'Tab'});
+    await act(async () => {
+      form.control('Name').focus();
+      fireEvent.keyDown(form.control('Name'), {key: 'Tab', code: 'Tab'});
+    });
     expect(form.control('Save')).toHaveFocus();
   }
 });
@@ -181,16 +183,49 @@ it.each(['entry', 'tag'] as const)(
   }
 );
 
-it('does not steal outside focus when the active form closes', () => {
-  mountForm('entry', 'first');
-  const second = mountForm('tag', 'second');
-  const outside = document.createElement('button');
-  document.body.append(outside);
-  try {
-    act(() => outside.focus());
+it.each([
+  ['entry', false],
+  ['entry', true],
+  ['tag', false],
+  ['tag', true],
+] as const)(
+  'preserves outside focus and native Tab after active close: %s, reverse=%s',
+  async (kind, reverse) => {
+    const user = userEvent.setup();
+    const first = mountForm(kind, 'first');
+    const ownership = useAppState.getState().editorOwnership;
+    invariant(ownership.status === 'editing', 'the first editor owns keyboard');
+    const survivor = ownership.active;
+    const secondKind = kind === 'entry' ? 'tag' : 'entry';
+    const second = mountForm(secondKind, 'second');
+    const outside = render(
+      <div>
+        <button type="button">Outside previous</button>
+        <button type="button">Outside focused</button>
+        <button type="button">Outside next</button>
+      </div>
+    );
+    const focused = outside.getByRole('button', {name: 'Outside focused'});
+    const destination = outside.getByRole('button', {
+      name: reverse ? 'Outside previous' : 'Outside next',
+    });
+    expect(
+      second.control(secondKind === 'entry' ? 'Subject' : 'Name')
+    ).toHaveFocus();
+    await user.click(focused);
+    expect(focused).toHaveFocus();
     second.unmount();
-    expect(outside).toHaveFocus();
-  } finally {
-    outside.remove();
+    expect(focused).toHaveFocus();
+    const expected = {status: 'editing', active: survivor, others: []};
+    const mode = kind === 'entry' ? appMode.entryEditor : appMode.tagEditor;
+    expect(useAppState.getState().editorOwnership).toEqual(expected);
+    expect(useAppState.getState().appMode).toBe(mode);
+    expect(
+      first.control(kind === 'entry' ? 'Subject' : 'Name')
+    ).toBeInTheDocument();
+    await user.tab({shift: reverse});
+    expect(destination).toHaveFocus();
+    expect(useAppState.getState().editorOwnership).toEqual(expected);
+    expect(useAppState.getState().appMode).toBe(mode);
   }
-});
+);

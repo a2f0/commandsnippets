@@ -1,5 +1,5 @@
 import {ThemeProvider} from '@mui/material/styles';
-import {fireEvent, render, screen, waitFor} from '@testing-library/react';
+import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import invariant from 'invariant';
 import {I18nextProvider} from 'react-i18next';
 import {vi} from 'vitest';
@@ -63,7 +63,7 @@ const rectAt = (top: number): DOMRect => ({
 });
 
 describe('EntryEdit', () => {
-  it('puts the subject and body back on Cancel', () => {
+  it('puts the subject and body back on Cancel', async () => {
     const onCancel = vi.fn();
     renderEditor(onCancel);
     fireEvent.change(byId('editSubject'), {target: {value: 'new subject'}});
@@ -72,7 +72,7 @@ describe('EntryEdit', () => {
     fireEvent.click(screen.getByText('Cancel'));
     expect(onCancel).toHaveBeenCalledOnce();
     // What Save sends now: the entry as it was.
-    fireEvent.click(screen.getByText('Save'));
+    await act(async () => fireEvent.click(screen.getByText('Save')));
 
     expect(updateEntry).toHaveBeenCalledWith(
       expect.anything(),
@@ -80,6 +80,35 @@ describe('EntryEdit', () => {
       'the subject',
       'the body'
     );
+  });
+
+  it('does not report a stored edit as unsaved when its close callback throws', async () => {
+    const failure = new Error('close callback failed');
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const onSave = vi.fn().mockImplementationOnce(() => {
+      throw failure;
+    });
+    renderEditor(vi.fn(), onSave);
+    fireEvent.click(screen.getByText('Save'));
+    await waitFor(() =>
+      expect(errors).toHaveBeenCalledExactlyOnceWith(
+        'Failed to finish update entry:',
+        failure
+      )
+    );
+    expect(updateEntry).toHaveBeenCalledOnce();
+    expect(document.getElementById('editError')).toBeNull();
+    expect(screen.getByText('Save')).toBeEnabled();
+    fireEvent.change(byId('editSubject'), {target: {value: 'another edit'}});
+    fireEvent.click(screen.getByText('Save'));
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(2));
+    expect(updateEntry).toHaveBeenLastCalledWith(
+      expect.anything(),
+      '1',
+      'another edit',
+      'the body'
+    );
+    expect(errors).toHaveBeenCalledOnce();
   });
 
   it('stays open with the edit and says why when the save fails', async () => {

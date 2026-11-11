@@ -1,4 +1,11 @@
-import {act, fireEvent, screen, waitFor, within} from '@testing-library/react';
+import {
+  act,
+  cleanup,
+  fireEvent,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import invariant from 'invariant';
 import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
@@ -7,26 +14,53 @@ import {apiClient} from '../../src/lib/api/apiClient';
 import {DataVersionChangedError} from '../../src/lib/api/errors';
 import {readAnalytics} from '../../src/lib/data/analytics';
 import {routeOf} from '../../src/lib/router/route';
-import {syncSession} from '../../src/lib/sync/session';
+import {publicSyncSession, syncSession} from '../../src/lib/sync/session';
 import {setRuntimeEntriesOverride} from '../../src/msw/handlers';
 import {entriesResponse} from '../../test/mocks/entries/entriesResponse';
 import {apiClientMethods} from '../util/apiClientMethods';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
+import {mockResult} from '../util/mockResult';
 import {serveMockApi, server} from '../util/msw';
+import {observeSignOutWork} from '../util/observeSignOutWork';
+import {observeSyncWork} from '../util/observeSyncWork';
 import {signIn, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
 const API = 'http://localhost:9001/api/v1/user/analytics';
 serveMockApi();
+let finishWork: () => Promise<void>;
+let expectedWarnings: unknown[][];
+let expectedCollections: number;
 beforeEach(() => {
+  finishWork = async () => {};
+  expectedWarnings = [];
+  expectedCollections = 1;
   vi.spyOn(console, 'log').mockImplementation(() => {});
-  vi.spyOn(console, 'warn').mockImplementation(() => {});
+  vi.spyOn(console, 'warn');
+});
+afterEach(async () => {
+  cleanup();
+  await finishWork();
+  expect(vi.mocked(console.warn).mock.calls).toEqual(expectedWarnings);
 });
 
 function mount(path = '/test/activity/analytics', signedIn = true) {
   if (signedIn) {
     signIn();
     assignLoggedInCookie();
+    if (path.startsWith('/test')) {
+      const work = observeSyncWork(TEST_USER);
+      const reads = vi.spyOn(syncSession(TEST_USER).sync, 'entryReuses');
+      finishWork = async () => {
+        await work.finish();
+        for (let i = 0; i < reads.mock.results.length; i++) {
+          await act(async () => {
+            await mockResult(reads, i);
+          });
+        }
+        expect(work.syncAll).toHaveBeenCalledTimes(expectedCollections);
+      };
+    }
   }
   return renderAppAt(path).history;
 }
@@ -37,6 +71,7 @@ async function select(label: string, option: string) {
 }
 
 it('opens from View and slices actual reuses by dates and tag, with exact chart values', async () => {
+  expectedCollections = 2;
   mount('/test?entries=all');
   await apiClient.forVersion(1).reuseEntry('1', 'analytics-1');
   await apiClient.forVersion(1).reuseEntry('1', 'analytics-2');
@@ -79,6 +114,12 @@ it('does not fetch invalid ranges, and clears old charts on filter changes and f
   expect(screen.getByRole('alert')).toHaveTextContent('Choose valid dates');
   expect(reads).not.toHaveBeenCalled();
   server.use(http.get(API, () => HttpResponse.error()));
+  expectedWarnings = [
+    [
+      'WARNING: analytics could not be read:',
+      expect.objectContaining({name: 'TypeError', message: 'fetch failed'}),
+    ],
+  ];
   fireEvent.click(screen.getByRole('button', {name: 'Last 30 days'}));
   expect(await screen.findByRole('alert')).toHaveTextContent(
     'Could not load analytics'
@@ -92,6 +133,7 @@ it('does not fetch invalid ranges, and clears old charts on filter changes and f
 });
 
 it('shows all retained history, preserves filters and links, and returns to custom ranges', async () => {
+  expectedCollections = 3;
   const entries = structuredClone(entriesResponse);
   for (const entry of entries.data)
     entry.attributes.date_created = '2001-02-03T12:00:00.000000';
@@ -170,6 +212,8 @@ it('labels combined daily periods in the chart and exact data table', async () =
 
 it('ignores a late response for the previous slice', async () => {
   const gate = Promise.withResolvers<void>();
+  const handled = Promise.withResolvers<void>();
+  const reads = vi.spyOn(apiClientMethods, 'getAnalytics');
   let started = false;
   server.use(
     http.get(API, async ({request}) => {
@@ -178,6 +222,7 @@ it('ignores a late response for the previous slice', async () => {
       if (activity === 'created') {
         started = true;
         await gate.promise;
+        handled.resolve();
       }
       return HttpResponse.json({
         data: {
@@ -204,13 +249,19 @@ it('ignores a late response for the previous slice', async () => {
   expect(
     await screen.findByRole('img', {name: /Activity over time/})
   ).toHaveTextContent('1 event');
-  await act(async () => gate.resolve());
+  await act(async () => {
+    gate.resolve();
+    await handled.promise;
+    await expect(mockResult(reads)).rejects.toMatchObject({name: 'AbortError'});
+  });
+  expect(reads).toHaveBeenCalledTimes(2);
   expect(
     screen.getByRole('img', {name: /Activity over time/})
   ).not.toHaveTextContent('999');
 });
 
 it('resyncs stale analytics after a restore on another device', async () => {
+  expectedCollections = 2;
   mount();
   await screen.findByText(/No activity in this slice/);
   const session = syncSession(TEST_USER);
@@ -232,11 +283,26 @@ it.each([
   ['/someone/activity/analytics', true],
 ])('keeps %s private (signed in: %s)', async (path, signedIn) => {
   const reads = vi.spyOn(apiClientMethods, 'getAnalytics');
+  const owner = signedIn ? 'someone' : 'test';
+  const collections = vi.spyOn(publicSyncSession(owner).sync, 'syncAll');
+  const work = observeSignOutWork();
+  finishWork = work.finish;
+  const errors = vi.spyOn(console, 'error');
   const history = mount(path, signedIn);
   await waitFor(() =>
     expect(history.location.pathname).not.toContain('/activity/analytics')
   );
   expect(reads).not.toHaveBeenCalled();
+  await waitFor(() => expect(collections).toHaveBeenCalledTimes(1));
+  const unavailable = expect.objectContaining({
+    name: 'PublicViewChangedError',
+    message: 'This public view is unavailable.',
+    restart: false,
+  });
+  await work.finish(signedIn ? [unavailable] : []);
+  expect(errors.mock.calls).toEqual(
+    signedIn ? [['ERROR: sync failed:', unavailable]] : []
+  );
 });
 
 it('preserves tags named activity and analytics', () => {
@@ -253,6 +319,7 @@ it('preserves tags named activity and analytics', () => {
 });
 
 it('keeps a date and activity slice in the URL when returning from entry details', async () => {
+  expectedCollections = 3;
   const {from, to} = recentRange(90);
   const history = mount(
     `/test/activity/analytics?activity=reused&interval=day&from=${from}&to=${to}`
@@ -288,6 +355,10 @@ it.each(['abc', '0'])(
 it('refuses a mismatched response version and preserves that error when resync fails', async () => {
   mount();
   await screen.findByText(/No activity in this slice/);
+  await finishWork();
+  // Retire the successful fixture drain before this scenario's deliberate
+  // rejected sync, which is joined and asserted explicitly below.
+  finishWork = async () => {};
   const session = syncSession(TEST_USER);
   const params = {
     activity: 'created',
@@ -306,11 +377,12 @@ it('refuses a mismatched response version and preserves that error when resync f
       top_entries: [],
     },
   });
-  const sync = vi
-    .spyOn(session.sync, 'syncAll')
-    .mockRejectedValue(new Error('Offline'));
+  const offline = new Error('Offline');
+  expectedWarnings = [['WARNING: analytics version sync failed:', offline]];
+  const sync = vi.spyOn(session.sync, 'syncAll').mockRejectedValue(offline);
   await expect(
     readAnalytics(session, params, new AbortController().signal)
   ).rejects.toBeInstanceOf(DataVersionChangedError);
-  expect(sync).toHaveBeenCalled();
+  expect(sync).toHaveBeenCalledTimes(2);
+  await expect(mockResult(sync, 1)).rejects.toBe(offline);
 });

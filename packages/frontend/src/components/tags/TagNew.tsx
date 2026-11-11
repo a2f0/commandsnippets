@@ -21,15 +21,13 @@ const TagNew = ({id}: IProps) => {
   };
 
   const handleSave = (tagName: string) => {
-    if (session === null) {
-      return;
-    }
-    saveError.clear();
-    createTag(session, tagName)
-      .then(() => {
+    if (session === null) return;
+    void saveError.save(
+      () => createTag(session, tagName),
+      () => {
         if (mounted.current) appConfig.setTagNew(null);
-      })
-      .catch(saveError.failed);
+      }
+    );
   };
 
   return (
@@ -44,6 +42,7 @@ const TagNew = ({id}: IProps) => {
       onSave={handleSave}
       onCancel={handleCancel}
       error={saveError.error}
+      saving={saveError.saving}
       cycleFields
     />
   );

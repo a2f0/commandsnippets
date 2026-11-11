@@ -45,7 +45,7 @@ describe('useSession', () => {
     await first.db.open();
 
     // Another tab's sign-out deletes the database (its sign-in opens anew).
-    await Dexie.delete(first.db.name);
+    await act(async () => Dexie.delete(first.db.name));
 
     await waitFor(() => expect(shown.at(-1)).not.toBe(first));
     expect(shown.at(-1)).toBe(syncSession(TEST_USER));

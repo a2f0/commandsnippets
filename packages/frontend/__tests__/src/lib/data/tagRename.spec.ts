@@ -197,9 +197,11 @@ it.each(['before', 'after'])(
         : null;
     await claimData(TEST_USER, testUser.id);
     if (when === 'before') {
-      await expect(
-        renameTag(session, object.id, 'renamed', identity)
-      ).rejects.toBeInstanceOf(AccountChangedError);
+      const refused = renameTag(session, object.id, 'renamed', identity);
+      await expect(refused).rejects.toBeInstanceOf(AccountChangedError);
+      await expect(refused).rejects.toThrow(
+        `${TEST_USER}'s account binding changed meanwhile; try again`
+      );
     } else {
       invariant(renamed, 'the tag was already stored');
       expect(await isCurrentTagRename(session, renamed, identity)).toBe(false);

@@ -1,6 +1,7 @@
 /**
  * The app's routes, by the URL's path: the OAuth callbacks, the admin page, a
- * user's page (`/:user`, `/:user/:tag`), one of their entries'
+ * user's page (`/:user`, `/:user/:tag`, or `/:user/tags/~.` and
+ * `/:user/tags/~..` for dot-only tags), one of their entries'
  * (`/:user/entries/:id`) and the root. Every other first path
  * segment is a username (`routePaths.ts`). Paths match as React Router
  * matched them: decoded, the app's own paths in any case, a trailing slash
@@ -43,9 +44,9 @@ export const userPath = (user: string): string =>
 export const entryPath = (user: string, entryId: string): string =>
   `/${encodeURIComponent(user)}/entries/${encodeURIComponent(entryId)}`;
 
-/** The path of `user`'s tag, preserving each value as one segment. */
+/** Dot-only tags need a segment the browser will not normalize away. */
 export const tagPath = (user: string, tag: string): string =>
-  `/${encodeURIComponent(user)}/${encodeURIComponent(tag)}`;
+  `/${encodeURIComponent(user)}/${tag === '.' || tag === '..' ? `tags/~${tag}` : encodeURIComponent(tag)}`;
 
 export const reusesPath = (user: string): string =>
   `/${encodeURIComponent(user)}/activity/reuses`;
@@ -92,6 +93,14 @@ export function routeOf(pathname: string): Route {
   }
   const [user, tag, ...rest] = segments.slice(1);
   const [entryId] = rest;
+  if (
+    user &&
+    tag === 'tags' &&
+    rest.length === 1 &&
+    (entryId === '~.' || entryId === '~..')
+  ) {
+    return {page: 'user', user, tag: entryId.slice(1)};
+  }
   if (
     user &&
     tag === 'activity' &&

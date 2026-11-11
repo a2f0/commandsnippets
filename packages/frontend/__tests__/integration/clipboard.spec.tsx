@@ -1,19 +1,58 @@
 import {act, cleanup, fireEvent, screen, waitFor} from '@testing-library/react';
 import {vi} from 'vitest';
 import * as copying from '../../src/lib/data/copyEntry';
+import * as identity from '../../src/lib/data/writeIdentity';
 import * as writes from '../../src/lib/data/writes';
 import {appMode} from '../../src/lib/shared';
 import {syncSession} from '../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {mockResult} from '../util/mockResult';
 import {serveMockApi} from '../util/msw';
+import {observeSyncWork} from '../util/observeSyncWork';
 import {signIn, store, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
 serveMockApi();
+let finishWork: (expectedReuseFailures?: unknown[]) => Promise<void>;
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
+
+  const work = observeSyncWork(TEST_USER);
+  const copied = vi.spyOn(copying, 'copyEntry');
+  const captured = vi.spyOn(identity, 'captureWriteIdentity');
+  const reused = vi.spyOn(writes, 'reuseEntry');
+  const history = vi.spyOn(syncSession(TEST_USER).sync, 'entryReuses');
+  let joinedReuses = 0;
+  finishWork = async (expectedReuseFailures = []) => {
+    await act(async () => {
+      await Promise.all(
+        copied.mock.results.map((_, i) => mockResult(copied, i))
+      );
+      // Failed clipboard writes can return before their identity capture.
+      await Promise.all(
+        captured.mock.results.map((_, i) => mockResult(captured, i))
+      );
+      const reuses = reused.mock.results
+        .slice(joinedReuses)
+        .map((_, i) => mockResult(reused, joinedReuses + i));
+      joinedReuses = reused.mock.results.length;
+      const results = await Promise.allSettled(reuses);
+      expect(
+        results.flatMap(result =>
+          result.status === 'rejected' ? [result.reason] : []
+        )
+      ).toEqual(expectedReuseFailures);
+    });
+    await work.finish();
+    // A persisted copy count can start a new history read, independently of sync.
+    for (let i = 0; i < history.mock.results.length; i++) {
+      await act(async () => {
+        await mockResult(history, i);
+      });
+    }
+    expect(work.syncAll).toHaveBeenCalledTimes(1);
+  };
   Object.defineProperty(navigator, 'clipboard', {
     value: {writeText: vi.fn().mockResolvedValue(undefined)},
     configurable: true,
@@ -21,8 +60,11 @@ beforeEach(() => {
 });
 
 const sources = ['body', 'keyboard', 'detail page'] as const;
-// Unmount before the shared setup resets the account and deletes its data.
-afterEach(() => cleanup());
+// Keep handlers and the database until every operation the fixture started ends.
+afterEach(async () => {
+  cleanup();
+  await finishWork();
+});
 type Source = (typeof sources)[number];
 
 async function openSource(source: Source) {
@@ -73,7 +115,7 @@ it.each(sources)(
     vi.spyOn(navigator.clipboard, 'writeText').mockReturnValueOnce(
       pending.promise
     );
-    const failed = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const failed = vi.spyOn(console, 'error');
     const reuse = vi.spyOn(writes, 'reuseEntry');
     await openSource(source);
     startCopy(source);
@@ -172,7 +214,7 @@ it('reports an older successful copy when the newer request fails', async () => 
   vi.spyOn(navigator.clipboard, 'writeText')
     .mockReturnValueOnce(older.promise)
     .mockReturnValueOnce(newer.promise);
-  const failed = vi.spyOn(console, 'error').mockImplementation(() => {});
+  const failed = vi.spyOn(console, 'error');
   await openSource('body');
   startCopy('body');
   act(() => store.setEntrySelectedID('2'));
@@ -205,10 +247,11 @@ it('reports an older successful copy when the newer request fails', async () => 
 });
 
 it('still reports a successful copy when recording its reuse fails', async () => {
-  vi.spyOn(writes, 'reuseEntry').mockRejectedValueOnce(
-    new Error('Storage unavailable')
-  );
-  const failed = vi.spyOn(console, 'error').mockImplementation(() => {});
+  const storageError = new Error('Storage unavailable');
+  const reuse = vi
+    .spyOn(writes, 'reuseEntry')
+    .mockRejectedValueOnce(storageError);
+  const failed = vi.spyOn(console, 'error');
   await openSource('body');
   await act(async () => startCopy('body'));
   await waitFor(() =>
@@ -218,6 +261,8 @@ it('still reports a successful copy when recording its reuse fails', async () =>
     )
   );
   await waitFor(() => expect(store.mostRecentCopyID).toBe('1'));
+  expect(reuse).toHaveBeenCalledTimes(1);
+  await finishWork([storageError]);
 });
 
 it.each(['body', 'keyboard'] as const)(
@@ -256,12 +301,14 @@ it.each(['body', 'keyboard'] as const)(
 
 it('a detail-page completion cannot mark a replacement entry as copied', async () => {
   const copy = vi.spyOn(copying, 'copyEntry');
+  const historyReads = vi.spyOn(syncSession(TEST_USER).sync, 'entryReuses');
   const pending = Promise.withResolvers<void>();
   vi.spyOn(navigator.clipboard, 'writeText').mockReturnValueOnce(
     pending.promise
   );
   const reuse = vi.spyOn(writes, 'reuseEntry');
   const {history} = await openSource('detail page');
+
   startCopy('detail page');
   act(() => history.push('/test/entries/2'));
   await screen.findByText('entry-2-body');
@@ -282,4 +329,9 @@ it('a detail-page completion cannot mark a replacement entry as copied', async (
         ?.attributes.reused_count
     ).toBe(1)
   );
+  await finishWork();
+  expect(historyReads.mock.calls).toEqual([
+    ['1', 1],
+    ['2', 1],
+  ]);
 });

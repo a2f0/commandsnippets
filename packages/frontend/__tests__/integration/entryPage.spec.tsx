@@ -4,23 +4,98 @@
  * first. The reuses are private: its owner sees them, staff their count only,
  * and a public page neither.
  */
-import {act, fireEvent, screen, waitFor, within} from '@testing-library/react';
+import {
+  act,
+  cleanup,
+  fireEvent,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import {HttpResponse, http} from 'msw/http';
 import {vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
+import * as copying from '../../src/lib/data/copyEntry';
+import * as writes from '../../src/lib/data/writes';
+import {signedOutDataCleanedUp} from '../../src/lib/state/appState';
+import {publicSyncSession, syncSession} from '../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
+import {mockResult} from '../util/mockResult';
 import {serveMockApi, server} from '../util/msw';
-import {signIn, store} from '../util/signIn';
+import {observeSignOutWork} from '../util/observeSignOutWork';
+import {observeSyncWork} from '../util/observeSyncWork';
+import {signIn, store, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
 serveMockApi();
+let finishWork: () => Promise<void>;
+let finishCopies: () => Promise<void>;
+let finishHistory: (expectedFailures?: unknown[]) => Promise<void>;
+let expectedCollections: number;
+let expectedErrors: unknown[][];
+let expectedWarnings: unknown[][];
 beforeEach(() => {
+  finishWork = async () => {};
+  finishHistory = async () => {};
+  expectedCollections = 1;
+  expectedErrors = [];
+  expectedWarnings = [];
+  vi.spyOn(console, 'error');
+  vi.spyOn(console, 'warn');
+  const copied = vi.spyOn(copying, 'copyEntry');
+  const reused = vi.spyOn(writes, 'reuseEntry');
+  finishCopies = () =>
+    act(async () => {
+      await Promise.all(
+        copied.mock.results.map((_, i) => mockResult(copied, i))
+      );
+      await Promise.all(
+        reused.mock.results.map((_, i) => mockResult(reused, i))
+      );
+    });
   vi.spyOn(console, 'log').mockImplementation(() => {});
   Object.defineProperty(navigator, 'clipboard', {
     value: {writeText: vi.fn().mockResolvedValue(undefined)},
     configurable: true,
   });
 });
+
+afterEach(async () => {
+  cleanup();
+  await finishCopies();
+  await finishWork();
+  await finishHistory();
+  expect(vi.mocked(console.error).mock.calls).toEqual(expectedErrors);
+  expect(vi.mocked(console.warn).mock.calls).toEqual(expectedWarnings);
+});
+
+function mount(
+  path: string,
+  session = syncSession(TEST_USER),
+  successfulSync = true
+) {
+  if (successfulSync) {
+    const work = observeSyncWork(session);
+    finishWork = async () => {
+      await work.finish();
+      expect(work.syncAll).toHaveBeenCalledTimes(expectedCollections);
+    };
+  }
+  const reads = vi.spyOn(session.sync, 'entryReuses');
+  let joined = 0;
+  finishHistory = async (expectedFailures = []) => {
+    const failures: unknown[] = [];
+    while (joined < reads.mock.results.length) {
+      const promise = mockResult(reads, joined++);
+      await act(async () => {
+        const [result] = await Promise.allSettled([promise]);
+        if (result?.status === 'rejected') failures.push(result.reason);
+      });
+    }
+    expect(failures).toEqual(expectedFailures);
+  };
+  return renderAppAt(path);
+}
 
 const signInHere = () => {
   signIn();
@@ -39,11 +114,12 @@ const field = (key: string) => {
 const reuseList = () => screen.findByRole('list');
 
 it('opens from Get Info, shows the entry and its reuses, and goes back to the list', async () => {
+  expectedCollections = 3;
   signInHere();
   // Two copies recorded before (another device's).
   await apiClient.forVersion(1).reuseEntry('1', 'earlier');
   await apiClient.forVersion(1).reuseEntry('1', 'later');
-  const {history} = renderAppAt('/test/test-tag-1');
+  const {history} = mount('/test/test-tag-1');
 
   fireEvent.contextMenu(await screen.findByText('entry-1-subject'));
   fireEvent.click(await screen.findByRole('menuitem', {name: 'Get Info'}));
@@ -73,7 +149,7 @@ it('opens from Get Info, shows the entry and its reuses, and goes back to the li
 
 it('counts a copy made on the page, which joins its reuses', async () => {
   signInHere();
-  renderAppAt('/test/entries/2');
+  mount('/test/entries/2');
   expect(await screen.findByText('Not reused yet.')).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', {name: 'Copy'}));
@@ -95,7 +171,7 @@ it('loads the next page of an individual entry history with Show more', async ()
     await apiClient.forVersion(1).reuseEntry('1', `copy-${index}`);
   }
   await apiClient.forVersion(1).reuseEntry('2', 'another-entry');
-  renderAppAt('/test/entries/1');
+  mount('/test/entries/1');
   await waitFor(async () =>
     expect(within(await reuseList()).getAllByRole('listitem')).toHaveLength(50)
   );
@@ -109,10 +185,11 @@ it('loads the next page of an individual entry history with Show more', async ()
 });
 
 it("lists a deep link's reuses, and goes back to the user's page", async () => {
+  expectedCollections = 2;
   signInHere();
   await apiClient.forVersion(1).reuseEntry('1', 'first');
   await apiClient.forVersion(1).reuseEntry('1', 'second');
-  const {history} = renderAppAt('/test/entries/1');
+  const {history} = mount('/test/entries/1');
 
   expect(within(await reuseList()).getAllByRole('listitem')).toHaveLength(2);
   // Opened by a link, not from a list: Back goes to the user's page.
@@ -122,7 +199,7 @@ it("lists a deep link's reuses, and goes back to the user's page", async () => {
 
 it('says when there is no such entry', async () => {
   signInHere();
-  renderAppAt('/test/entries/999');
+  mount('/test/entries/999');
   expect(
     await screen.findByText('There is no such entry.')
   ).toBeInTheDocument();
@@ -131,7 +208,7 @@ it('says when there is no such entry', async () => {
 it("shows staff another user's entry and its count, not its reuses", async () => {
   signInHere();
   act(() => store.setIsStaff(true));
-  renderAppAt('/alice/entries/71');
+  mount('/alice/entries/71', syncSession(TEST_USER, 'alice'));
 
   expect(
     await screen.findByRole('heading', {name: 'alices-entry'})
@@ -146,7 +223,7 @@ it('shows a guest a public entry without its reuses', async () => {
   await apiClient.forVersion(1).setTagPublic('1', true);
   await apiClient.forVersion(1).setEntryPublic('1', true);
   await apiClient.forVersion(1).reuseEntry('1', 'private');
-  renderAppAt('/test/entries/1');
+  mount('/test/entries/1', publicSyncSession(TEST_USER));
 
   expect(
     await screen.findByRole('heading', {name: 'entry-1-subject'})
@@ -157,8 +234,9 @@ it('shows a guest a public entry without its reuses', async () => {
 });
 
 it("goes back to the list each entry's page was opened from", async () => {
+  expectedCollections = 5;
   signInHere();
-  const {history} = renderAppAt('/test/test-tag-1');
+  const {history} = mount('/test/test-tag-1');
   fireEvent.contextMenu(await screen.findByText('entry-1-subject'));
   fireEvent.click(await screen.findByRole('menuitem', {name: 'Get Info'}));
   await screen.findByRole('heading', {name: 'entry-1-subject'});
@@ -180,16 +258,29 @@ it('signs out when the login cookie is gone, showing nothing private', async () 
   // Signed in here, but the user has cleared their cookies since.
   signIn();
   assignLoggedInCookie('');
+  const session = syncSession(TEST_USER);
+  const flush = vi.spyOn(session.sync, 'flush');
+  const collection = vi.spyOn(session.sync, 'syncAll');
+  const work = observeSignOutWork();
+  finishWork = work.finish;
   renderAppAt('/test/entries/1');
 
   await waitFor(() => expect(store.loggedInUser).toBeNull());
   expect(screen.queryByRole('heading', {name: 'entry-1-subject'})).toBeNull();
+  await act(() => signedOutDataCleanedUp());
+  const interrupted = expect.objectContaining({name: 'DatabaseClosedError'});
+  await work.finish([interrupted, interrupted]);
+  expect(flush).toHaveBeenCalledTimes(1);
+  expect(collection).toHaveBeenCalledTimes(1);
+  expect(session.db.hasBeenClosed()).toBe(true);
+  expectedErrors = [['ERROR: sync failed:', interrupted]];
+  expectedWarnings = [['Cookie logout occurred.']];
 });
 
 it("shows none of the last entry's reuses on another entry's page", async () => {
   signInHere();
   await apiClient.forVersion(1).reuseEntry('1', 'one');
-  const {history} = renderAppAt('/test/entries/1');
+  const {history} = mount('/test/entries/1');
   expect(within(await reuseList()).getAllByRole('listitem')).toHaveLength(1);
   server.use(
     http.get('http://localhost:9001/api/v1/entry_reuses', () =>
@@ -204,11 +295,20 @@ it("shows none of the last entry's reuses on another entry's page", async () => 
     await screen.findByText('The reuses could not be read.')
   ).toBeInTheDocument();
   expect(document.getElementById('entryReuses')).toBeNull();
+  const failure = expect.objectContaining({
+    name: 'TypeError',
+    message: 'fetch failed',
+  });
+  await finishHistory([failure]);
+  expectedWarnings = [['WARNING: the reuses could not be read:', failure]];
 });
 
 it('reads the reuses again once back online: a copy made offline', async () => {
   signInHere();
-  renderAppAt('/test/entries/2');
+  const collections = vi.spyOn(syncSession(TEST_USER).sync, 'syncAll');
+  const work = observeSignOutWork();
+  finishWork = work.finish;
+  mount('/test/entries/2', syncSession(TEST_USER), false);
   expect(await screen.findByText('Not reused yet.')).toBeInTheDocument();
   // Offline: the copy is counted here, but neither sent nor listed.
   server.use(
@@ -218,10 +318,25 @@ it('reads the reuses again once back online: a copy made offline', async () => {
   await waitFor(() => expect(field('Reused')).toHaveTextContent('1 time'));
   expect(screen.getByText('Not reused yet.')).toBeInTheDocument();
 
+  await finishCopies();
+  const failure = expect.objectContaining({
+    name: 'TypeError',
+    message: 'fetch failed',
+  });
+  await work.finish([failure]);
+  await finishHistory([failure]);
+  expectedWarnings = [
+    ['WARNING: queued writes not sent yet:', failure],
+    ['WARNING: the reuses could not be read:', failure],
+  ];
+
   server.resetHandlers();
   act(() => {
     window.dispatchEvent(new Event('online'));
   });
 
   expect(within(await reuseList()).getAllByRole('listitem')).toHaveLength(1);
+  await work.finish();
+  await finishHistory();
+  expect(collections).toHaveBeenCalledTimes(2);
 });

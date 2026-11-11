@@ -27,6 +27,8 @@ describe('routeOf', () => {
     // A tag named "entries" is still a tag.
     ['/test/activity/reuses', {page: 'reuses', user: 'test'}],
     ['/test/activity/reuses/', {page: 'reuses', user: 'test'}],
+    ['/test/activity/analytics', {page: 'analytics', user: 'test'}],
+    ['/test/activity/analytics/', {page: 'analytics', user: 'test'}],
     ['/test/reuses', {page: 'user', user: 'test', tag: 'reuses'}],
     ['/test/activity', {page: 'user', user: 'test', tag: 'activity'}],
     ['/test/entries', {page: 'user', user: 'test', tag: 'entries'}],
@@ -107,6 +109,80 @@ describe('routeOf', () => {
     expect(url.hash).toBe('');
     expect(routeOf(url.pathname)).toEqual({page: 'user', user, tag});
   });
+
+  it.each(['.', '..'])('round-trips dot tag %s through a native URL', tag => {
+    const url = new URL(tagPath('test', tag), 'https://example.com');
+    expect(routeOf(url.pathname)).toEqual({page: 'user', user: 'test', tag});
+    expect(url.pathname).toBe(`/test/tags/~${tag}`);
+    expect(url.search).toBe('');
+    expect(url.hash).toBe('');
+  });
+
+  it.each([
+    ['/test/tags/~.', 'test', '.'],
+    ['/test/tags/~..///', 'test', '..'],
+    ['/test/%74ags/%7E%2E', 'test', '.'],
+    ['/oauth%2Fgithub/tags/~..', 'oauth/github', '..'],
+    ['/literal%252F/tags/~.', 'literal%2F', '.'],
+    ['/100%/tags/~.', '100%', '.'],
+    ['/%E0%A4/tags/~..', '%E0%A4', '..'],
+  ])('decodes the exact dot-tag extension %s once', (path, user, tag) => {
+    expect(routeOf(new URL(path, 'https://example.com').pathname)).toEqual({
+      page: 'user',
+      user,
+      tag,
+    });
+  });
+
+  it.each([
+    '//tags/~.',
+    '/test/Tags/~.',
+    '/test/tags/~',
+    '/test/tags/~...',
+    '/test/tags/~./extra',
+    '/test/tags//~.',
+    '/test/tags/%257E.',
+    '/test/%2574ags/~.',
+    '/test/tags/%7E%ZZ',
+    '/test/tags/%7E%E0%A4',
+    '/test/tags/~.%2F',
+    '/test/tags/~.%252F',
+  ])('does not widen the dot-tag extension to %s', path => {
+    expect(routeOf(path)).toEqual({page: 'none'});
+  });
+
+  it.each([
+    ['tags', '/test/tags'],
+    ['~.', '/test/~.'],
+    ['~..', '/test/~..'],
+    ['tags/~.', '/test/tags%2F~.'],
+    ['tags/~..', '/test/tags%2F~..'],
+    ['%2e', '/test/%252e'],
+    ['%2e%2e', '/test/%252e%252e'],
+    ['%2F', '/test/%252F'],
+    ['/', '/test/%2F'],
+  ])('preserves the legacy path for literal tag %s', (tag, path) => {
+    expect(tagPath('test', tag)).toBe(path);
+    expect(routeOf(new URL(path, 'https://example.com').pathname)).toEqual({
+      page: 'user',
+      user: 'test',
+      tag,
+    });
+  });
+
+  it.each([
+    ['/test/.', {page: 'user', user: 'test'}],
+    ['/test/%2e', {page: 'user', user: 'test'}],
+    ['/test/..', {page: 'root'}],
+    ['/test/%2E%2e', {page: 'root'}],
+  ])(
+    'does not guess a tag lost to native normalization of %s',
+    (path, route) => {
+      expect(routeOf(new URL(path, 'https://example.com').pathname)).toEqual(
+        route
+      );
+    }
+  );
 
   it("names an entry's page, any id round-tripping", () => {
     expect(entryPath('test', '589')).toBe('/test/entries/589');

@@ -53,13 +53,15 @@ describe('TagNew', () => {
     expect(document.activeElement).toBe(byId('tagNewTopTextField'));
   });
 
-  it('keeps Tab in the form', () => {
+  it('keeps Tab in the form', async () => {
     renderForm();
 
-    const moved = fireEvent.keyDown(byId('tagNewTopTextField'), {
-      key: 'Tab',
-      code: 'Tab',
-    });
+    const moved = await act(async () =>
+      fireEvent.keyDown(byId('tagNewTopTextField'), {
+        key: 'Tab',
+        code: 'Tab',
+      })
+    );
 
     expect(moved).toBe(false);
     expect(byId('tagNewTop')).toContainElement(
@@ -69,21 +71,21 @@ describe('TagNew', () => {
     );
   });
 
-  it('moves Tab from the name to Save, Cancel and back', () => {
+  it('moves Tab from the name to Save, Cancel and back', async () => {
     renderForm();
     const tab = () =>
-      act(() => {
+      act(async () => {
         fireEvent.keyDown(document.activeElement ?? document, {
           key: 'Tab',
           code: 'Tab',
         });
       });
 
-    tab();
+    await tab();
     expect(document.activeElement).toBe(byId('tagNewTopSave'));
-    tab();
+    await tab();
     expect(document.activeElement).toBe(byId('tagNewTopCancel'));
-    tab();
+    await tab();
     expect(document.activeElement).toBe(byId('tagNewTopTextField'));
   });
 

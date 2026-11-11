@@ -7,9 +7,10 @@
 import {act, fireEvent, screen, waitFor, within} from '@testing-library/react';
 import invariant from 'invariant';
 import {vi} from 'vitest';
-import {syncSession} from '../../src/lib/sync/session';
+import {publicSyncSession, syncSession} from '../../src/lib/sync/session';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {recordRequests, serveMockApi} from '../util/msw';
+import {observeSyncWork} from '../util/observeSyncWork';
 import {signIn, store, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
@@ -37,6 +38,7 @@ const writesSent = () =>
 describe("Another user's page", () => {
   it("shows staff that user's data, marked read-only", async () => {
     act(() => store.setIsStaff(true));
+    const work = observeSyncWork(syncSession(TEST_USER, 'alice'));
     const writes = writesSent();
 
     const {history} = renderAppAt('/alice');
@@ -57,11 +59,14 @@ describe("Another user's page", () => {
       expect(await db.tags.get(['alice', '70'])).toBeDefined()
     );
     expect(await db.tags.get([TEST_USER, '70'])).toBeUndefined();
+    await work.finish();
+    expect(work.syncAll).toHaveBeenCalledTimes(1);
     expect(writes).toEqual([]);
   });
 
   it('offers nothing that creates, edits or reorders', async () => {
     act(() => store.setIsStaff(true));
+    const work = observeSyncWork(syncSession(TEST_USER, 'alice'));
     const writes = writesSent();
     renderAppAt('/alice/alices-tag');
     const entry = await screen.findByText('alices-entry');
@@ -107,22 +112,28 @@ describe("Another user's page", () => {
     )) {
       expect(handle).not.toBeVisible();
     }
+    await work.finish();
+    expect(work.syncAll).toHaveBeenCalledTimes(1);
     expect(writes).toEqual([]);
   });
 
   it('keeps non-staff on the requested public page', async () => {
     act(() => store.setIsStaff(false));
+    const work = observeSyncWork(publicSyncSession('alice'));
 
     const {history} = renderAppAt('/alice');
 
     await waitFor(() => expect(history.location.pathname).toBe('/alice'));
     expect(await screen.findByText('Read-only: alice')).toBeInTheDocument();
+    await work.finish();
+    expect(work.syncAll).toHaveBeenCalledTimes(1);
     expect(screen.queryByText('test-tag-1')).toBeNull();
     expect(screen.queryByText('alices-entry')).toBeNull();
   });
 
   it("leaves staff's own page as it was: editable, with no badge", async () => {
     act(() => store.setIsStaff(true));
+    const work = observeSyncWork(syncSession(TEST_USER));
 
     renderAppAt(`/${TEST_USER}`);
 
@@ -133,5 +144,7 @@ describe("Another user's page", () => {
     expect(
       await waitFor(() => byId('file-menu-new-entry'))
     ).toBeInTheDocument();
+    await work.finish();
+    expect(work.syncAll).toHaveBeenCalledTimes(1);
   });
 });

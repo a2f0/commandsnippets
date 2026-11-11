@@ -5,7 +5,7 @@ import {useDocumentKeydown} from './useDocumentKeydown';
 const controlsOf = (root: HTMLDivElement | null) =>
   Array.from(
     root?.querySelectorAll<HTMLElement>(
-      'input, textarea:not([aria-hidden]), button'
+      'input:not(:disabled), textarea:not([aria-hidden]):not(:disabled), button:not(:disabled)'
     ) ?? []
   );
 
@@ -26,6 +26,7 @@ export function useEditFieldCycle(
     const focused = document.activeElement;
     const index =
       focused instanceof HTMLElement ? controls.indexOf(focused) : -1;
+    if (index === -1) return;
     const next = (index + 1) % controls.length;
     controls[next]?.focus();
     event.preventDefault();

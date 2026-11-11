@@ -25,15 +25,13 @@ const EntryEdit = ({
   const saveError = useSaveError('update entry');
 
   const handleSave = (subject: string, body: string) => {
-    if (session === null) {
-      return;
-    }
-    saveError.clear();
-    updateEntry(session, object.id, subject, body)
-      .then(() => {
+    if (session === null) return;
+    void saveError.save(
+      () => updateEntry(session, object.id, subject, body),
+      () => {
         if (mounted.current) handleSaveParent();
-      })
-      .catch(saveError.failed);
+      }
+    );
   };
 
   return (
@@ -45,6 +43,7 @@ const EntryEdit = ({
       onSave={handleSave}
       onCancel={handleCancelEditParent}
       error={saveError.error}
+      saving={saveError.saving}
     />
   );
 };

@@ -5,18 +5,26 @@
  * API, so a guest sees none, and a guest's copy counts nothing. (An entry's
  * page, Get Info, is `entryPage.spec.tsx`.)
  */
-import {fireEvent, screen, within} from '@testing-library/react';
+import {act, cleanup, fireEvent, screen, within} from '@testing-library/react';
 import {vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
+import * as copying from '../../src/lib/data/copyEntry';
 import {publicSyncSession, syncSession} from '../../src/lib/sync/session';
 import {setRuntimeEntriesOverride} from '../../src/msw/handlers';
 import {entriesResponse} from '../../test/mocks/entries/entriesResponse';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
+import {mockResult} from '../util/mockResult';
 import {recordRequests, serveMockApi} from '../util/msw';
+import {observeSyncWork} from '../util/observeSyncWork';
 import {signIn, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
 serveMockApi();
+let finishSync: () => Promise<void>;
+afterEach(async () => {
+  cleanup();
+  await finishSync();
+});
 beforeEach(() => {
   vi.spyOn(console, 'log').mockImplementation(() => {});
   // Clicking an entry's body copies it.
@@ -38,6 +46,7 @@ beforeEach(() => {
 const signInHere = () => {
   signIn();
   assignLoggedInCookie();
+  finishSync = observeSyncWork(TEST_USER).finish;
 };
 
 const reuseCounts = () => screen.queryAllByTitle(/^Reused /);
@@ -106,9 +115,15 @@ it('shows a guest no reuse counts on a public page, and counts no copy', async (
   await apiClient.forVersion(1).setTagPublic('1', true);
   await apiClient.forVersion(1).setEntryPublic('1', true);
   const sent = reusesSent();
+  const copy = vi.spyOn(copying, 'copyEntry');
+  finishSync = observeSyncWork(publicSyncSession(TEST_USER)).finish;
   renderAppAt('/test/test-tag-1');
 
-  fireEvent.click(await screen.findByText('entry-1-body'));
+  const body = await screen.findByText('entry-1-body');
+  await act(async () => {
+    fireEvent.click(body);
+    await mockResult(copy, 0);
+  });
 
   expect(
     (await publicSyncSession('test').db.entries.get(['test', '1']))?.attributes

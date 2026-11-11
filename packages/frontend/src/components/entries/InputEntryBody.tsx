@@ -37,6 +37,7 @@ interface IProps {
   placeholder: string;
   valueParent: string;
   id: string;
+  readOnly?: boolean;
 }
 
 const InputEntryBody = ({
@@ -44,6 +45,7 @@ const InputEntryBody = ({
   valueParent,
   placeholder,
   id,
+  readOnly = false,
 }: IProps) => {
   const [value, setValue] = useState<string>(valueParent);
 
@@ -70,6 +72,7 @@ const InputEntryBody = ({
   return (
     <StyledTextareaAutosize
       id={id}
+      readOnly={readOnly}
       onClick={handleClick}
       theme={theme}
       spellCheck="false"

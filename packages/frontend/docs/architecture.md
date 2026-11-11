@@ -511,6 +511,16 @@ A failed or ineligible follow-up read skips only route correction: the
 successful write closes its still-mounted editor before that read, even if
 the session has since ended. A replacement draft stays open and remains saveable.
 
+All four editors share `hooks/useSaveError.ts`'s `SaveState` and pure
+`transitionSave`: `ready`, `saving`, or `failed` with its error. A synchronous
+ref mirror refuses a second start before React renders the busy state; the
+write begins immediately so identity capture still belongs to that Save.
+Fields are read-only and Save is disabled while saving; Cancel remains usable,
+as does Escape in tag forms. Field cycling skips disabled controls. A failed
+write unlocks the retained draft for correction and retry. A post-persistence
+callback failure is logged separately, never presented as "Not saved". The
+save request tag does not replace mounted-instance or account/session guards.
+
 Both form kinds share the pure `transitionEditorOwnership` in
 `lib/state/editorOwnership.ts`. `editing` carries the active form and the other
 registered forms in focus/open order; `released` carries the explicitly chosen
@@ -529,8 +539,10 @@ menus restore focus, including rename fields. A surviving form receives focus
 only when focus disappeared with the closing form, never from another control.
 Escape cancels only its focused tag form, before document search shortcuts;
 menu Escape and background drafts remain independent.
-`useEditFieldCycle` cycles only the owner's controls,
-not every form sharing a global active-field value. Entry and new-tag Tab
+`useEditFieldCycle` cycles only when focus is on one of the owner's controls,
+not every form sharing a global active-field value. Tab and Shift+Tab outside
+those controls retain their native focus order without releasing the surviving
+editor's ownership or draft. Entry and new-tag Tab
 cycles, native rename Tab, and explicit pane/list navigation remain distinct.
 
 ## Routing
@@ -543,10 +555,15 @@ not, so a tag switch rendered every tag and entry row and the whole page).
   `googleOAuth`, `user`, `entry`, `root`, `none`), a user's page's `user`
   and `tag`, and an entry's page's `user` and `entryId` (`entryPath` makes
   one). `userPath` encodes the account segment for redirects, filters and
-  account links; `tagPath` encodes both username and tag as separate segments
-  for click, keyboard, first-tag and rename navigation. Parsing splits before
-  decoding, so encoded slashes remain inside their segment and literal
-  percent escapes are decoded once. A tag named
+  account links; `tagPath` encodes the username and tag for click, keyboard,
+  first-tag and rename navigation. Exact `.` and `..` tags use
+  `/:user/tags/~.` and `/:user/tags/~..`: native URL normalization removes
+  plain or percent-encoded dot-only segments. Other tags retain their existing
+  two-segment paths, including literal `~.`, `tags/~.` and `%2e` names.
+  Parsing splits before decoding, so encoded slashes remain inside their
+  segment and literal percent escapes are decoded once. The extension neither
+  recovers old dot URLs after normalization nor fixes dot-only usernames.
+  A tag named
   `entries` is still a tag (`/:user/entries`); `/:user/entries/:id` is the
   entry's page.
 - `navigation.ts`: the URL as an external store. Read it through a selector
@@ -629,8 +646,26 @@ per-row work multiplies (the HUD's Analytics tab times it).
   jest-dom matchers and stubs `scrollIntoView`; `vite.config.ts` also loads
   `fake-indexeddb/auto`, and undoes every spy (`vi.spyOn`) and stubbed global
   (`vi.stubGlobal`) before each test (`restoreMocks`, `unstubGlobals`;
-  `setup.ts` undoes them after each jsdom test, before its cleanup), so specs
-  restore none themselves. Unit specs mock the API with `msw/node`
+  `setup.ts` first unmounts React trees, then undoes mocks/globals, then resets
+  app state and deletes test databases). Vitest runs `afterEach` hooks in
+  reverse registration order, so shared teardown must explicitly unmount
+  before resetting subscribed stores rather than rely on RTL auto-cleanup.
+  Specs must finish their own started async work, including a destination
+  page's sync after navigation: unmounting does not join an in-flight sync.
+  Register a file's drain after `serveMockApi()` so it runs before MSW removes
+  per-test handlers. `__tests__/util/observeSyncWork.ts` joins successful work
+  on the actual private or public session; it starts no replacement sync.
+  Copies, saves and logout need their own completion promises too: clipboard
+  acceptance or a closed menu does not prove their writes or cleanup finished.
+  Keep interruption observers scenario-owned, with exact rejected promises and
+  visible error assertions (see `observeSignOutWork.ts`), not global drains.
+  Global spies can alter existing bound-method mocks; observing rejection with
+  a spy or `allSettled` can also hide an unhandled rejection. Await and assert
+  intentional cookie/logout interruptions rather than postponing logout or
+  suppressing the resulting database error to obtain silent test output.
+  `silent: false` keeps passing-test diagnostics visible even with Vitest's
+  agent-mode minimal reporter; absence of logs with implicit reporting is not
+  evidence of warning-free execution. Unit specs mock the API with `msw/node`
   (`__tests__/util/msw.ts`). The specs are in three places:
   - `__tests__/src/` mirrors `src/`: the spec for `src/pages/AdminPage.tsx` is
     `__tests__/src/pages/AdminPage.spec.tsx`

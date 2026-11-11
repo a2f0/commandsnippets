@@ -17,7 +17,7 @@ if (typeof Element !== 'undefined') {
 // API's data as __tests__/util/msw.ts has it. (The app's modules read
 // `window` when they load, so node-environment specs skip this.)
 if (typeof window !== 'undefined') {
-  const [{configure}, {resetApp}, {resetMockApi}] = await Promise.all([
+  const [{cleanup, configure}, {resetApp}, {resetMockApi}] = await Promise.all([
     import('@testing-library/react'),
     import('./util/signIn'),
     import('./util/msw'),
@@ -28,9 +28,11 @@ if (typeof window !== 'undefined') {
   // 5 second test timeout, so a wait in vain fails with what it waited for.
   configure({asyncUtilTimeout: 3000});
   beforeEach(() => resetMockApi());
-  // The cleanup runs the app's own modules: a test's spies and stubbed
-  // globals go first (the config undoes them only before the next test).
+  // Vitest reverses afterEach registration order, so this precedes RTL's
+  // auto-cleanup. Unmount before restoring mocks/globals and resetting the
+  // stores; otherwise subscribed components render during their teardown.
   afterEach(() => {
+    cleanup();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     return resetApp();

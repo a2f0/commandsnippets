@@ -4,15 +4,20 @@
  * before every sync).
  */
 import {CURSOR_START} from '@commandsnippets/api-shared/cursor';
-import {act, fireEvent, screen, waitFor} from '@testing-library/react';
+import {act, cleanup, fireEvent, screen, waitFor} from '@testing-library/react';
 import invariant from 'invariant';
 import {HttpResponse, http} from 'msw/http';
-import {vi} from 'vitest';
+import {type MockResult, vi} from 'vitest';
 import {apiClient} from '../../src/lib/api/apiClient';
+import {ApiRequestError} from '../../src/lib/api/errors';
 import {createEntry, createTag} from '../../src/lib/data/writes';
+import {signedOutDataCleanedUp} from '../../src/lib/state/appState';
 import {isLocalId} from '../../src/lib/sync/outbox';
+import * as sessions from '../../src/lib/sync/session';
 import {syncSession} from '../../src/lib/sync/session';
+import * as syncReads from '../../src/lib/sync/sync';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
+import {mockResult} from '../util/mockResult';
 import {
   API,
   offlineForWrites,
@@ -24,16 +29,76 @@ import {signIn, store, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
 serveMockApi();
+let pageSyncs: ReturnType<typeof observePageSyncs>;
 beforeEach(() => {
   signIn();
   assignLoggedInCookie();
-  // The mock API announces each request; a flush that fails warns.
-  vi.spyOn(console, 'log').mockImplementation(() => {});
-  vi.spyOn(console, 'warn').mockImplementation(() => {});
+  pageSyncs = observePageSyncs();
+});
+afterEach(async () => {
+  try {
+    await pageSyncs.finish();
+  } finally {
+    cleanup();
+  }
 });
 
+/** Writes/flushes are awaited by each test; follow the page's reads too. */
+function observePageSyncs() {
+  const observed: {mock: {results: readonly MockResult<Promise<unknown>>[]}}[] =
+    [vi.spyOn(syncReads, 'isTagSynced')];
+  const known = new Set<sessions.SyncSession>();
+  const observe = (session: sessions.SyncSession) => {
+    if (!known.has(session)) {
+      known.add(session);
+      observed.push(
+        vi.spyOn(session.sync, 'syncAll'),
+        vi.spyOn(session.sync, 'syncTag')
+      );
+    }
+    return session;
+  };
+  const own = sessions.syncSession;
+  const publicSession = sessions.publicSyncSession;
+  vi.spyOn(sessions, 'syncSession').mockImplementation((...args) =>
+    observe(own(...args))
+  );
+  vi.spyOn(sessions, 'publicSyncSession').mockImplementation((...args) =>
+    observe(publicSession(...args))
+  );
+  const joined = new Set<Promise<unknown>>();
+  return {
+    finish: async (expectedFailures: unknown[] = []) => {
+      const failures: unknown[] = [];
+      for (;;) {
+        const pending = observed
+          .flatMap(operation =>
+            operation.mock.results.map((_, index) =>
+              mockResult<Promise<unknown>>(operation, index)
+            )
+          )
+          .filter(promise => !joined.has(promise));
+        if (pending.length === 0) break;
+        for (const promise of pending) joined.add(promise);
+        await act(async () => {
+          for (const result of await Promise.allSettled(pending)) {
+            if (result.status === 'rejected') failures.push(result.reason);
+          }
+        });
+      }
+      expect(failures).toEqual(expectedFailures);
+    },
+  };
+}
+
+async function renderEntries(path: string) {
+  await act(async () => renderAppAt(path));
+  await screen.findByText('test-tag-1');
+  await pageSyncs.finish();
+}
+
 it('shows a write made offline at once, and sends it once back online', async () => {
-  renderAppAt('/test/test-tag-1');
+  await renderEntries('/test/test-tag-1');
   await screen.findByText('entry-1-subject');
   const session = syncSession(TEST_USER);
   const posted = recordRequests(({method}, path) =>
@@ -41,16 +106,25 @@ it('shows a write made offline at once, and sends it once back online', async ()
   );
   offlineForWrites();
 
-  const entry = await createEntry(session, 'offline-subject', 'body', '1');
+  const entry = await act(() =>
+    createEntry(session, 'offline-subject', 'body', '1')
+  );
 
   expect(await screen.findByText('offline-subject')).toBeInTheDocument();
-  await expect(session.sync.flush()).rejects.toThrow();
+  await act(async () => {
+    await expect(session.sync.flush()).rejects.toThrow();
+  });
   expect(await session.db.outbox.count()).toBe(2);
 
   server.resetHandlers();
-  act(() => {
+  const reconnect = vi.spyOn(session.sync, 'flush');
+  const reconnectIndex = reconnect.mock.calls.length;
+  await act(async () => {
     window.dispatchEvent(new Event('online'));
+    expect(reconnect).toHaveBeenCalledTimes(reconnectIndex + 1);
+    await mockResult(reconnect, reconnectIndex);
   });
+  await pageSyncs.finish();
 
   await waitFor(async () => expect(await session.db.outbox.count()).toBe(0));
   expect(posted).toEqual(
@@ -69,28 +143,45 @@ it('shows a write made offline at once, and sends it once back online', async ()
 });
 
 it('keeps writes queued when the session expires, and sends them at the next sign-in', async () => {
-  renderAppAt('/test/test-tag-1');
+  const errors = vi.spyOn(console, 'error');
+  await renderEntries('/test/test-tag-1');
   await screen.findByText('entry-1-subject');
   const session = syncSession(TEST_USER);
   offlineForWrites();
-  await createEntry(session, 'kept-subject', 'body');
-  await expect(session.sync.flush()).rejects.toThrow();
+  await act(() => createEntry(session, 'kept-subject', 'body'));
+  await act(async () => {
+    await expect(session.sync.flush()).rejects.toThrow();
+  });
 
   // The session expires: the API answers 401, which signs the user out.
   server.use(
     http.get(`${API}/user/`, () => HttpResponse.json({}, {status: 401}))
   );
-  act(() => {
+  const reconnect = vi.spyOn(session.sync, 'flush');
+  const reconnectIndex = reconnect.mock.calls.length;
+  await act(async () => {
     window.dispatchEvent(new Event('online'));
+    expect(reconnect).toHaveBeenCalledTimes(reconnectIndex + 1);
+    await expect(mockResult(reconnect, reconnectIndex)).rejects.toThrow(
+      'fetch failed'
+    );
   });
+  const expired = new ApiRequestError(
+    'Failed to fetch user',
+    401,
+    'Unauthorized'
+  );
+  await pageSyncs.finish([expired]);
   await waitFor(() => expect(store.loggedInUser).toBeNull());
+  await act(() => signedOutDataCleanedUp());
 
   // Their database stays, queue and all; signing in again sends it.
   server.resetHandlers();
-  act(() => signIn());
+  await act(async () => signIn());
   const again = syncSession(TEST_USER);
-  expect(await again.db.outbox.count()).toBe(1);
-  await again.sync.flush();
+  await act(async () => expect(await again.db.outbox.count()).toBe(1));
+  await act(() => again.sync.flush());
+  await pageSyncs.finish();
   expect(await again.db.outbox.count()).toBe(0);
   const stored = await again.db.entries
     .where('owner')
@@ -98,15 +189,18 @@ it('keeps writes queued when the session expires, and sends them at the next sig
     .filter(row => row.attributes.subject === 'kept-subject')
     .first();
   expect(isLocalId(stored?.id ?? 'local-')).toBe(false);
+  expect(errors.mock.calls).toEqual([['ERROR: sync failed:', expired]]);
 });
 
 it("keeps an editor open on an entry made offline, with its text, when the API's id replaces its own", async () => {
-  renderAppAt('/test?entries=untagged');
+  await renderEntries('/test?entries=untagged');
   await screen.findByText('test-tag-1');
   const session = syncSession(TEST_USER);
   offlineForWrites();
-  await createEntry(session, 'draft-subject', 'body');
-  await expect(session.sync.flush()).rejects.toThrow();
+  await act(() => createEntry(session, 'draft-subject', 'body'));
+  await act(async () => {
+    await expect(session.sync.flush()).rejects.toThrow();
+  });
 
   // Editing it, not saved yet.
   fireEvent.contextMenu(await screen.findByText('draft-subject'));
@@ -116,12 +210,14 @@ it("keeps an editor open on an entry made offline, with its text, when the API's
 
   // Back online: the create is sent, and the entry gets the API's id.
   server.resetHandlers();
-  await session.sync.flush();
-  const stored = await session.db.entries
-    .where('owner')
-    .equals(TEST_USER)
-    .filter(row => row.attributes.subject === 'draft-subject')
-    .first();
+  await act(() => session.sync.flush());
+  const stored = await act(() =>
+    session.db.entries
+      .where('owner')
+      .equals(TEST_USER)
+      .filter(row => row.attributes.subject === 'draft-subject')
+      .first()
+  );
   expect(isLocalId(stored?.id ?? 'local-')).toBe(false);
 
   // The same editor, now of the API's entry, its text kept.
@@ -134,12 +230,14 @@ it("keeps an editor open on an entry made offline, with its text, when the API's
 });
 
 it("keeps a new entry's form opened next to an entry made offline, with its text, when the API's id replaces its own", async () => {
-  renderAppAt('/test?entries=untagged');
+  await renderEntries('/test?entries=untagged');
   await screen.findByText('test-tag-1');
   const session = syncSession(TEST_USER);
   offlineForWrites();
-  await createEntry(session, 'anchor', 'body');
-  await expect(session.sync.flush()).rejects.toThrow();
+  await act(() => createEntry(session, 'anchor', 'body'));
+  await act(async () => {
+    await expect(session.sync.flush()).rejects.toThrow();
+  });
 
   // A new entry's form, above it, not saved yet.
   fireEvent.contextMenu(await screen.findByText('anchor'));
@@ -149,12 +247,14 @@ it("keeps a new entry's form opened next to an entry made offline, with its text
   });
 
   server.resetHandlers();
-  await session.sync.flush();
-  const stored = await session.db.entries
-    .where('owner')
-    .equals(TEST_USER)
-    .filter(row => row.attributes.subject === 'anchor')
-    .first();
+  await act(() => session.sync.flush());
+  const stored = await act(() =>
+    session.db.entries
+      .where('owner')
+      .equals(TEST_USER)
+      .filter(row => row.attributes.subject === 'anchor')
+      .first()
+  );
   invariant(stored && !isLocalId(stored.id), 'the API id should replace it');
 
   // The same form, above the API's entry, its text kept.
@@ -167,11 +267,12 @@ it("keeps a new entry's form opened next to an entry made offline, with its text
 });
 
 it("keeps an editor open on an entry when a tag made offline gets the entry's id", async () => {
+  const errors = vi.spyOn(console, 'error');
   // Entry 5 and, once sent, tag 5: ids of different types can be alike.
   const {data: entry} = await apiClient
     .forVersion(1)
     .createEntry('five', 'body');
-  renderAppAt('/test?entries=untagged');
+  await renderEntries('/test?entries=untagged');
   const session = syncSession(TEST_USER);
   fireEvent.contextMenu(await screen.findByText('five'));
   fireEvent.click(await screen.findByRole('menuitem', {name: 'Edit'}));
@@ -179,22 +280,25 @@ it("keeps an editor open on an entry when a tag made offline gets the entry's id
     target: {value: 'unsaved five'},
   });
 
-  const tag = await createTag(session, 'made-here');
-  await session.sync.flush();
-  const sent = await session.db.tags
-    .where('owner')
-    .equals(TEST_USER)
-    .filter(row => row.attributes.name === 'made-here')
-    .first();
+  const tag = await act(() => createTag(session, 'made-here'));
+  await act(() => session.sync.flush());
+  const sent = await act(() =>
+    session.db.tags
+      .where('owner')
+      .equals(TEST_USER)
+      .filter(row => row.attributes.name === 'made-here')
+      .first()
+  );
   expect(isLocalId(tag.id)).toBe(true);
   expect(sent?.id).toBe(entry.id);
 
   expect(screen.getByPlaceholderText('subject')).toHaveValue('unsaved five');
   expect(document.getElementById(`textEntryEdit${entry.id}`)).not.toBeNull();
+  expect(errors).not.toHaveBeenCalled();
 });
 
 it('adopts the entry a create whose answer was lost made, when a sync brings it', async () => {
-  renderAppAt('/test?entries=untagged');
+  await renderEntries('/test?entries=untagged');
   await screen.findByText('test-tag-1');
   const session = syncSession(TEST_USER);
   // The API makes the entry, but its answer never arrives.
@@ -212,8 +316,10 @@ it('adopts the entry a create whose answer was lost made, when a sync brings it'
       {once: true}
     )
   );
-  const entry = await createEntry(session, 'lost-answer', 'body');
-  await expect(session.sync.flush()).rejects.toThrow();
+  const entry = await act(() => createEntry(session, 'lost-answer', 'body'));
+  await act(async () => {
+    await expect(session.sync.flush()).rejects.toThrow();
+  });
 
   // Editing it, not saved yet.
   fireEvent.contextMenu(await screen.findByText('lost-answer'));
@@ -224,7 +330,7 @@ it('adopts the entry a create whose answer was lost made, when a sync brings it'
 
   // A sync brings the API's entry: it is the one shown (once), the create is
   // not queued any more, and the same editor is open on it, its text kept.
-  await session.sync.syncAll();
+  await act(() => session.sync.syncAll());
   expect(await session.db.outbox.count()).toBe(0);
   const made = await session.db.entries
     .where('owner')
@@ -243,7 +349,7 @@ it('adopts the entry a create whose answer was lost made, when a sync brings it'
 });
 
 it('adopts the tag a create whose answer was lost made, renamed since', async () => {
-  renderAppAt('/test?entries=untagged');
+  await renderEntries('/test?entries=untagged');
   await screen.findByText('test-tag-1');
   const session = syncSession(TEST_USER);
   server.use(
@@ -260,19 +366,23 @@ it('adopts the tag a create whose answer was lost made, renamed since', async ()
       {once: true}
     )
   );
-  const tag = await createTag(session, 'lost-tag');
-  await expect(session.sync.flush()).rejects.toThrow();
+  const tag = await act(() => createTag(session, 'lost-tag'));
+  await act(async () => {
+    await expect(session.sync.flush()).rejects.toThrow();
+  });
   // Another device renames the tag the API made.
   const listed = await apiClient.getTagsAfter(CURSOR_START);
   const made = listed.data.find(row => row.attributes.client_id === tag.id);
   invariant(made, 'the API should have made the tag');
   await apiClient.forVersion(1).updateTag(made.id, 'renamed-tag');
   // This device's clock runs ahead: its copy reads as newer than the API's.
-  await session.db.tags.update([TEST_USER, tag.id], {
-    'attributes.date_updated': '2999-01-01T00:00:00.000000',
-  });
+  await act(() =>
+    session.db.tags.update([TEST_USER, tag.id], {
+      'attributes.date_updated': '2999-01-01T00:00:00.000000',
+    })
+  );
 
-  await session.sync.syncAll();
+  await act(() => session.sync.syncAll());
   expect(await session.db.outbox.count()).toBe(0);
   const stored = await session.db.tags
     .where('owner')
@@ -292,6 +402,6 @@ it('adopts the tag a create whose answer was lost made, renamed since', async ()
   const posted = recordRequests(({method}, path) =>
     method === 'POST' ? path : undefined
   );
-  await session.sync.flush();
+  await act(() => session.sync.flush());
   expect(posted).toEqual([]);
 });

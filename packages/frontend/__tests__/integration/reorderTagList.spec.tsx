@@ -1,6 +1,7 @@
 import {act, fireEvent, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {type MockInstance, vi} from 'vitest';
+import * as writes from '../../src/lib/data/writes';
 import {apiClientMethods} from '../util/apiClientMethods';
 import {assignLoggedInCookie} from '../util/assignLoggedInCookie';
 import {
@@ -11,13 +12,22 @@ import {
   pointAtHandle,
   rowAt,
 } from '../util/dragReorder';
+import {mockResult} from '../util/mockResult';
 import {serveMockApi} from '../util/msw';
-import {signIn} from '../util/signIn';
+import {observeSyncWork} from '../util/observeSyncWork';
+import {signIn, TEST_USER} from '../util/signIn';
 import {renderAppAt} from '../util/TestAppRouter';
 
 serveMockApi();
+let syncWork: ReturnType<typeof observeSyncWork>;
+// Finish the mounted fixture before MSW removes its handlers and DB reset.
+afterEach(async () => {
+  await syncWork.finish();
+  expect(syncWork.syncAll).toHaveBeenCalledTimes(1);
+});
 beforeEach(() => {
   signIn();
+  syncWork = observeSyncWork(TEST_USER);
   assignLoggedInCookie();
 });
 
@@ -174,6 +184,7 @@ describe('TagList', () => {
       reorder: {top: '3', bottom: '2'},
     },
   ])('Reorders $name', async ({from, steps, afterDrop, reorder}) => {
+    const reordered = vi.spyOn(writes, 'reorderTags');
     const {user, tags: initial} = await renderTags();
     const handle = await pointAtHandle(user, 'tag', from, 4);
     expect(reorderTagSpy).not.toBeCalled();
@@ -201,5 +212,10 @@ describe('TagList', () => {
         expect.any(String)
       )
     );
+    expect(reordered).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      await mockResult(reordered);
+    });
+    expect(reorderTagSpy).toHaveBeenCalledTimes(1);
   });
 });

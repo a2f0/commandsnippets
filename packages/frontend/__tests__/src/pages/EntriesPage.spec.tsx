@@ -1,5 +1,5 @@
 import {ThemeProvider} from '@mui/material/styles';
-import {render} from '@testing-library/react';
+import {act, render, waitFor} from '@testing-library/react';
 import {createMemoryHistory} from 'history';
 import invariant from 'invariant';
 import {DndProvider} from 'react-dnd';
@@ -8,11 +8,49 @@ import {I18nextProvider} from 'react-i18next';
 import {describe, expect, it, vi} from 'vitest';
 import {i18n} from '../../../src/i18n/i18n';
 import {Router} from '../../../src/lib/router/Router';
+import {signedOutDataCleanedUp} from '../../../src/lib/state/appState';
+import {syncSession} from '../../../src/lib/sync/session';
 import {EntriesPage} from '../../../src/pages/EntriesPage';
 import {darkTheme} from '../../../src/theme/themes';
-import {signIn} from '../../util/signIn';
+import {mockResult} from '../../util/mockResult';
+import {signIn, TEST_USER} from '../../util/signIn';
 
-beforeEach(() => signIn());
+let interrupted: ReturnType<typeof observeCookieLogout>;
+beforeEach(() => {
+  signIn();
+  interrupted = observeCookieLogout();
+});
+afterEach(async () => {
+  // This layout fixture supplies no login cookie. Preserve that mount-time
+  // sign-out and join its interrupted collection effect before resetting data.
+  const {session, flush, syncs, errors} = interrupted;
+  expect(session.db.hasBeenClosed()).toBe(true);
+  expect(flush).toHaveBeenCalledTimes(1);
+  await waitFor(() => expect(syncs).toHaveBeenCalledTimes(1));
+  await act(async () => {
+    await expect(mockResult(flush)).rejects.toMatchObject({
+      name: 'DatabaseClosedError',
+    });
+    await expect(mockResult(syncs)).rejects.toMatchObject({
+      name: 'DatabaseClosedError',
+    });
+    await signedOutDataCleanedUp();
+  });
+  expect(errors).toHaveBeenCalledExactlyOnceWith(
+    'ERROR: sync failed:',
+    expect.objectContaining({name: 'DatabaseClosedError'})
+  );
+});
+
+function observeCookieLogout() {
+  const session = syncSession(TEST_USER);
+  return {
+    session,
+    flush: vi.spyOn(session.sync, 'flush'),
+    syncs: vi.spyOn(session.sync, 'syncAll'),
+    errors: vi.spyOn(console, 'error'),
+  };
+}
 
 vi.mock('react-cookie', () => ({
   useCookies: () => [{}, vi.fn(), vi.fn()],

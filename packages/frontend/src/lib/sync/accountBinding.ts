@@ -16,13 +16,13 @@ import {heldVersion} from './dataVersion';
 import type {OutboxApi} from './send';
 
 /**
- * The data was bound to another account (`bindOwner`: a sign-in here of
- * another account of the same name) while a flush or a sync was on its
- * way: what it brought is the first account's, and is not stored.
+ * The account binding changed while an operation was pending, including a
+ * first binding after an unbound capture. Refuse the old operation instead
+ * of guessing its owner; a fresh attempt captures the current binding.
  */
 export class AccountChangedError extends Error {
   constructor(owner: string) {
-    super(`${owner}'s data was bound to another account meanwhile`);
+    super(`${owner}'s account binding changed meanwhile; try again`);
     this.name = 'AccountChangedError';
   }
 }
