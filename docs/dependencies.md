@@ -23,8 +23,13 @@ edits need no reinstall. Preserve minimum release age and verify that unrelated
 package identities did not change.
 
 The root `.mise.toml` pins Bun 1.4.4 and Node 26.13.0 for development and CI.
-Keep its Bun pin and every package's `packageManager` declaration together. Keep
-its Node pin, frontend `engines.node` and Node types compatible. Terraform
+`mise.lock` beside it records their download URLs and checksums; regenerate it
+with `mise lock` whenever `.mise.toml` changes, and commit both together. CI's
+mise-action reads it in locked mode, so the setup action's mise `version` must
+read the lockfile's format (format 4 needs mise 2026.11.1 or later): raise that
+pin before the lock's format moves.
+Keep the Bun pin and every package's `packageManager` declaration together. Keep
+the Node pin, frontend `engines.node` and Node types compatible. Terraform
 retains its specialized setup. Every manifest (the root and each package) pins
 its dependencies to exact versions, peer dependencies included: no `^` or `~`
 ranges (`scripts/checks/exactPins.test.ts` enforces it). Add with `--exact`, and

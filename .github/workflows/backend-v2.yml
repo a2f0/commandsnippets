@@ -11,6 +11,7 @@ on:
     branches: [main, staging]
     paths:
       - '.mise.toml'
+      - 'mise.lock'
       - 'bun.lock'
       - 'bunfig.toml'
       - 'package.json'

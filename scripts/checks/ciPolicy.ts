@@ -32,7 +32,7 @@ export type CiScope = keyof typeof CI_SCOPES;
  * which every package's lint reads.
  */
 const COMMON =
-  /^(\.github\/(workflows|actions)\/|scripts\/checks\/ci|package\.json$|bun\.lock$|bunfig\.toml$|\.mise\.toml$|biome\.json$|knip\.config\.ts$)/;
+  /^(\.github\/(workflows|actions)\/|scripts\/checks\/ci|package\.json$|bun\.lock$|bunfig\.toml$|\.mise\.toml$|mise\.lock$|biome\.json$|knip\.config\.ts$)/;
 
 export function ciDiffRange(
   base: string | undefined,
