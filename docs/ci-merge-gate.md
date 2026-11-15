@@ -11,10 +11,10 @@ requires each lane to have succeeded, or to have been skipped *because* change
 detection marked it irrelevant. A failed, cancelled, missing, or unexpectedly
 skipped lane fails the gate. Changes to a workflow or to the setup action
 every job uses (`.github/actions/setup`), to the CI policy itself
-(`scripts/checks/ci*`), to the root `.mise.toml`, to the workspace install
-files every package shares (the root `package.json`, `bunfig.toml` and
-`bun.lock`), or to the root `biome.json` and `knip.config.ts` every
-package's lint reads exercise every lane.
+(`scripts/checks/ci*`), to the root `.mise.toml` or `mise.lock`, to the
+workspace install files every package shares (the root `package.json`,
+`bunfig.toml` and `bun.lock`), or to the root `biome.json` and
+`knip.config.ts` every package's lint reads exercise every lane.
 
 The gate always checks managed skill and permission-rule drift, rejects
 committed binary files (`agent-tool checks binaries`), and lints the actual PR
@@ -108,10 +108,10 @@ changes take effect. `bun run hooks:check` reports missing or stale copies.
   uncommitted tracked changes and no untracked files under the checked paths.
   The `api-shared` checks start with the workspace install, then `backend-v2`
   runs against api-shared through its workspace link. A change that runs every
-  lane in CI (a workflow or the setup action, the CI policy, `.mise.toml`, the
-  workspace install files or the root lint configs) runs every local check. It
-  refuses to run when the installed copy is stale. Per-check timings are logged
-  under `.git/commandsnippets/pushGateTimings.tsv`
+  lane in CI (a workflow or the setup action, the CI policy, `.mise.toml`,
+  `mise.lock`, the workspace install files or the root lint configs) runs every
+  local check. It refuses to run when the installed copy is stale. Per-check
+  timings are logged under `.git/commandsnippets/pushGateTimings.tsv`
   (`scripts/git/showPushGateTimings.sh`).
 
 A co-author trailer that reaches `pre-push` is rejected; reword the commit and

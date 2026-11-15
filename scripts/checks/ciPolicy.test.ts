@@ -205,6 +205,7 @@ describe('ciScopes', () => {
       'bun.lock',
       'bunfig.toml',
       '.mise.toml',
+      'mise.lock',
       'package.json',
       'biome.json',
       'knip.config.ts',
