@@ -15,14 +15,84 @@ function assertCiSuccess(needs: unknown): void {
   if (result.status !== 0) throw new Error(result.stdout + result.stderr);
 }
 
+type Workflow = {
+  on: {
+    push?: {branches?: string[]; paths?: string[]};
+    workflow_call?: {inputs?: Record<string, unknown>};
+  };
+  jobs: Record<
+    string,
+    {
+      needs?: string | string[];
+      if?: string;
+      with?: Record<string, unknown>;
+      concurrency?: unknown;
+    }
+  >;
+};
+
+/** A GitHub Actions expression, `${{ body }}`. */
+const expression = (body: string) => `\${{ ${body} }}`;
+
+async function readWorkflow(name: string): Promise<Workflow> {
+  return Bun.YAML.parse(
+    await Bun.file(path.join(root, '.github/workflows', name)).text()
+  ) as Workflow;
+}
+
 // A push has no pull request base, so change detection runs every lane:
 // the latest run on main checks the whole tree its merges combined into.
 test('CI runs on every push to main, with no paths filter', async () => {
-  const workflow = Bun.YAML.parse(
-    await Bun.file(path.join(root, '.github/workflows/ci.yml')).text()
-  ) as {on: {push?: {branches?: string[]; paths?: string[]}}};
+  const workflow = await readWorkflow('ci.yml');
   expect(workflow.on.push?.branches).toContain('main');
   expect(workflow.on.push?.paths).toBeUndefined();
+});
+
+// CI runs these lanes on every push to main, so their own push triggers
+// would run them twice there.
+test.each(['frontend.yml', 'backend-v2.yml'])(
+  '%s runs on its own only for pushes to staging',
+  async name => {
+    expect((await readWorkflow(name)).on.push?.branches).toEqual(['staging']);
+  }
+);
+
+describe('backend-v2 deploy', () => {
+  test('CI asks for it on a push to main only', async () => {
+    const ci = await readWorkflow('ci.yml');
+    expect(ci.jobs['backend-v2']?.with).toEqual({
+      deploy: expression(
+        "github.event_name == 'push' && github.ref == 'refs/heads/main'"
+      ),
+    });
+    const backend = await readWorkflow('backend-v2.yml');
+    expect(backend.on.workflow_call?.inputs?.['deploy']).toMatchObject({
+      type: 'boolean',
+      default: false,
+    });
+  });
+
+  // Production from CI's call, staging from the standalone workflow (a called
+  // workflow sees its caller's context), never for a pull request or a manual
+  // run, and only after the tests and while the repository variable allows it.
+  test('needs the tests and runs only for an allowed push', async () => {
+    const deploy = (await readWorkflow('backend-v2.yml')).jobs['deploy'];
+    expect(deploy?.needs).toBe('test');
+    expect(deploy?.if).toBe(
+      "github.event_name == 'push' && " +
+        "vars.BACKEND_V2_DEPLOY == 'true' && " +
+        "((github.workflow == 'Backend v2 CI' && github.ref == 'refs/heads/staging') || " +
+        "(inputs.deploy && github.ref == 'refs/heads/main'))"
+    );
+  });
+
+  test('never cancels a deploy in progress', async () => {
+    const deploy = (await readWorkflow('backend-v2.yml')).jobs['deploy'];
+    expect(deploy?.concurrency).toEqual({
+      group: `backend-v2-deploy-${expression('github.ref')}`,
+      'cancel-in-progress': false,
+    });
+  });
 });
 
 test('gate policy covers every classified scope', () => {
@@ -140,19 +210,16 @@ describe('ciScopes', () => {
   });
 
   test.each(['runUnitTests', 'runWebdriverTests', 'runBrowserAcquisition'])(
-    '%s runs frontend CI on pull requests and branch pushes',
+    '%s runs frontend CI on pull requests and staging pushes',
     async name => {
       const script = `scripts/testing/${name}.sh`;
       expect(ciScopes([script])).toMatchObject({
         tooling: true,
         frontend: true,
       });
-      const workflow = Bun.YAML.parse(
-        await Bun.file(path.join(root, '.github/workflows/frontend.yml')).text()
+      expect((await readWorkflow('frontend.yml')).on.push?.paths).toContain(
+        script
       );
-      expect(workflow).toMatchObject({
-        on: {push: {paths: expect.arrayContaining([script])}},
-      });
     }
   );
 

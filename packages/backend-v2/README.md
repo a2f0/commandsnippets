@@ -549,8 +549,12 @@ The Worker's hostname is a custom domain in `wrangler.jsonc`, attached by
 
 CI: pull requests run lint, typecheck, and the coverage-gated tests as the
 `backend-v2` lane of the required `CI gate`, for changes here or in
-`../api-shared`. `Backend v2 CI` also has a deploy job for pushes to
-`staging`/`main`, off unless configured; see
+`../api-shared`, and every push to `main` runs that lane. Its workflow,
+`backend-v2.yml`, also has a deploy job, off unless configured, which needs
+those tests. Once on, it deploys production from `CI` on every push to `main`,
+whether or not the push changed the backend: redeploying the same code and
+reapplying migrations already applied change nothing. It deploys staging on
+pushes to `staging` that change the backend or its install files. See
 [CI and merge requirements](../../docs/ci-merge-gate.md) for when it runs.
 Without it, releases are deployed by hand as above.
 

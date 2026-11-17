@@ -174,11 +174,12 @@ account, Worker, route and binding identities separately: bundling does not plan
 remote resources or D1 migrations. Inspect pending SQL and migration semantics
 before any application or deployment.
 
-Feature-branch pushes and PR CI do not deploy. Pushes to `main` or `staging`
-that change backend-v2, api-shared, the root `package.json`, `bunfig.toml` or
-`bun.lock`, or `.github/workflows/backend-v2.yml` can trigger remote D1
-migrations and deployment when the repository variable
-`BACKEND_V2_DEPLOY` is `true`. Re-read that variable before shipping and require
-the same preview and identity checks before the workflow's mutation.
+Feature-branch pushes and PR CI do not deploy. Every push to `main`, and pushes
+to `staging` that match `Backend v2 CI`'s path filters (backend-v2, api-shared,
+the root install and toolchain files, the setup action, and the workflow
+itself), can trigger remote D1 migrations and deployment when the repository
+variable `BACKEND_V2_DEPLOY` is `true`. Re-read that variable before shipping
+and require the same preview and identity checks before the workflow's
+mutation.
 Never apply, deploy, reset data or replace a resource to discover whether an
 upgrade is safe.

@@ -56,19 +56,32 @@ commandsnippets`), and change detection and the `terraform` lane install
 nothing.
 
 The application workflows are reusable (`workflow_call`) and keep their manual
-dispatch entry points. They no longer run on pull requests or feature-branch
-pushes themselves; `Frontend CI` and `Backend v2 CI` still run on pushes to
-`main` and `staging`, including pushes that change the root workspace install
-files. `Backend v2 CI` has a deploy job for those pushes, which needs the
-workflow's `test` job (lint, typecheck, and both coverage suites), so a push
-that breaks the backend fails before it ships. The deploy is off: it runs
-only once the `BACKEND_V2_DEPLOY` repository variable is `true` and the
-`CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets exist. Without
-that configuration deploys run by hand; see
+dispatch entry points. They do not run on pull requests or on pushes to `main`
+or feature branches themselves, so `CI` runs each lane once per push to `main`.
+`Frontend CI` and `Backend v2 CI` keep their own push triggers for `staging`
+alone, with path filters that include the root workspace install files.
+
+`Backend v2 CI` has a deploy job, which needs the workflow's `test` job (lint,
+typecheck, and both coverage suites), so a push that breaks the backend fails
+before it ships. It deploys production from `CI` on a push to `main`, which
+sets the workflow's `deploy` input, and staging from `Backend v2 CI`'s own run
+on a push to `staging`; it never runs for a pull request or a manual run. The
+job checks `github.workflow` for staging, because a reusable workflow sees its
+caller's context. Every lane runs on each push to `main`, so production
+deploys on every merge, not only on merges that change the backend: nearly
+every merge already changes the root `bun.lock`, and redeploying the same code
+and reapplying D1 migrations already applied change nothing. A failed deploy
+fails that push's `CI gate`, as it failed `Backend v2 CI` before. Deploys to
+one environment run one at a time, and one that has started is never
+cancelled. GitHub keeps one waiting job per concurrency group, so a newer
+push's deploy replaces a waiting one; the replaced deploy shows as cancelled
+and fails its push's `CI gate`, while the newer one ships the code it carried.
+
+The deploy is off: it runs only once the `BACKEND_V2_DEPLOY` repository
+variable is `true` and the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`
+secrets exist. Without that configuration deploys run by hand; see
 [backend deployment](../packages/backend-v2/README.md#deployment). Inspect the
-current variable and secret names before shipping. The job also checks
-`github.workflow`, because a reusable workflow sees its caller's context, so a
-`CI` run can never deploy.
+current variable and secret names before shipping.
 
 Frontend browser acquisition runs independently of the application browser specs;
 both jobs are required. For a diagnosed transient download-host failure, retain
@@ -156,5 +169,5 @@ Start with `agent-tool repo base-health` (see above). Use
 entry, `pr preflight` before the guarded merge, and `repo cleanup` after the
 confirmed merge. The managed skills document the procedure; this document owns
 the repository-specific policy. After cleanup, reinstall dependencies and hooks
-when changed. A merge that triggers Backend v2 CI must have its deployment
-result checked separately from the successful PR merge.
+when changed. While the backend deploy is on, check the deploy in the merge
+commit's `CI` run on `main` separately from the successful PR merge.

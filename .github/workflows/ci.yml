@@ -71,8 +71,9 @@ jobs:
       - name: Test hooks and CI policy
         run: bun run test:scripts
 
-  # The application workflows are reusable; backend-v2's deploy job is guarded
-  # so it never runs from here.
+  # The application workflows are reusable, and only this workflow runs them on
+  # main. On a push there, backend-v2 also deploys production once its tests
+  # pass (while BACKEND_V2_DEPLOY is `true`), and a failed deploy fails the gate.
   frontend:
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
@@ -83,6 +84,8 @@ jobs:
     needs: changes
     if: needs.changes.outputs.backendV2 == 'true'
     uses: ./.github/workflows/backend-v2.yml
+    with:
+      deploy: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     secrets: inherit
 
   api-shared:
