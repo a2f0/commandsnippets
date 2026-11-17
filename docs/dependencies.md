@@ -34,8 +34,11 @@ retains its specialized setup. Every manifest (the root and each package) pins
 its dependencies to exact versions, peer dependencies included: no `^` or `~`
 ranges (`scripts/checks/exactPins.test.ts` enforces it). Add with `--exact`, and
 keep the one-day minimum release age, which the root `bunfig.toml` applies to
-every package's new resolutions. An offline install lacking release timestamps
-does not justify disabling that policy.
+every package's new resolutions. Packages published from a2f0's own reviewed
+repositories (`@a2f0/agent-tool` and `@a2f0/ct-client`) are exempt, by the
+owner's decision, through `minimumReleaseAgeExcludes`; Bun matches exact names
+only, so a new internal dependency must be added to that list. An offline
+install lacking release timestamps does not justify disabling that policy.
 
 ## Compatibility groups
 

@@ -42,7 +42,7 @@ Bun reads only there:
 - **Install layout:** an isolated `node_modules` (`bunfig.toml`), so code can
   import only the packages it declares.
 - **New releases:** versions published less than a day ago are not installed
-  (`bunfig.toml`).
+  (`bunfig.toml`), except a2f0's own packages, such as `@a2f0/ct-client`.
 - **Install scripts:** only the packages in the root's `trustedDependencies`
   run theirs (the WebDriver and ffmpeg binaries, esbuild, workerd). This list
   replaces Bun's default allowlist for every package.
