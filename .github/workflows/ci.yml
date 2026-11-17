@@ -17,10 +17,11 @@ permissions:
   contents: read
 
 # A pull request's new run cancels its older one. Pushes to main run one at a
-# time, in push order, and a started run is never cancelled, so backend-v2's
-# production deploys never overlap or ship older code over newer. GitHub keeps
-# one waiting run per group: a newer push replaces a waiting one, and its run
-# checks and deploys the tree that includes it. Manual runs never wait.
+# time, queued as they start, and a started run is never cancelled, so
+# backend-v2's production deploys never overlap (its branch-tip check keeps a
+# superseded run from shipping older code). GitHub keeps one waiting run per
+# group: a newer push replaces a waiting one, and its run checks and deploys
+# the tree that includes it. Manual runs never wait.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'pull_request' && 'pr' || github.event_name == 'push' && 'push' || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}

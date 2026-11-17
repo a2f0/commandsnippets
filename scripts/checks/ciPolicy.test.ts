@@ -28,6 +28,7 @@ type Workflow = {
       if?: string;
       with?: Record<string, unknown>;
       concurrency?: unknown;
+      steps?: Array<{id?: string; if?: string; run?: string}>;
     }
   >;
 };
@@ -88,12 +89,11 @@ describe('backend-v2 deploy', () => {
   });
 
   // A lock taken once the tests pass would queue runs in the order their
-  // tests finish, so an older run could replace a newer one's waiting deploy
-  // and ship older code. Runs queue when they start instead, in push order:
-  // every push to main shares CI's group, and staging pushes share
-  // backend-v2.yml's (any other run's group is its own). A started run is
-  // never cancelled.
-  test('deploys pushes in order, never cancelling a started run', async () => {
+  // tests finish, so an older run could replace a newer one's waiting deploy.
+  // Runs queue as they start instead: every push to main shares CI's group,
+  // and staging pushes share backend-v2.yml's (any other run's group is its
+  // own). A started run is never cancelled, so deploys never overlap.
+  test('deploys one run at a time, never cancelling a started run', async () => {
     expect((await readWorkflow('ci.yml')).concurrency).toEqual({
       group: [
         expression('github.workflow'),
@@ -114,6 +114,29 @@ describe('backend-v2 deploy', () => {
       'cancel-in-progress': false,
     });
     expect(backend.jobs['deploy']?.concurrency).toBeUndefined();
+  });
+
+  // Queues cannot promise push order (a run can start late, or be rerun), so
+  // the deploy ships only its branch's tip, checked inside the queued run.
+  test('ships only the tip of its branch', async () => {
+    const steps =
+      (await readWorkflow('backend-v2.yml')).jobs['deploy']?.steps ?? [];
+    const tip = steps.findIndex(step => step.id === 'tip');
+    expect(steps[tip]?.run).toBe('sh scripts/checks/ciBranchTip.sh');
+    const shipping = steps.filter(step => step.run?.includes('wrangler'));
+    expect(shipping).toHaveLength(2);
+    for (const step of shipping) {
+      expect(steps.indexOf(step)).toBeGreaterThan(tip);
+      expect(step.if).toBe("steps.tip.outputs.current == 'true'");
+    }
+  });
+
+  // A staging push the filters skipped would leave the tip without a run,
+  // so an earlier run would stand down and nothing would deploy it.
+  test('runs on every staging push, so the tip has a run', async () => {
+    expect(
+      (await readWorkflow('backend-v2.yml')).on.push?.paths
+    ).toBeUndefined();
   });
 });
 

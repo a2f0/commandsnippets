@@ -554,8 +554,8 @@ CI: pull requests run lint, typecheck, and the coverage-gated tests as the
 those tests. Once on, it deploys production from `CI` on every push to `main`,
 whether or not the push changed the backend: redeploying the same code and
 reapplying migrations already applied change nothing. It deploys staging on
-pushes to `staging` that change the backend or its install files. Each
-environment's deploys go one at a time, in push order. See
+every push to `staging`. Each environment's deploys go one at a time, and a run
+whose commit a newer push superseded deploys nothing. See
 [CI and merge requirements](../../docs/ci-merge-gate.md) for when it runs.
 Without it, releases are deployed by hand as above.
 

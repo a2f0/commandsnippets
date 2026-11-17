@@ -6,7 +6,7 @@ review, and PR mechanics come from the exact-pinned `@a2f0/agent-tool`;
 
 | Group | Purpose and entrypoints |
 | --- | --- |
-| `checks/` | Path classification for CI and the push gate's scoped steps (`pushScope.ts`), PR-title commitlint, exact dependency pins, and policy tests; `bun run test:scripts` |
+| `checks/` | Path classification for CI and the push gate's scoped steps (`pushScope.ts`), the backend deploy's branch-tip check (`ciBranchTip.sh`), PR-title commitlint, exact dependency pins, and policy tests; `bun run test:scripts` |
 | `git/hooks/` | The commit-message hook and agent-tool's push gate (`pre-push`, declared under `pushGate` in `agent-tool.json`); `bun run hooks:install` / `bun run hooks:check` |
 | `testing/` | Frontend test launchers; `bun run test:unit`, `bun run test:browser`, `bun run test:browser-acquisition` |
 

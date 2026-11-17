@@ -58,8 +58,10 @@ nothing.
 The application workflows are reusable (`workflow_call`) and keep their manual
 dispatch entry points. They do not run on pull requests or on pushes to `main`
 or feature branches themselves, so `CI` runs each lane once per push to `main`.
-`Frontend CI` and `Backend v2 CI` keep their own push triggers for `staging`
-alone, with path filters that include the root workspace install files.
+`Frontend CI` keeps its own push trigger for `staging` alone, with path filters
+that include the root workspace install files. `Backend v2 CI` runs on every
+push to `staging`, so that branch's tip, like `main`'s, always has a run that
+can deploy it.
 
 `Backend v2 CI` has a deploy job, which needs the workflow's `test` job (lint,
 typecheck, and both coverage suites), so a push that breaks the backend fails
@@ -73,17 +75,22 @@ every merge already changes the root `bun.lock`, and redeploying the same code
 and reapplying D1 migrations already applied change nothing. A failed deploy
 fails that push's `CI gate`, as it failed `Backend v2 CI` before.
 
-Deploys ship in push order and never overlap, because the runs that deploy
-queue when they start rather than once their tests pass: `CI` runs pushes to
-`main` one at a time, in push order, and `Backend v2 CI` does the same for its
-own pushes to `staging` (their `concurrency` settings). Neither cancels a run
-that has started. A pull request's new run still cancels its older one, and
-manual runs never wait. GitHub keeps one waiting run per concurrency group, so
-a push that lands while another push's run waits replaces it: the replaced run
-shows as cancelled and leaves its commit without a `CI gate` result, and the
-newer run checks and deploys the tree that includes it. When merges cluster,
-`main`'s CI therefore takes longer to report, and only the latest of them gets
-a run of its own.
+Deploys never overlap and never ship older code over newer. The runs that
+deploy queue as they start, one at a time per branch: `CI` for pushes to
+`main`, and `Backend v2 CI` for its own pushes to `staging` (their
+`concurrency` settings). Neither cancels a run that has started; a pull
+request's new run still cancels its older one, and manual runs never wait. A
+queue cannot promise push order, since a run can start late or be rerun, so
+inside its run the deploy first checks that its commit is still the tip of its
+branch (`scripts/checks/ciBranchTip.sh`). A run that a newer push superseded
+passes without deploying, and the newer push's run deploys the tree that
+includes it. GitHub keeps one waiting run per concurrency group, so a push that
+lands while another push's run waits replaces it: the replaced run shows as
+cancelled and leaves its commit without a `CI gate` result. When merges
+cluster, `main`'s CI takes longer to report, and only the latest of them gets
+a run of its own. Rerunning an older run while a newer one waits replaces the
+newer one too; rerun the newest run afterwards, or its commit stays undeployed
+until the next push.
 
 The deploy is off: it runs only once the `BACKEND_V2_DEPLOY` repository
 variable is `true` and the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`

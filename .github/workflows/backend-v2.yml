@@ -2,9 +2,8 @@
 name: Backend v2 CI
 # Pull requests and pushes to main run this through `CI` (ci.yml, the required
 # `CI gate`), which sets `deploy` on a push to main; this workflow's own push
-# trigger remains for staging. The Worker bundles api-shared, so a change there
-# deploys too, and its dependencies are locked by the root workspace files
-# (package.json, bunfig.toml, bun.lock).
+# trigger remains for staging. Every staging push runs it, like every push to
+# main, so the branch's tip always has a run that can deploy it.
 on:
   workflow_dispatch:
   workflow_call:
@@ -15,21 +14,11 @@ on:
         default: false
   push:
     branches: [staging]
-    paths:
-      - '.mise.toml'
-      - 'mise.lock'
-      - 'bun.lock'
-      - 'bunfig.toml'
-      - 'package.json'
-      - 'packages/backend-v2/**'
-      - 'packages/api-shared/**'
-      - '.github/actions/setup/**'
-      - '.github/workflows/backend-v2.yml'
-# This workflow's own pushes to staging run one at a time, in push order, and a
-# started run is never cancelled, so staging deploys never overlap or ship older
-# code over newer; GitHub keeps one waiting run, which a newer push replaces.
-# Any other run gets a group of its own and never waits: from `CI` (whose
-# context a called workflow sees), ci.yml orders main's pushes itself.
+# This workflow's own pushes to staging run one at a time, queued as they
+# start, and a started run is never cancelled, so staging deploys never
+# overlap; GitHub keeps one waiting run, which a newer push replaces. Any other
+# run gets a group of its own and never waits: from `CI` (whose context a
+# called workflow sees), ci.yml queues main's pushes itself.
 concurrency:
   group: >-
     backend-v2-${{ github.workflow == 'Backend v2 CI' && github.event_name == 'push' && github.ref || github.run_id }}
@@ -59,8 +48,8 @@ jobs:
     # context, so `github.workflow` tells the two apart). Never for a pull
     # request or a manual run, and off until the BACKEND_V2_DEPLOY repository
     # variable is `true` and the CLOUDFLARE_* secrets exist
-    # (docs/ci-merge-gate.md). Runs that deploy to a branch go one at a time,
-    # in push order (the `concurrency` of ci.yml and of this workflow).
+    # (docs/ci-merge-gate.md). Runs that deploy from a branch go one at a time
+    # (the `concurrency` of ci.yml and of this workflow).
     if: >-
       github.event_name == 'push' &&
       vars.BACKEND_V2_DEPLOY == 'true' &&
@@ -77,7 +66,16 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
+      # Concurrency queues runs, but cannot promise push order (a run can start
+      # late, or be rerun): a run whose commit a newer push superseded stands
+      # down rather than ship older code, and the newer push's run deploys.
+      - name: Check that this commit is still the tip of its branch
+        id: tip
+        working-directory: .
+        run: sh scripts/checks/ciBranchTip.sh
       - name: Apply D1 migrations
+        if: steps.tip.outputs.current == 'true'
         run: bunx wrangler d1 migrations apply DB --remote --env "$DEPLOY_ENV"
       - name: Deploy
+        if: steps.tip.outputs.current == 'true'
         run: bunx wrangler deploy --env "$DEPLOY_ENV"
