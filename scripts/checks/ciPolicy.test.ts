@@ -15,6 +15,16 @@ function assertCiSuccess(needs: unknown): void {
   if (result.status !== 0) throw new Error(result.stdout + result.stderr);
 }
 
+// A push has no pull request base, so change detection runs every lane:
+// the latest run on main checks the whole tree its merges combined into.
+test('CI runs on every push to main, with no paths filter', async () => {
+  const workflow = Bun.YAML.parse(
+    await Bun.file(path.join(root, '.github/workflows/ci.yml')).text()
+  ) as {on: {push?: {branches?: string[]; paths?: string[]}}};
+  expect(workflow.on.push?.branches).toContain('main');
+  expect(workflow.on.push?.paths).toBeUndefined();
+});
+
 test('gate policy covers every classified scope', () => {
   expect(gatePolicy.conditional.map(rule => rule.output).sort()).toEqual(
     Object.keys(CI_SCOPES).sort()

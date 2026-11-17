@@ -6,15 +6,13 @@ review, and PR mechanics come from the exact-pinned `@a2f0/agent-tool`;
 
 | Group | Purpose and entrypoints |
 | --- | --- |
-| `checks/` | Path classification for CI and pre-push, PR-title commitlint, exact dependency pins, and policy tests; `bun run test:scripts` |
-| `git/hooks/` | Commit-message and conditional pre-push hooks; `bun run hooks:install` / `bun run hooks:check` |
-| `git/` | Push-specific timing history; `bun run timings:push -- --head <sha>` |
-| `lib/` | Timing helpers shared by the push gate and its history viewer |
+| `checks/` | Path classification for CI and the push gate's scoped steps (`pushScope.ts`), PR-title commitlint, exact dependency pins, and policy tests; `bun run test:scripts` |
+| `git/hooks/` | The commit-message hook and agent-tool's push gate (`pre-push`, declared under `pushGate` in `agent-tool.json`); `bun run hooks:install` / `bun run hooks:check` |
 | `testing/` | Frontend test launchers; `bun run test:unit`, `bun run test:browser`, `bun run test:browser-acquisition` |
 
-The push timing helpers remain local because they record the actual remote,
-every pushed ref, failed/unfinished steps, and the last 20 runs. Generic checks
-use `agent-tool run`; shared validation groups use `agent-tool run-group`.
+Generic checks use `agent-tool run`; shared validation groups, including the
+push gate's steps, use `agent-tool run-group`, and `agent-tool runs list` shows
+their timings.
 
 Application-specific scripts stay with their package. Backend administration is
 in `packages/backend-v2/scripts/admin/` (`bun run manage` there); its schema and

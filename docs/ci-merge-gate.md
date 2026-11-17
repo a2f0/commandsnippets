@@ -1,20 +1,30 @@
 # CI and merge requirements
 
 The `protect-main` GitHub ruleset requires the `CI gate` check from the GitHub
-Actions app, with strict base freshness, squash-only merges, signed commits, and
-no bypass actors. The ruleset is repository configuration; editing a workflow
-alone does not make a check required.
+Actions app, squash-only merges, signed commits, and no bypass actors. It does
+not require a branch to be up to date with `main`: a pull request whose `CI
+gate` passed merges after `main` moves, unless GitHub reports a conflict. The
+ruleset is repository configuration; editing a workflow alone does not make a
+check required.
 
-`CI gate` (`.github/workflows/ci.yml`) runs on every pull request. A `changes`
-job decides which lanes apply (`scripts/checks/ciPolicy.ts`), and the gate then
-requires each lane to have succeeded, or to have been skipped *because* change
-detection marked it irrelevant. A failed, cancelled, missing, or unexpectedly
-skipped lane fails the gate. Changes to a workflow or to the setup action
-every job uses (`.github/actions/setup`), to the CI policy itself
-(`scripts/checks/ci*`), to the root `.mise.toml` or `mise.lock`, to the
-workspace install files every package shares (the root `package.json`,
-`bunfig.toml` and `bun.lock`), or to the root `biome.json` and
-`knip.config.ts` every package's lint reads exercise every lane.
+`CI gate` (`.github/workflows/ci.yml`) runs on every pull request and every
+push to `main`. A `changes` job decides which lanes apply
+(`scripts/checks/ciPolicy.ts`), and the gate then requires each lane to have
+succeeded, or to have been skipped *because* change detection marked it
+irrelevant. A failed, cancelled, missing, or unexpectedly skipped lane fails
+the gate. Changes to a workflow or to the setup action every job uses
+(`.github/actions/setup`), to the CI policy itself (`scripts/checks/ci*`), to
+the root `.mise.toml` or `mise.lock`, to the workspace install files every
+package shares (the root `package.json`, `bunfig.toml` and `bun.lock`), or to
+the root `biome.json` and `knip.config.ts` every package's lint reads exercise
+every lane, and so does a push to `main`, which has no pull request diff.
+
+Two pull requests that pass separately can break `main` together; that is
+accepted, and `main`'s own CI shows it: every lane runs on each push there, so
+the latest run checks the whole tree its merges combined into. The `ship-pr`
+skill starts from `agent-tool repo base-health`: a red `main` is repaired, with
+the test that would have caught the combination, before or alongside the
+requested change.
 
 The gate always checks managed skill and permission-rule drift, rejects
 committed binary files (`agent-tool checks binaries`), and lints the actual PR
@@ -36,22 +46,25 @@ change there also runs the lanes of its consumers: `backend-v2` and
 `frontend`. Both web packages render their icons from the brand sources in
 `assets/brand/` with the `images` settings in `agent-tool.json`, using the
 root's pinned agent-tool, so those paths run the `frontend` and `website`
-lanes (and, on push, the website checks). Every job checks the repository
-out, then sets up with `.github/actions/setup`: the pinned mise installs the
-Bun and Node versions in `.mise.toml`, and every application lane runs one
-`bun install --frozen-lockfile`, which installs the whole workspace, root
-tooling included, from the root `bun.lock`; the `tooling` lane and the gate
-install only the root workspace (`--filter commandsnippets`), and change
-detection and the `terraform` lane install nothing.
+lanes (and, in the push gate, the website's lint and typecheck). Every job
+checks the repository out, then sets up with `.github/actions/setup`: the
+pinned mise installs the Bun and Node versions in `.mise.toml`, and every
+application lane runs one `bun install --frozen-lockfile`, which installs the
+whole workspace, root tooling included, from the root `bun.lock`; the
+`tooling` lane and the gate install only the root workspace (`--filter
+commandsnippets`), and change detection and the `terraform` lane install
+nothing.
 
 The application workflows are reusable (`workflow_call`) and keep their manual
 dispatch entry points. They no longer run on pull requests or feature-branch
 pushes themselves; `Frontend CI` and `Backend v2 CI` still run on pushes to
 `main` and `staging`, including pushes that change the root workspace install
-files. `Backend v2 CI` has a deploy job for those pushes, but
-it is off: it runs only once the `BACKEND_V2_DEPLOY` repository variable is
-`true` and the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets
-exist. Without that configuration deploys run by hand; see
+files. `Backend v2 CI` has a deploy job for those pushes, which needs the
+workflow's `test` job (lint, typecheck, and both coverage suites), so a push
+that breaks the backend fails before it ships. The deploy is off: it runs
+only once the `BACKEND_V2_DEPLOY` repository variable is `true` and the
+`CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets exist. Without
+that configuration deploys run by hand; see
 [backend deployment](../packages/backend-v2/README.md#deployment). Inspect the
 current variable and secret names before shipping. The job also checks
 `github.workflow`, because a reusable workflow sees its caller's context, so a
@@ -93,26 +106,31 @@ changes take effect. `bun run hooks:check` reports missing or stale copies.
 
 - `commit-msg` rejects attribution using `agent-tool commits check --message-file`
   and lints the unchanged message with the full local commitlint configuration.
-- `pre-push` validates every pushed branch destination using `agent-tool branch
-  check --pre-push`, rejects unsigned/bad signatures and `Co-authored-by`
-  trailers with `agent-tool commits check --range`, and runs the checks below.
-  Trust checks exclude history already reachable through the named push remote,
-  so integrating its fetched base does not re-check upstream commits. New
-  branches retain the local-main range fallback; pushes to a URL/path retain the
-  original range without remote-name filtering. Path selection still uses the
-  full diff, including base integration: the hook classifies it with CI's policy
-  (`bun scripts/checks/ciChanges.ts --range <range>`, one per pushed ref) and
-  runs the local checks of every lane that applies except `frontend`, whose
-  suites are left to CI. Those checks run against the worktree, so the hook
-  first requires the pushed commit to be the checked-out `HEAD`, with no
-  uncommitted tracked changes and no untracked files under the checked paths.
-  The `api-shared` checks start with the workspace install, then `backend-v2`
-  runs against api-shared through its workspace link. A change that runs every
-  lane in CI (a workflow or the setup action, the CI policy, `.mise.toml`,
-  `mise.lock`, the workspace install files or the root lint configs) runs every
-  local check. It refuses to run when the installed copy is stale. Per-check
-  timings are logged under `.git/commandsnippets/pushGateTimings.tsv`
-  (`scripts/git/showPushGateTimings.sh`).
+- `pre-push` is agent-tool's push gate, the exact output of
+  `agent-tool push-gate hook`. It runs agent-tool's trust guards (installed
+  hooks, managed skills and permission rules, branch names, commit signatures
+  and attribution, and binary files) on exactly the commits the push adds, then
+  the steps `pushGate` declares in `agent-tool.json`, and stops at the first
+  failure.
+
+The declared steps are static checks only: the lint and typecheck of each CI
+lane a push changes, except `frontend`'s, and `terraform fmt -check` for
+Terraform. Tests, builds, coverage, and dependency installs run in CI, which is
+the authority; `agent-tool push-gate check` rejects a step that reaches a test
+runner or an install, and `scripts/checks/hooks.test.ts` runs it. Each step
+first asks `scripts/checks/pushScope.ts` whether its lane applies. It
+classifies the pushed commits with CI's policy (`ciPolicy.ts`), from the
+remote's old tip, or for a new branch from where it left `main`, so a change
+that runs every lane in CI (a workflow or the setup action, the CI policy,
+`.mise.toml`, `mise.lock`, the workspace install files or the root lint
+configs) runs every step. The checks read the working tree, so a step refuses
+when a pushed ref is not the checked-out `HEAD`, when a tracked file has
+uncommitted changes (checked before the policy loads, so an uncommitted edit to
+it cannot decide what runs), or when an untracked file sits in a lane it
+checks. `agent-tool runs list` shows each push's step timings, and the gate
+warns when a push takes longer than its 60-second budget. When CI fails after
+a push, read the failing job with `agent-tool pr logs --head <sha>` and push a
+reviewed fix to the same branch.
 
 A co-author trailer that reaches `pre-push` is rejected; reword the commit and
 review the new HEAD before shipping. Signature policy requires presence and
@@ -125,12 +143,16 @@ when Git would otherwise report them as unsigned.
 Use the managed skills in `.agents/skills/` and `.claude/skills/` with the
 exact-pinned package. `agent-tool.json` declares conventional types (including
 `cleanup`), a 50-character header/branch limit, `main`/`staging` exemptions,
-the `CI gate` check in workflow `CI`, and strict ruleset freshness. Commitlint
-retains its complete local rules for commits and PR titles. Changed frontend
-and backend-v2 packages receive the patch bumps configured under `versions`,
-which records their new versions in the root `bun.lock`.
+the `CI gate` check in workflow `CI`, and the push gate's steps. It leaves
+`merge.requireStrictBaseFreshness` unset, so `pr checks --wait` and `pr merge`
+accept a `main` that moved during CI; only a conflict, or a `versions check`
+that fails against the live base, sends a branch back to integrate it.
+Commitlint retains its complete local rules for commits and PR titles. Changed
+frontend and backend-v2 packages receive the patch bumps configured under
+`versions`, which records their new versions in the root `bun.lock`.
 
-Use `agent-tool pr checks --wait --head <reviewed-sha>` to wait for every check
+Start with `agent-tool repo base-health` (see above). Use
+`agent-tool pr checks --wait --head <reviewed-sha>` to wait for every check
 entry, `pr preflight` before the guarded merge, and `repo cleanup` after the
 confirmed merge. The managed skills document the procedure; this document owns
 the repository-specific policy. After cleanup, reinstall dependencies and hooks

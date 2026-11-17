@@ -1,12 +1,16 @@
 ---
 # The aggregate `CI gate` job is the check the protect-main ruleset requires;
 # see docs/ci-merge-gate.md. Scoped jobs run only when change detection says
-# they apply, and the gate fails closed on anything else.
+# they apply, and the gate fails closed on anything else. A push to main has
+# no pull request diff, so every lane runs: two merges that pass separately
+# can break main together, and its latest run shows whether they did.
 name: CI
 
 on:
   pull_request:
     types: [opened, synchronize, reopened, edited]
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:

@@ -125,9 +125,9 @@ api-shared.
 
 **Consumers see api-shared's edits at once** through the link, including
 added, moved and removed files. After changing its `package.json`, run
-`bun install` and commit the root `bun.lock` if it changes. The pre-push hook
-and CI check `backend-v2` whenever `packages/api-shared/` changes, and CI runs
-the web app's checks as well.
+`bun install` and commit the root `bun.lock` if it changes. Whenever
+`packages/api-shared/` changes, the push gate lints and typechecks
+`backend-v2`, and CI runs the checks and tests of `backend-v2` and the web app.
 
 ### Clients
 

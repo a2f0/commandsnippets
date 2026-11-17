@@ -69,10 +69,11 @@ Monorepo for the Command Snippets app.
   and test launchers in `scripts/testing`; see [script layout](scripts/README.md).
   Put reusable mechanics in agent-tool and application-specific policy here.
   Preserve all callers when moving a script, including package-local guidance.
-- Follow [CI and merge requirements](docs/ci-merge-gate.md) for strict freshness,
-  scoped checks, hook setup, timing evidence, and deploy conditions. Inspect
-  unresolved review threads and reply in each original thread before resolving
-  a fully addressed finding.
+- Follow [CI and merge requirements](docs/ci-merge-gate.md) for merging without
+  an up-to-date branch, repairing a red `main`, scoped checks, the push gate
+  and hook setup, and deploy conditions. The push gate runs static checks only;
+  CI runs the tests. Inspect unresolved review threads and reply in each
+  original thread before resolving a fully addressed finding.
 
 ## Output capture
 
