@@ -20,6 +20,7 @@ type Workflow = {
     push?: {branches?: string[]; paths?: string[]};
     workflow_call?: {inputs?: Record<string, unknown>};
   };
+  concurrency?: unknown;
   jobs: Record<
     string,
     {
@@ -27,8 +28,6 @@ type Workflow = {
       if?: string;
       with?: Record<string, unknown>;
       concurrency?: unknown;
-      outputs?: Record<string, string>;
-      steps?: Array<{id?: string; if?: string; run?: string}>;
     }
   >;
 };
@@ -78,47 +77,43 @@ describe('backend-v2 deploy', () => {
   // workflow sees its caller's context), never for a pull request or a manual
   // run, and only after the tests and while the repository variable allows it.
   test('needs the tests and runs only for an allowed push', async () => {
-    const {jobs} = await readWorkflow('backend-v2.yml');
-    expect(jobs['tip']?.needs).toBe('test');
-    expect(jobs['tip']?.if).toBe(
+    const deploy = (await readWorkflow('backend-v2.yml')).jobs['deploy'];
+    expect(deploy?.needs).toBe('test');
+    expect(deploy?.if).toBe(
       "github.event_name == 'push' && " +
         "vars.BACKEND_V2_DEPLOY == 'true' && " +
         "((github.workflow == 'Backend v2 CI' && github.ref == 'refs/heads/staging') || " +
         "(inputs.deploy && github.ref == 'refs/heads/main'))"
     );
-    expect(jobs['deploy']?.needs).toEqual(['test', 'tip']);
-    expect(jobs['deploy']?.if).toBe("needs.tip.outputs.current == 'true'");
   });
 
-  // A run whose tests finish after a newer push must not deploy older code:
-  // it is checked before it queues for the lock, so it cannot replace the
-  // newer run's waiting deploy, and again inside the lock, before it ships.
-  test('stands down when a newer push superseded its commit', async () => {
-    const {jobs} = await readWorkflow('backend-v2.yml');
-    const check = 'sh scripts/checks/ciBranchTip.sh';
-    expect(jobs['tip']?.steps?.find(step => step.id === 'tip')?.run).toBe(
-      check
-    );
-    expect(jobs['tip']?.outputs).toEqual({
-      current: expression('steps.tip.outputs.current'),
+  // A lock taken once the tests pass would queue runs in the order their
+  // tests finish, so an older run could replace a newer one's waiting deploy
+  // and ship older code. Runs queue when they start instead, in push order:
+  // every push to main shares CI's group, and staging pushes share
+  // backend-v2.yml's (any other run's group is its own). A started run is
+  // never cancelled.
+  test('deploys pushes in order, never cancelling a started run', async () => {
+    expect((await readWorkflow('ci.yml')).concurrency).toEqual({
+      group: [
+        expression('github.workflow'),
+        expression('github.ref'),
+        expression(
+          "github.event_name == 'pull_request' && 'pr' || " +
+            "github.event_name == 'push' && 'push' || github.run_id"
+        ),
+      ].join('-'),
+      'cancel-in-progress': expression("github.event_name == 'pull_request'"),
     });
-    const steps = jobs['deploy']?.steps ?? [];
-    const tip = steps.findIndex(step => step.id === 'tip');
-    expect(steps[tip]?.run).toBe(check);
-    const shipping = steps.filter(step => step.run?.includes('wrangler'));
-    expect(shipping).toHaveLength(2);
-    for (const step of shipping) {
-      expect(steps.indexOf(step)).toBeGreaterThan(tip);
-      expect(step.if).toBe("steps.tip.outputs.current == 'true'");
-    }
-  });
-
-  test('never cancels a deploy in progress', async () => {
-    const deploy = (await readWorkflow('backend-v2.yml')).jobs['deploy'];
-    expect(deploy?.concurrency).toEqual({
-      group: `backend-v2-deploy-${expression('github.ref')}`,
+    const backend = await readWorkflow('backend-v2.yml');
+    expect(backend.concurrency).toEqual({
+      group: `backend-v2-${expression(
+        "github.workflow == 'Backend v2 CI' && github.event_name == 'push' && " +
+          'github.ref || github.run_id'
+      )}`,
       'cancel-in-progress': false,
     });
+    expect(backend.jobs['deploy']?.concurrency).toBeUndefined();
   });
 });
 

@@ -16,7 +16,7 @@
     "lint:binary-files": "agent-tool checks binaries --all",
     "fix": "biome check --write biome.json commitlint.config.mts knip.config.ts package.json scripts terraform/scripts tsconfig.base.json tsconfig.scripts.json && markdownlint-cli2 --fix '**/*.md'",
     "lint:branch-name": "agent-tool branch check",
-    "lint:shell": "shellcheck --shell=sh scripts/git/hooks/commit-msg scripts/git/hooks/pre-push scripts/checks/*.sh scripts/testing/*.sh packages/frontend/scripts/testing/*.sh",
+    "lint:shell": "shellcheck --shell=sh scripts/git/hooks/commit-msg scripts/git/hooks/pre-push scripts/testing/*.sh packages/frontend/scripts/testing/*.sh",
     "test:scripts": "bun test ./scripts/",
     "typecheck": "tsc -p tsconfig.scripts.json",
     "agent:run": "agent-tool run",
