@@ -4,3 +4,7 @@
 # it declares) and no versions published less than a day ago.
 linker = "isolated"
 minimumReleaseAge = 86400 # seconds
+# Packages published from a2f0's own reviewed repositories are exempt from the
+# release age. Bun matches exact package names only (a scope pattern such as
+# "@a2f0/*" is ignored), so add each new internal dependency here.
+minimumReleaseAgeExcludes = ["@a2f0/agent-tool", "@a2f0/ct-client"]

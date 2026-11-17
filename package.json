@@ -16,8 +16,7 @@
     "lint:binary-files": "agent-tool checks binaries --all",
     "fix": "biome check --write biome.json commitlint.config.mts knip.config.ts package.json scripts terraform/scripts tsconfig.base.json tsconfig.scripts.json && markdownlint-cli2 --fix '**/*.md'",
     "lint:branch-name": "agent-tool branch check",
-    "lint:shell": "shellcheck --shell=sh scripts/git/showPushGateTimings.sh scripts/git/hooks/commit-msg scripts/git/hooks/pre-push scripts/lib/stepTimings.sh scripts/testing/*.sh packages/frontend/scripts/testing/*.sh",
-    "test:agent-tool": "bun run agents:check",
+    "lint:shell": "shellcheck --shell=sh scripts/git/hooks/commit-msg scripts/git/hooks/pre-push scripts/checks/*.sh scripts/testing/*.sh packages/frontend/scripts/testing/*.sh",
     "test:scripts": "bun test ./scripts/",
     "typecheck": "tsc -p tsconfig.scripts.json",
     "agent:run": "agent-tool run",
@@ -30,11 +29,10 @@
     "test:unit": "sh scripts/testing/runUnitTests.sh",
     "test:browser-acquisition": "sh scripts/testing/runBrowserAcquisition.sh",
     "test:browser": "sh scripts/testing/runWebdriverTests.sh",
-    "timings:push": "sh scripts/git/showPushGateTimings.sh",
     "check": "agent-tool run-group scripts/testing/verify.json"
   },
   "devDependencies": {
-    "@a2f0/agent-tool": "0.1.53",
+    "@a2f0/agent-tool": "0.1.60",
     "@biomejs/biome": "2.6.6",
     "@commitlint/cli": "21.2.4",
     "@commitlint/config-conventional": "21.2.4",

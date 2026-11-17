@@ -1,15 +1,16 @@
 ---
 
 name: Frontend CI
-# Pull requests run this through `CI` (ci.yml, the required `CI gate`); pushes to
-# the long-lived branches rerun the checks. Static checks, units, browser
-# acquisition and WebdriverIO run independently; the caller sees their combined
-# result, without a download failure preventing the app specs from starting.
+# Pull requests and pushes to main run this through `CI` (ci.yml, the required
+# `CI gate`); this workflow's own push trigger remains for staging. Static
+# checks, units, browser acquisition and WebdriverIO run independently; the
+# caller sees their combined result, without a download failure preventing the
+# app specs from starting.
 on:
   workflow_dispatch:
   workflow_call:
   push:
-    branches: [main, staging]
+    branches: [staging]
     paths:
       - '.ls-lint.yml'
       - '.mise.toml'

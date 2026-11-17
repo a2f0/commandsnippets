@@ -34,8 +34,11 @@ retains its specialized setup. Every manifest (the root and each package) pins
 its dependencies to exact versions, peer dependencies included: no `^` or `~`
 ranges (`scripts/checks/exactPins.test.ts` enforces it). Add with `--exact`, and
 keep the one-day minimum release age, which the root `bunfig.toml` applies to
-every package's new resolutions. An offline install lacking release timestamps
-does not justify disabling that policy.
+every package's new resolutions. Packages published from a2f0's own reviewed
+repositories (`@a2f0/agent-tool` and `@a2f0/ct-client`) are exempt, by the
+owner's decision, through `minimumReleaseAgeExcludes`; Bun matches exact names
+only, so a new internal dependency must be added to that list. An offline
+install lacking release timestamps does not justify disabling that policy.
 
 ## Compatibility groups
 
@@ -174,11 +177,10 @@ account, Worker, route and binding identities separately: bundling does not plan
 remote resources or D1 migrations. Inspect pending SQL and migration semantics
 before any application or deployment.
 
-Feature-branch pushes and PR CI do not deploy. Pushes to `main` or `staging`
-that change backend-v2, api-shared, the root `package.json`, `bunfig.toml` or
-`bun.lock`, or `.github/workflows/backend-v2.yml` can trigger remote D1
-migrations and deployment when the repository variable
-`BACKEND_V2_DEPLOY` is `true`. Re-read that variable before shipping and require
-the same preview and identity checks before the workflow's mutation.
+Feature-branch pushes and PR CI do not deploy. Every push to `main` or
+`staging` can trigger remote D1 migrations and deployment when the repository
+variable `BACKEND_V2_DEPLOY` is `true`. Re-read that variable before shipping
+and require the same preview and identity checks before the workflow's
+mutation.
 Never apply, deploy, reset data or replace a resource to discover whether an
 upgrade is safe.

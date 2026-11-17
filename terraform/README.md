@@ -74,8 +74,8 @@ mocked provider: the www redirect, CAA set, TXT quoting, TLS settings and D1
 read replication), `tflint --recursive` with the shared `.tflint.hcl`, and
 shellcheck plus `bun test` for `scripts/tf` (against fixture `.secrets` tiers
 and a fake `terraform`: each stack reads its tier, a missing file or credential
-stops it, and inherited credentials never reach Terraform). The pre-push hook
-runs the format check and the wrapper tests. Locally:
+stops it, and inherited credentials never reach Terraform). The push gate
+runs the format check. Locally:
 
 ```shell
 terraform fmt -recursive

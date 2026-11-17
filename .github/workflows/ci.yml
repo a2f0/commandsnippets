@@ -1,19 +1,29 @@
 ---
 # The aggregate `CI gate` job is the check the protect-main ruleset requires;
 # see docs/ci-merge-gate.md. Scoped jobs run only when change detection says
-# they apply, and the gate fails closed on anything else.
+# they apply, and the gate fails closed on anything else. A push to main has
+# no pull request diff, so every lane runs: two merges that pass separately
+# can break main together, and its latest run shows whether they did.
 name: CI
 
 on:
   pull_request:
     types: [opened, synchronize, reopened, edited]
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
 
+# A pull request's new run cancels its older one. Pushes to main run one at a
+# time, queued as they start, and a started run is never cancelled, so
+# backend-v2's production deploys never overlap (its branch-tip check keeps a
+# superseded run from shipping older code). GitHub keeps one waiting run per
+# group: a newer push replaces a waiting one, and its run checks and deploys
+# the tree that includes it. Manual runs never wait.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'pull_request' && 'pr' || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'pull_request' && 'pr' || github.event_name == 'push' && 'push' || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -67,8 +77,9 @@ jobs:
       - name: Test hooks and CI policy
         run: bun run test:scripts
 
-  # The application workflows are reusable; backend-v2's deploy job is guarded
-  # so it never runs from here.
+  # The application workflows are reusable, and only this workflow runs them on
+  # main. On a push there, backend-v2 also deploys production once its tests
+  # pass (while BACKEND_V2_DEPLOY is `true`), and a failed deploy fails the gate.
   frontend:
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
@@ -79,6 +90,8 @@ jobs:
     needs: changes
     if: needs.changes.outputs.backendV2 == 'true'
     uses: ./.github/workflows/backend-v2.yml
+    with:
+      deploy: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     secrets: inherit
 
   api-shared:

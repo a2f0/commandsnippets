@@ -47,14 +47,58 @@
       }
     ]
   },
+  "pushGate": {
+    "steps": [
+      {
+        "label": "tooling-lint",
+        "command": ["sh", "-ec", "scope=$(bun scripts/checks/pushScope.ts tooling); [ \"$scope\" = skip ] || bun run lint"]
+      },
+      {
+        "label": "tooling-shell",
+        "command": ["sh", "-ec", "scope=$(bun scripts/checks/pushScope.ts tooling); [ \"$scope\" = skip ] || bun run lint:shell"]
+      },
+      {
+        "label": "tooling-typecheck",
+        "command": ["sh", "-ec", "scope=$(bun scripts/checks/pushScope.ts tooling); [ \"$scope\" = skip ] || bun run typecheck"]
+      },
+      {
+        "label": "api-shared-lint",
+        "command": ["sh", "-ec", "scope=$(bun scripts/checks/pushScope.ts apiShared); [ \"$scope\" = skip ] || bun run --cwd packages/api-shared lint"]
+      },
+      {
+        "label": "api-shared-typecheck",
+        "command": ["sh", "-ec", "scope=$(bun scripts/checks/pushScope.ts apiShared); [ \"$scope\" = skip ] || bun run --cwd packages/api-shared typecheck"]
+      },
+      {
+        "label": "backend-v2-lint",
+        "command": ["sh", "-ec", "scope=$(bun scripts/checks/pushScope.ts backendV2); [ \"$scope\" = skip ] || bun run --cwd packages/backend-v2 lint"]
+      },
+      {
+        "label": "backend-v2-typecheck",
+        "command": ["sh", "-ec", "scope=$(bun scripts/checks/pushScope.ts backendV2); [ \"$scope\" = skip ] || bun run --cwd packages/backend-v2 typecheck"]
+      },
+      {
+        "label": "terraform-format",
+        "command": ["sh", "-ec", "scope=$(bun scripts/checks/pushScope.ts terraform); [ \"$scope\" = skip ] || terraform fmt -check -recursive terraform"]
+      },
+      {
+        "label": "website-lint",
+        "command": ["sh", "-ec", "scope=$(bun scripts/checks/pushScope.ts website); [ \"$scope\" = skip ] || bun run --cwd packages/website lint"]
+      },
+      {
+        "label": "website-typecheck",
+        "command": ["sh", "-ec", "scope=$(bun scripts/checks/pushScope.ts website); [ \"$scope\" = skip ] || bun run --cwd packages/website check"]
+      }
+    ],
+    "budgetSeconds": 60
+  },
   "merge": {
     "requiredChecks": [
       {
         "name": "CI gate",
         "workflow": "CI"
       }
-    ],
-    "requireStrictBaseFreshness": true
+    ]
   },
   "versions": {
     "packages": [
