@@ -71,11 +71,17 @@ caller's context. Every lane runs on each push to `main`, so production
 deploys on every merge, not only on merges that change the backend: nearly
 every merge already changes the root `bun.lock`, and redeploying the same code
 and reapplying D1 migrations already applied change nothing. A failed deploy
-fails that push's `CI gate`, as it failed `Backend v2 CI` before. Deploys to
-one environment run one at a time, and one that has started is never
-cancelled. GitHub keeps one waiting job per concurrency group, so a newer
-push's deploy replaces a waiting one; the replaced deploy shows as cancelled
-and fails its push's `CI gate`, while the newer one ships the code it carried.
+fails that push's `CI gate`, as it failed `Backend v2 CI` before.
+
+Deploys to one environment run one at a time, and one that has started is
+never cancelled. A run deploys only its branch's tip
+(`scripts/checks/ciBranchTip.sh`), checked once its tests pass and again once
+it holds the deploy lock, so a run whose tests finish after a newer push never
+ships older code over it: it passes without deploying, and the newer push's
+run deploys once its own tests pass. GitHub keeps one waiting job per
+concurrency group, so a newer push's deploy replaces a waiting one; the
+replaced deploy shows as cancelled and fails its push's `CI gate`, while the
+newer one ships the code it carried.
 
 The deploy is off: it runs only once the `BACKEND_V2_DEPLOY` repository
 variable is `true` and the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`

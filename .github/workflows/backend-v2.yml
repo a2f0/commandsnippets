@@ -42,7 +42,11 @@ jobs:
         run: bun run test:coverage
       - name: Test management scripts and migrations (fails under 98%)
         run: bun run test:scripts
-  deploy:
+  # Whether this run may deploy, and whether its commit is still the tip of its
+  # branch once the tests pass. A run that a newer push superseded deploys
+  # nothing and never queues for the deploy lock, where it could replace the
+  # newer run's waiting deploy.
+  tip:
     runs-on: ubuntu-latest
     needs: test
     # Production from `CI`'s call with `deploy` on a push to main; staging from
@@ -56,6 +60,17 @@ jobs:
       vars.BACKEND_V2_DEPLOY == 'true' &&
       ((github.workflow == 'Backend v2 CI' && github.ref == 'refs/heads/staging') ||
       (inputs.deploy && github.ref == 'refs/heads/main'))
+    outputs:
+      current: ${{ steps.tip.outputs.current }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check that this commit is still the tip of its branch
+        id: tip
+        run: sh scripts/checks/ciBranchTip.sh
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [test, tip]
+    if: needs.tip.outputs.current == 'true'
     # One deploy per environment at a time, never cancelled once it starts.
     # GitHub keeps one waiting job per group, so a newer push's deploy
     # replaces a waiting one; the newer commit carries the replaced one's code.
@@ -73,7 +88,16 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
+      # Again inside the lock: a push that landed since the first check deploys
+      # from its own run, so this one stands down rather than risk shipping
+      # older code after it.
+      - name: Check that this commit is still the tip of its branch
+        id: tip
+        working-directory: .
+        run: sh scripts/checks/ciBranchTip.sh
       - name: Apply D1 migrations
+        if: steps.tip.outputs.current == 'true'
         run: bunx wrangler d1 migrations apply DB --remote --env "$DEPLOY_ENV"
       - name: Deploy
+        if: steps.tip.outputs.current == 'true'
         run: bunx wrangler deploy --env "$DEPLOY_ENV"
