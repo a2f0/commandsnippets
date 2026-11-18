@@ -1,5 +1,12 @@
 import {afterEach, expect, test} from 'bun:test';
-import {mkdtempSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
+import {
+  cpSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 
@@ -43,6 +50,8 @@ function pushedTwice() {
   git(repo, 'config', 'user.name', 'Test');
   git(repo, 'config', 'user.email', 'test@example.com');
   git(repo, 'remote', 'add', 'origin', origin);
+  mkdirSync(path.join(repo, 'scripts/checks'), {recursive: true});
+  cpSync(SCRIPT, path.join(repo, 'scripts/checks/ciBranchTip.sh'));
   const commit = (message: string) => {
     git(repo, 'commit', '-q', '--allow-empty', '-m', message);
     git(repo, 'push', '-q', 'origin', 'HEAD:refs/heads/main');
@@ -60,10 +69,18 @@ function branchTip(
 ) {
   const output = path.join(mkdtempSync(path.join(dir, 'run-')), 'output');
   writeFileSync(output, '');
-  const result = Bun.spawnSync(['sh', SCRIPT], {
-    cwd: repo,
-    env: {...testEnv, GITHUB_REF: ref, GITHUB_SHA: sha, GITHUB_OUTPUT: output},
-  });
+  const result = Bun.spawnSync(
+    ['sh', path.join(repo, 'scripts/checks/ciBranchTip.sh')],
+    {
+      cwd: dir,
+      env: {
+        ...testEnv,
+        GITHUB_REF: ref,
+        GITHUB_SHA: sha,
+        GITHUB_OUTPUT: path.relative(dir, output),
+      },
+    }
+  );
   return {
     exitCode: result.exitCode,
     stderr: result.stderr.toString(),

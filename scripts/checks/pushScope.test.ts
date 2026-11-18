@@ -111,9 +111,14 @@ function pushData(repo: string, refs: Ref[] = [{}]): string {
 }
 
 function pushScope(repo: string, scope: string, refs?: Ref[]) {
-  const result = run(['bun', 'scripts/checks/pushScope.ts', scope], repo, {
-    AGENT_TOOL_PUSH_GATE: pushData(repo, refs),
-  });
+  const caller = path.dirname(repo);
+  const result = run(
+    ['bun', path.join(repo, 'scripts/checks/pushScope.ts'), scope],
+    caller,
+    {
+      AGENT_TOOL_PUSH_GATE: path.relative(caller, pushData(repo, refs)),
+    }
+  );
   return {...result, output: result.stdout.trim()};
 }
 

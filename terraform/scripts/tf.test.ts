@@ -6,11 +6,12 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  realpathSync,
   rmSync,
   writeFileSync,
 } from 'node:fs';
 import {tmpdir} from 'node:os';
-import {join} from 'node:path';
+import {basename, dirname, join, relative} from 'node:path';
 
 // Runs a copy of scripts/tf inside a temporary repository layout, with fixture
 // `.secrets/<tier>` files and a fake `terraform`. It never reads the real
@@ -36,8 +37,10 @@ function tierSecrets(tier: string) {
 }
 
 function run(args: string[], env: Record<string, string> = {}) {
-  const result = Bun.spawnSync(['bash', script, ...args], {
-    env: {PATH: `${bin}:/usr/bin:/bin`, HOME: bin, ...env},
+  const caller = dirname(repo);
+  const result = Bun.spawnSync(['bash', relative(caller, script), ...args], {
+    cwd: caller,
+    env: {PATH: `${bin}:/usr/bin:/bin`, HOME: bin, CDPATH: bin, ...env},
     stdout: 'pipe',
     stderr: 'pipe',
   });
@@ -51,9 +54,9 @@ function run(args: string[], env: Record<string, string> = {}) {
 }
 
 beforeEach(() => {
-  repo = mkdtempSync(join(tmpdir(), 'tf-wrapper-'));
+  repo = realpathSync(mkdtempSync(join(tmpdir(), 'tf wrapper ')));
   bin = join(repo, 'bin');
-  mkdirSync(bin);
+  mkdirSync(join(bin, basename(repo), 'terraform/scripts'), {recursive: true});
   mkdirSync(join(repo, 'terraform', 'scripts'), {recursive: true});
   for (const stack of ['production', 'staging', 'zone']) {
     mkdirSync(join(repo, 'terraform', 'stacks', stack), {recursive: true});
@@ -173,8 +176,8 @@ describe('scripts/tf', () => {
       [
         '# comment',
         '',
-        `$(touch ${marker})`,
-        `touch ${marker}`,
+        `$(touch "${marker}")`,
+        `touch "${marker}"`,
         'OTHER_SECRET=not-for-terraform',
         'TF_STATE_ACCESS_KEY_ID=app-key-id',
         // Values keep every character after the first `=`, and the last line

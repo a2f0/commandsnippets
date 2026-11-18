@@ -9,6 +9,7 @@
  */
 import {execFileSync} from 'node:child_process';
 import {appendFileSync} from 'node:fs';
+import path from 'node:path';
 import {allScopes, ciDiffRange, ciScopes} from './ciPolicy';
 
 /**
@@ -19,7 +20,7 @@ export function changedPaths(range: string): string[] {
   return execFileSync(
     'git',
     ['diff', '--name-only', '--no-renames', '-z', range, '--'],
-    {encoding: 'utf8'}
+    {cwd: path.resolve(import.meta.dirname, '../..'), encoding: 'utf8'}
   )
     .split('\0')
     .filter(path => path !== '');
