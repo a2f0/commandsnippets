@@ -176,8 +176,8 @@ describe('scripts/tf', () => {
       [
         '# comment',
         '',
-        `$(touch ${marker})`,
-        `touch ${marker}`,
+        `$(touch "${marker}")`,
+        `touch "${marker}"`,
         'OTHER_SECRET=not-for-terraform',
         'TF_STATE_ACCESS_KEY_ID=app-key-id',
         // Values keep every character after the first `=`, and the last line
