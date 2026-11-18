@@ -19,6 +19,7 @@
  */
 import {spawnSync} from 'node:child_process';
 import {readFileSync} from 'node:fs';
+import path from 'node:path';
 import type {CiScope} from './ciPolicy';
 
 interface PushedRef {
@@ -34,7 +35,10 @@ interface PushData {
 }
 
 function git(args: readonly string[]): {status: number | null; stdout: string} {
-  const result = spawnSync('git', args, {encoding: 'utf8'});
+  const result = spawnSync('git', args, {
+    cwd: path.resolve(import.meta.dirname, '../..'),
+    encoding: 'utf8',
+  });
   if (result.error) throw result.error;
   return {status: result.status, stdout: result.stdout};
 }

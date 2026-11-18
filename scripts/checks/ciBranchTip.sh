@@ -17,7 +17,8 @@ case "$GITHUB_REF" in
     ;;
 esac
 
-refs=$(git ls-remote origin "$GITHUB_REF")
+repo=$(CDPATH='' cd -P -- "$(dirname -- "$0")/../.." && pwd -P)
+refs=$(git -C "$repo" ls-remote origin "$GITHUB_REF")
 tip=$(printf '%s\n' "$refs" | awk -v ref="$GITHUB_REF" '$2 == ref { print $1 }')
 if [ -z "$tip" ]; then
   echo "origin has no $GITHUB_REF" >&2

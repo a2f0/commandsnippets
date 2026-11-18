@@ -5,7 +5,7 @@
 #   scripts/tf <zone|staging|production> <terraform arguments...>
 set -euo pipefail
 
-root="$(cd "$(dirname "$0")/.." && pwd)"
+root="$(CDPATH='' cd -P -- "$(dirname -- "$0")/.." && pwd -P)"
 stack=${1:-}
 if [ -z "$stack" ] || [ ! -d "$root/stacks/$stack" ]; then
   stacks=$(for dir in "$root"/stacks/*/; do basename "$dir"; done | paste -sd '|' -)
