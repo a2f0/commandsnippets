@@ -68,6 +68,31 @@ describe('sortTags', () => {
     );
     expect(names(listed)).toEqual(['Shell']);
   });
+
+  // Counts of every kind, and of shortcuts only (View > Keyboard Shortcuts).
+  const counted = [
+    tag('1', {name: 'tmux', entry_count: 2}),
+    tag('2', {name: 'git', entry_count: 9}),
+    tag('3', {name: 'vim', entry_count: 5}),
+  ];
+  const shortcuts = new Map([
+    ['1', 2],
+    ['3', 4],
+  ]);
+
+  it.each([
+    ['entry_count', undefined, ['tmux', 'vim', 'git']],
+    ['-entry_count', undefined, ['git', 'vim', 'tmux']],
+    ['entry_count', shortcuts, ['git', 'tmux', 'vim']],
+    ['-entry_count', shortcuts, ['vim', 'tmux', 'git']],
+    ['name', shortcuts, ['git', 'tmux', 'vim']],
+  ])('sorts by %s, with counts %o', (order, counts, expected) => {
+    const entryCount =
+      counts === undefined
+        ? undefined
+        : (tag: {id: string}) => counts.get(tag.id) ?? 0;
+    expect(names(sortTags(counted, order, '', entryCount))).toEqual(expected);
+  });
 });
 
 describe('sortEntries', () => {

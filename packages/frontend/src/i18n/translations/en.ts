@@ -203,6 +203,9 @@ export const en = {
     darkMode: 'Dark Mode',
     lightMode: 'Light Mode',
     showTagCounts: 'Show Tag Counts',
+    allEntryKinds: 'All Entry Types',
+    keyboardShortcuts: 'Keyboard Shortcuts',
+    textEntries: 'Text Entries',
     sortByBody: 'Sort by Body',
     sortByDateCreated: 'Sort by Date Created',
     sortByDateTagged: 'Sort by Date Tagged',
@@ -245,6 +248,10 @@ export const en = {
     copyEntry: 'Copy',
     shortcutKind: 'Keyboard shortcut',
     shortcutPlaceholder: 'keys: ctrl + b, c',
+    noShortcutsShown:
+      'No keyboard shortcuts here. View > All Entry Types shows every entry.',
+    noSnippetsShown:
+      'No text entries here. View > All Entry Types shows every entry.',
     getInfo: 'Get Info',
     editEntry: 'Edit',
     untagEntry: 'Untag',

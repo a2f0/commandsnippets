@@ -54,6 +54,24 @@ describe('the app state', () => {
     expect(store.isStaff).toBe(false);
     expect(store.entryNew).toBeNull();
   });
+
+  it.each([
+    ['shortcut', 'shortcut'],
+    ['snippet', 'snippet'],
+    ['command', 'all'],
+    [undefined, 'all'],
+  ])('reads a saved kind filter of %s as %s', async (saved, expected) => {
+    const {entryKindFilter: _, ...rest} = defaultSavedState;
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        state: saved === undefined ? rest : {...rest, entryKindFilter: saved},
+        version: 0,
+      })
+    );
+    await act(() => useAppState.persist.rehydrate());
+    expect(store.entryKindFilter).toBe(expected);
+  });
 });
 
 // However the user leaves, their IndexedDB data goes: the menu's sign-out

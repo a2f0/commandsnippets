@@ -175,12 +175,14 @@ const TagContent = ({
   handleRef,
   dropRef,
   handleShown,
+  entryCount,
 }: {
   tag: ITagJsonApi;
   previewRef: (el: HTMLDivElement | null) => void;
   handleRef: (el: HTMLDivElement | null) => void;
   dropRef: (el: HTMLDivElement | null) => void;
   handleShown: boolean;
+  entryCount: number;
 }) => {
   const showTagCounts = useAppState(state => state.showTagCounts);
   return (
@@ -200,7 +202,7 @@ const TagContent = ({
         ref={dropRef}
       >
         <TagLabel label={tag.attributes.name} />
-        {showTagCounts ? ` (${tag.attributes.entry_count})` : null}
+        {showTagCounts ? ` (${entryCount})` : null}
       </TagLabelWrapper>
     </TagContainer>
   );
@@ -209,6 +211,8 @@ const TagContent = ({
 interface ITagProps {
   id: string;
   object: ITagJsonApi;
+  /** Its count of the entries the lists show (View's kind, or every one). */
+  entryCount: number;
   moveEntry: (id: string, atIndex: number) => void;
   findEntry: (id: string) => {entry: ITagJsonApi; index: number};
   index: number;
@@ -221,6 +225,7 @@ interface ITagProps {
 const Tag = ({
   id,
   object: tagObject,
+  entryCount,
   moveEntry,
   findEntry,
   index,
@@ -258,8 +263,6 @@ const Tag = ({
   const menu = useContextMenu();
   const edit = useTagEdit(tagObject, user);
 
-  const opacity = isDragging ? 0 : 1;
-
   const previewRef = (el: HTMLDivElement | null) => {
     preview(el);
   };
@@ -285,7 +288,7 @@ const Tag = ({
           >
             <Box
               ref={dropRef}
-              style={{opacity}}
+              style={{opacity: isDragging ? 0 : 1}}
               id={`tag-${id}`}
               data-testid={`tag-${id}`}
               data-row-kind="tag"
@@ -306,6 +309,7 @@ const Tag = ({
                 handleRef={handleRef}
                 dropRef={dropRef}
                 handleShown={dragHandle.shown}
+                entryCount={entryCount}
               />
             </Box>
           </ListItemButton>

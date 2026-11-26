@@ -15,6 +15,7 @@ import {appMode} from '../../lib/shared';
 import {useAppConfig} from '../../lib/state/appState';
 import {ItemTypes} from '../dnd/itemTypes';
 import {useDraggedRows} from '../dnd/useDraggedRows';
+import {NoneOfKindShown} from './EntryKindControls';
 import {EntryListContextMenu} from './EntryListContextMenu';
 import {EntryNew} from './EntryNew';
 import {EntryRow, type EntryRowPlace, type EntryRowShared} from './EntryRow';
@@ -101,7 +102,7 @@ const EntryList = () => {
   // Whose entries a copy (Enter) counts a reuse of: none but the owner's.
   const session = useSession();
   const mounted = useMounted();
-  const {shown, currentTag, tagId, tagNames} = useShownEntries();
+  const {shown, currentTag, tagId, tagNames, kindHidesAll} = useShownEntries();
 
   // The list as a drag reorders it.
   const {
@@ -182,6 +183,7 @@ const EntryList = () => {
         <EntryNew id="textEntryNewTop" tagId={currentTag?.id} />
       )}
       <EntryRows virtual={virtual} entries={entries} row={row} />
+      {kindHidesAll && <NoneOfKindShown />}
       {appConfig.entryNew === 'textEntry-bottom' && !readOnly && (
         <EntryNew id="textEntryNewBottom" tagId={currentTag?.id} />
       )}

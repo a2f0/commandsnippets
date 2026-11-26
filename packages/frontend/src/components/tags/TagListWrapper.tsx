@@ -1,6 +1,6 @@
-import React, {useEffect, useMemo} from 'react';
-import {useTags} from '../../lib/data/hooks';
-import {sortTags} from '../../lib/data/sort';
+import type {Tag} from '@commandsnippets/api-shared/responses';
+import React, {useEffect} from 'react';
+import {useTagListing} from '../../lib/data/tagListing';
 import {useRenderTiming} from '../../lib/metrics/hooks';
 import {
   navigate,
@@ -11,30 +11,25 @@ import {tagPath} from '../../lib/router/route';
 import {useAppState} from '../../lib/state/appState';
 import {TagList} from './TagList';
 
+// The list before the tags are read: the same one each render, so the
+// list (memoized) does not render again until they are.
+const NO_TAGS: Tag[] = [];
+
 /**
- * The user's tags (from IndexedDB, as syncs and writes store them), sorted
- * and searched. With no tag or entries list in the URL, it opens the first.
- * Each render is timed for the HUD.
+ * The tag list (`useTagListing`). With no tag or entries list in the URL,
+ * it opens the first, once the tags are listed with their counts (not
+ * from a list kept while they are read). Each render is timed for the HUD.
  */
 const TagListWrapper = () => {
   const renderStart = performance.now();
   const user = useRouteParam('user');
   const tag = useRouteParam('tag');
   const entriesList = useSearchParam('entries');
-  const allTags = useTags();
-  const tagSortOrder = useAppState(state => state.tagSortOrder);
-  const tagSearchString = useAppState(state => state.tagSearchString);
   const setTagSelectedID = useAppState(state => state.setTagSelectedID);
+  const listing = useTagListing();
+  const tags = listing.status === 'unread' ? undefined : listing.tags;
 
-  const tags = useMemo(
-    () =>
-      allTags === undefined
-        ? undefined
-        : sortTags(allTags, tagSortOrder, tagSearchString),
-    [allTags, tagSortOrder, tagSearchString]
-  );
-
-  const first = tags?.[0];
+  const first = listing.status === 'listed' ? listing.tags[0] : undefined;
   const current = tags?.find(candidate => candidate.attributes.name === tag);
   useEffect(() => {
     if (user === undefined) {
@@ -58,7 +53,13 @@ const TagListWrapper = () => {
     return null;
   }
 
-  return <TagList tagsFromWrapper={tags ?? []} username={user} />;
+  return (
+    <TagList
+      tagsFromWrapper={tags ?? NO_TAGS}
+      username={user}
+      entryCounts={listing.status === 'unread' ? null : listing.entryCounts}
+    />
+  );
 };
 
 const memoizedTagListWrapper = React.memo(TagListWrapper);

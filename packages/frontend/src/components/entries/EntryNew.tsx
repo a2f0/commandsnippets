@@ -4,7 +4,7 @@ import {useMounted} from '../../hooks/useMounted';
 import {useSaveError} from '../../hooks/useSaveError';
 import {useSession} from '../../lib/data/hooks';
 import {createEntry} from '../../lib/data/writes';
-import {useAppConfig} from '../../lib/state/appState';
+import {useAppConfig, useAppState} from '../../lib/state/appState';
 import {EntryForm} from './EntryForm';
 
 interface IEntryNewProps {
@@ -18,6 +18,8 @@ const EntryNew = ({id, tagId}: IEntryNewProps) => {
   const session = useSession();
   const mounted = useMounted();
   const saveError = useSaveError('create entry');
+  // A shortcut while View shows only shortcuts, so the new entry stays shown.
+  const kindFilter = useAppState(state => state.entryKindFilter);
 
   const handleSave = (subject: string, body: string, kind: EntryKind) => {
     if (session === null) return;
@@ -39,7 +41,7 @@ const EntryNew = ({id, tagId}: IEntryNewProps) => {
       kind="new"
       subject=""
       body=""
-      entryKind="snippet"
+      entryKind={kindFilter === 'shortcut' ? 'shortcut' : 'snippet'}
       onSave={handleSave}
       onCancel={handleCancel}
       error={saveError.error}

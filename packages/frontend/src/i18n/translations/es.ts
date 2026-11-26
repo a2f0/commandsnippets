@@ -212,6 +212,9 @@ export const es: I18NextTranslations = {
     darkMode: 'Modo Oscuro',
     lightMode: 'Modo Claro',
     showTagCounts: 'Mostrar Contadores de Etiquetas',
+    allEntryKinds: 'Todos los Tipos de Entrada',
+    keyboardShortcuts: 'Atajos de Teclado',
+    textEntries: 'Entradas de Texto',
     sortByBody: 'Ordenar por Cuerpo',
     sortByDateCreated: 'Ordenar por Fecha de Creación',
     sortByDateTagged: 'Ordenar por Fecha de Etiquetado',
@@ -256,6 +259,10 @@ export const es: I18NextTranslations = {
     copyEntry: 'Copiar',
     shortcutKind: 'Atajo de teclado',
     shortcutPlaceholder: 'teclas: ctrl + b, c',
+    noShortcutsShown:
+      'No hay atajos de teclado aquí. Ver > Todos los Tipos de Entrada muestra todas las entradas.',
+    noSnippetsShown:
+      'No hay entradas de texto aquí. Ver > Todos los Tipos de Entrada muestra todas las entradas.',
     getInfo: 'Obtener información',
     editEntry: 'Editar',
     untagEntry: 'Quitar etiqueta',

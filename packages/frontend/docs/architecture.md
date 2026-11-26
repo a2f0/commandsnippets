@@ -128,6 +128,20 @@ API; everything else the app keeps is a zustand store.
   in the list, the editor's preview and its page. Words that name no key
   stay text. Nothing copies a shortcut: it has no copy icon or Copy, and a
   click or Enter only selects it (`lib/entryKind.ts`'s `isShortcut`).
+  View > All Entry Types, Keyboard Shortcuts or Text Entries (the saved
+  `entryKindFilter`; one saved that is no filter reads as all) limits
+  every entry list to one kind (`useShownEntries`), with a note when it
+  hides every entry a list (searched) holds, and starts a new entry as a
+  shortcut while only shortcuts show. The tag list's counts and its sort by
+  entry count follow it: for one kind, `useTagCounts` counts each tag's
+  live entries of that kind from the junctions in IndexedDB, in one query
+  whose answer names its kind and session; for every kind, the tags'
+  `entry_count` stands. `lib/data/tagListing.ts` makes the list from them
+  (`unread`, `listed`, or the session's last list `kept` while a kind's
+  counts are read), so it never sorts, counts or opens its first tag by
+  another kind's counts or unread ones. Counted locally, a kind's counts
+  grow with a first collection load, page by page, as its junctions are
+  stored.
 - **Reuses**: every copy of a snippet (its copy icon, a click on its body,
   its menu's Copy, Enter in the list: `copyEntry`) is a reuse
   (`reuseEntry`) only after the clipboard accepts it. Failed clipboard

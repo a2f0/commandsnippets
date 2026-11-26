@@ -17,6 +17,7 @@ import {
 import {apiClient} from '../api/apiClient';
 import {UserMismatchError} from '../api/errors';
 import {setSignedInUser, setUnauthorizedHandler} from '../auth/authUtils';
+import {type EntryKindFilter, entryKindFilterOf} from '../entryKind';
 import {environment} from '../environment';
 import {clearMetrics} from '../metrics/timings';
 import {activeSearch, appMode} from '../shared';
@@ -44,6 +45,8 @@ export interface SavedState {
   /** The order of the untagged and all entries lists. */
   entrySortOrder: string;
   showTagCounts: boolean;
+  /** Which kind of entries the lists show and the tags count. */
+  entryKindFilter: EntryKindFilter;
   tagSidebarWidth: number;
 }
 
@@ -79,6 +82,7 @@ export interface AppActions {
   setTagTextEntryThroughModelSortOrder(order: string): void;
   setEntrySortOrder(order: string): void;
   setShowTagCounts(value: boolean): void;
+  setEntryKindFilter(value: EntryKindFilter): void;
   setTagSidebarWidth(value: number): void;
   setAppMode(value: ListMode): void;
   sendEditorOwnership(event: EditorOwnershipEvent): void;
@@ -104,6 +108,7 @@ export const defaultSavedState: SavedState = {
   tagTextEntryThroughModelSortOrder: 'order',
   entrySortOrder: 'date_updated',
   showTagCounts: false,
+  entryKindFilter: 'all',
   tagSidebarWidth: DEFAULT_SIDEBAR_WIDTH,
 };
 
@@ -209,6 +214,7 @@ export const useAppState = create<AppState>()(
         set({tagTextEntryThroughModelSortOrder}),
       setEntrySortOrder: entrySortOrder => set({entrySortOrder}),
       setShowTagCounts: showTagCounts => set({showTagCounts}),
+      setEntryKindFilter: entryKindFilter => set({entryKindFilter}),
       setTagSidebarWidth: width =>
         set({tagSidebarWidth: clampSidebarWidth(width)}),
       setAppMode: mode => get().sendEditorOwnership({type: 'release', mode}),
@@ -235,6 +241,17 @@ export const useAppState = create<AppState>()(
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => guardedStorage),
+      // The saved state over the defaults, its kind filter one there is.
+      merge: (saved, current) => {
+        const state = typeof saved === 'object' && saved !== null ? saved : {};
+        return {
+          ...current,
+          ...state,
+          entryKindFilter: entryKindFilterOf(
+            'entryKindFilter' in state ? state.entryKindFilter : undefined
+          ),
+        };
+      },
       partialize: (state): SavedState => ({
         loggedInUser: state.loggedInUser,
         isStaff: state.isStaff,
@@ -244,6 +261,7 @@ export const useAppState = create<AppState>()(
           state.tagTextEntryThroughModelSortOrder,
         entrySortOrder: state.entrySortOrder,
         showTagCounts: state.showTagCounts,
+        entryKindFilter: state.entryKindFilter,
         tagSidebarWidth: state.tagSidebarWidth,
       }),
     }
