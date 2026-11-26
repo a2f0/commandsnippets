@@ -114,6 +114,29 @@ export function booleanField() {
 }
 
 /**
+ * DRF's ChoiceField: one of `choices`, exactly as written (DRF looks the
+ * value's `str()` up among them, so neither `' snippet'` nor `''` is one).
+ */
+// @__NO_SIDE_EFFECTS__
+export function choiceField<const T extends readonly [string, ...string[]]>(
+  choices: T
+) {
+  const allowed = new Set<unknown>(choices);
+  return z.pipe(
+    present(notNull()),
+    z.transform((value: unknown, ctx): T[number] => {
+      if (!allowed.has(value)) {
+        const input = stringValue(value) ?? typeof value;
+        return fail(ctx, MESSAGES.invalidChoice(input), {
+          code: CODES.invalidChoice,
+        });
+      }
+      return value as T[number];
+    })
+  );
+}
+
+/**
  * The format half of DRF's PrimaryKeyRelatedField for a pk in attributes
  * (e.g. a reorder's `top`): a non-negative integer, as a number or string.
  * Outputs the pk as a string; whether the object exists is the server's

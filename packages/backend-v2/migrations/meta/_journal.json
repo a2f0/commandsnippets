@@ -169,6 +169,13 @@
       "when": 1792847958354,
       "tag": "0023_reuse_client_ids",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1795706667127,
+      "tag": "0024_entry_kind",
+      "breakpoints": true
     }
   ]
 }

@@ -186,6 +186,7 @@ export async function textEntryFactory(fields: {
   user: User;
   subject?: string;
   body?: string;
+  kind?: TextEntry['kind'];
   is_deleted?: boolean;
 }): Promise<TextEntry> {
   const n = next();
@@ -198,6 +199,7 @@ export async function textEntryFactory(fields: {
       subject,
       body,
       ...searchColumns({subject, body}),
+      ...(fields.kind === undefined ? {} : {kind: fields.kind}),
       user_id: fields.user.id,
       version: activeVersion(fields.user.id),
       is_deleted: fields.is_deleted ?? false,

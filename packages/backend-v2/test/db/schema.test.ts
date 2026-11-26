@@ -1,3 +1,4 @@
+import {ENTRY_KINDS} from '@commandsnippets/api-shared';
 import {getTableConfig} from 'drizzle-orm/sqlite-core';
 import {describe, expect, it} from 'vitest';
 import {
@@ -82,6 +83,7 @@ describe('schema', () => {
       ],
       references: ['user_id->users_user cascade'],
     });
+    expect(textEntries.kind.enumValues).toEqual([...ENTRY_KINDS]);
   });
 
   it('tags_tag', () => {

@@ -237,6 +237,11 @@ Deliberate changes, by area. The admin API is new; see
   A client needs to sync a tag only when its revision from the tags sync is
   newer than the one it last synced it at; Django only advanced a tag when
   the tag itself was edited.
+- **Entries have a `kind`**: `snippet` or `shortcut` (a keyboard shortcut,
+  whose body names its keys). A create without one makes a snippet, an edit
+  without one keeps it, any other value is a 400 `invalid_choice`, and
+  `null` is a 400 `null`, as for any field. Backups carry it; a backup
+  entry without one restores as a snippet. Django had no kinds.
 - **Search folds Unicode in the app.** D1's SQLite has no ICU, so
   `filter[search]` compares against `subject_folded`/`body_folded`, written by
   every entry write path (`src/lib/search.ts`). Anything that
@@ -252,7 +257,8 @@ Deliberate changes, by area. The admin API is new; see
   and adds one that advances an entry's tags whenever the entry's revision
   does. The triggers compute revisions with `src/lib/revision.ts`'s formula,
   written out in SQL.
-- **Length limits are CHECK constraints**, since SQLite has no varchar lengths.
+- **Length limits are CHECK constraints**, since SQLite has no varchar
+  lengths, and so is an entry's `kind` (`0024_entry_kind.sql`).
 - **Emails are unique** among accounts that have one (logins find accounts by
   email).
 - **`is_superuser` is gone.** `is_staff` is the only admin flag. The schema
@@ -402,10 +408,11 @@ data version made active, answering with its number and how many tags,
 entries, taggings and reuses it made (api-shared's `restoreResultSchema`).
 Nothing is deleted: the version before stays as it was. It is checked
 first, as a create of each row would be (a tag's name, an entry's subject
-and body), with every id a row refers to in the backup: anything else is a
-400 whose pointer and detail say where (`Invalid backup at /tags/3/name:
-...`), and no version is made. It names the version it is made over
-(`X-Data-Version`, a 400 when it names none): another than the active one
+and body; its kind is one of the kinds), with every id a row refers to in
+the backup: anything else is a 400 whose pointer and detail say where
+(`Invalid backup at /tags/3/name: ...`), and no version is made. It names
+the version it is made over (`X-Data-Version`, a 400 when it names none):
+another than the active one
 is a 409, checked when it arrives and again as
 its batch's first statement (the active version's row is made again, which
 its primary key refuses unless it is the one named), so a restore or switch

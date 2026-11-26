@@ -109,10 +109,11 @@ function rowInserts(
     ),
     ...chunked(restore.entries, chunkBytes).map(
       run => sql`INSERT INTO ${textEntries} (
-          "subject", "body", "subject_folded", "body_folded", "user_id",
-          "version", "is_public", "is_deleted", "date_created", "date_updated"
+          "subject", "body", "kind", "subject_folded", "body_folded",
+          "user_id", "version", "is_public", "is_deleted", "date_created",
+          "date_updated"
         )
-        SELECT ${field('subject')}, ${field('body')},
+        SELECT ${field('subject')}, ${field('body')}, ${field('kind')},
           ${field('subject_folded')}, ${field('body_folded')}, ${userId},
           ${version}, ${field('is_public')}, 0, ${field('date_created')},
           ${nextRevision(textEntryResource, userId)}

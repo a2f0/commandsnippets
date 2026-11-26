@@ -9,6 +9,7 @@ import {copyEntry} from '../../lib/data/copyEntry';
 import {NO_TAG_NAMES} from '../../lib/data/entryTags';
 import {useReadOnly, useSession} from '../../lib/data/hooks';
 import {keyOfRow} from '../../lib/data/rowKey';
+import {isShortcut} from '../../lib/entryKind';
 import {useRenderTiming} from '../../lib/metrics/hooks';
 import {appMode} from '../../lib/shared';
 import {useAppConfig} from '../../lib/state/appState';
@@ -123,6 +124,8 @@ const EntryList = () => {
       scrollTo(index, entry.id, up ? 'start' : 'end');
     },
     onEnter: selected => {
+      // A shortcut has nothing to copy.
+      if (isShortcut(selected)) return;
       void copyEntry(session, selected.id, selected.attributes.body).then(
         copied => {
           if (copied && mounted.current) {

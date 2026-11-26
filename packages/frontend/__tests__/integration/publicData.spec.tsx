@@ -115,6 +115,24 @@ describe('public user pages', () => {
     expect(writes).toEqual([]);
   });
 
+  it("leaves a guest's shortcut, which has nothing to copy, the browser's menu", async () => {
+    await publish();
+    await apiClient.forVersion(1).updateEntry('1', {
+      subject: 'entry-1-subject',
+      body: 'ctrl + b, c',
+      kind: 'shortcut',
+    });
+    renderAppAt('/test/test-tag-1');
+    const subject = await screen.findByText('entry-1-subject');
+    expect(await screen.findByText('Ctrl')).toBeInTheDocument();
+
+    // The browser's menu: the page's does not take the right-click.
+    expect(fireEvent.contextMenu(subject)).toBe(true);
+
+    expect(document.getElementById('tagsEntriesContextMenu-1')).toBeNull();
+    expect(screen.queryAllByRole('menuitem')).toEqual([]);
+  });
+
   it('supports entries=all for a non-admin viewing someone else, with one copy of an entry in multiple public tags', async () => {
     await publish();
     await apiClient.forVersion(1).tagEntry('2', '1');

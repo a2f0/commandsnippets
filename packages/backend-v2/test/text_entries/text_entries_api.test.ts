@@ -56,9 +56,10 @@ describe('TestTextEntriesApi', () => {
     expect(data.id).toBe(String(entry1.id));
 
     const attributes = data.attributes;
-    expect(Object.keys(attributes).length).toBe(9);
+    expect(Object.keys(attributes).length).toBe(10); // v2: kind
     expect(attributes.subject).toBe(entry1.subject);
     expect(attributes.body).toBe(entry1.body);
+    expect(attributes.kind).toBe('snippet');
     expect(attributes.date_created).toBe(isoformat(entry1.date_created));
     expect(attributes.date_updated).toBe(isoformat(entry1.date_updated));
     expect(attributes.reused_count).toBe(entry1.reused_count);
@@ -867,6 +868,66 @@ describe('TextEntriesApi v2', () => {
       ['/data/attributes/body', 'This field is required.'],
       ['/data/attributes/subject', 'This field is required.'],
     ]);
+  });
+
+  it('makes entries snippets unless created or edited as shortcuts, and an edit keeps the kind', async () => {
+    const {user1Client} = base;
+    const create = async (attributes: Json) => {
+      const response = await user1Client.post(
+        '/api/v1/entries',
+        entryPayload({subject: 's', body: 'ctrl + b', ...attributes})
+      );
+      expect(response.status).toBe(201);
+      return (await json(response)).data;
+    };
+
+    expect((await create({})).attributes.kind).toBe('snippet');
+    const shortcut = await create({kind: 'shortcut'});
+    expect(shortcut.attributes.kind).toBe('shortcut');
+    expect((await refreshEntry(Number(shortcut.id)))?.kind).toBe('shortcut');
+
+    // An edit that names no kind keeps it.
+    const edited = await user1Client.patch(
+      `/api/v1/entries/${shortcut.id}`,
+      entryPayload({subject: 'split', body: 'cmd + d'}, shortcut.id)
+    );
+    expect(edited.status).toBe(200);
+    expect((await json(edited)).data.attributes.kind).toBe('shortcut');
+    expect((await refreshEntry(Number(shortcut.id)))?.kind).toBe('shortcut');
+
+    const response = await user1Client.patch(
+      `/api/v1/entries/${shortcut.id}`,
+      entryPayload({kind: 'snippet'}, shortcut.id)
+    );
+    expect(response.status).toBe(200);
+    expect((await json(response)).data.attributes.kind).toBe('snippet');
+    expect((await refreshEntry(Number(shortcut.id)))?.kind).toBe('snippet');
+  });
+
+  it('refuses a kind that is not snippet or shortcut', async () => {
+    const {user1, user1Client} = base;
+    const entry = await textEntryFactory({user: user1});
+    const invalid = await expectError(
+      await user1Client.patch(
+        `/api/v1/entries/${entry.id}`,
+        entryPayload({kind: 'macro'}, String(entry.id))
+      ),
+      400,
+      '"macro" is not a valid choice.'
+    );
+    expect(invalid.errors[0]).toMatchObject({
+      code: 'invalid_choice',
+      source: {pointer: '/data/attributes/kind'},
+    });
+    await expectError(
+      await user1Client.post(
+        '/api/v1/entries',
+        entryPayload({subject: 's', body: 'b', kind: null})
+      ),
+      400,
+      'This field may not be null.'
+    );
+    expect((await refreshEntry(entry.id))?.kind).toBe('snippet');
   });
 
   it('creates an entry owned by the requester, ignoring a user relationship', async () => {

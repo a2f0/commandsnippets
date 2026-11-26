@@ -28,6 +28,7 @@ function renderForm(
           kind={kind}
           subject="the subject"
           body="the body"
+          entryKind="snippet"
           onSave={vi.fn()}
           onCancel={vi.fn()}
           {...props}
@@ -57,7 +58,14 @@ describe.each(['new', 'edit'] as const)('EntryForm (%s)', kind => {
     renderForm(kind);
     expect(document.activeElement).toBe(byId('formSubject'));
 
-    for (const field of ['Body', 'Save', 'Cancel', 'Subject', 'Body']) {
+    for (const field of [
+      'Body',
+      'Save',
+      'Cancel',
+      'Shortcut',
+      'Subject',
+      'Body',
+    ]) {
       // The form moves the focus itself, in place of the browser.
       expect(await pressTab()).toBe(false);
       expect(document.activeElement).toBe(byId(`form${field}`));
@@ -92,7 +100,44 @@ describe.each(['new', 'edit'] as const)('EntryForm (%s)', kind => {
 
     fireEvent.click(byId('formSave'));
 
-    expect(onSave).toHaveBeenCalledExactlyOnceWith('new subject', 'new body');
+    expect(onSave).toHaveBeenCalledExactlyOnceWith(
+      'new subject',
+      'new body',
+      'snippet'
+    );
+  });
+
+  it('saves a keyboard shortcut, previewing its keys as they are typed', () => {
+    const onSave = vi.fn();
+    renderForm(kind, {onSave});
+    expect(document.getElementById('formKeysPreview')).toBeNull();
+
+    fireEvent.click(byId('formShortcut'));
+    fireEvent.change(byId('formBody'), {target: {value: 'cntrl + b, c'}});
+
+    const keys = byId('formKeysPreview').querySelectorAll('kbd kbd');
+    expect([...keys].map(key => key.textContent)).toEqual(['Ctrl', 'B', 'c']);
+    fireEvent.click(byId('formSave'));
+    expect(onSave).toHaveBeenCalledExactlyOnceWith(
+      'the subject',
+      'cntrl + b, c',
+      'shortcut'
+    );
+  });
+
+  it('opens on its kind, and Cancel puts the kind back', () => {
+    const onCancel = vi.fn();
+    renderForm(kind, {entryKind: 'shortcut', onCancel});
+    const shortcut = byId('formShortcut');
+    invariant(shortcut instanceof HTMLInputElement, 'a checkbox');
+    expect(shortcut.checked).toBe(true);
+
+    fireEvent.click(shortcut);
+    expect(shortcut.checked).toBe(false);
+    fireEvent.click(byId('formCancel'));
+
+    expect(shortcut.checked).toBe(true);
+    expect(onCancel).toHaveBeenCalledOnce();
   });
 });
 

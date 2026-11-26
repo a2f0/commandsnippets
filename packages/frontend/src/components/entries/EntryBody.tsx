@@ -1,9 +1,11 @@
 import type {Theme} from '@mui/material/styles';
-import {useTheme} from '@mui/material/styles';
+import {styled, useTheme} from '@mui/material/styles';
 import React from 'react';
 import Highlighter from 'react-highlight-words';
 import type {ITextEntryJsonApi} from '../../lib/api/responses/types';
+import {isShortcut} from '../../lib/entryKind';
 import {useAppConfig} from '../../lib/state/appState';
+import {KeySequence} from './KeySequence';
 
 interface IProps {
   handleClick: (event: React.MouseEvent<HTMLDivElement>) => void;
@@ -15,6 +17,12 @@ interface IProps {
    */
   selected: boolean;
 }
+
+/** A shortcut's keys, wrapping within the row. */
+const ShortcutBody = styled('div')(() => ({
+  whiteSpace: 'pre-wrap',
+  cursor: 'default',
+}));
 
 const EntryBody = ({object, handleClick, selected}: IProps) => {
   const appConfig = useAppConfig();
@@ -37,6 +45,20 @@ const EntryBody = ({object, handleClick, selected}: IProps) => {
   if (selected) {
     styleOuterDiv.backgroundColor = theme.selected.background;
     style.color = theme.selected.foreground;
+  }
+
+  // A shortcut is drawn as keys, unhighlighted (a search still finds it),
+  // and a click selects it as a click on a snippet's text does.
+  if (isShortcut(object)) {
+    return (
+      <ShortcutBody
+        style={{...styleOuterDiv, ...style}}
+        id={`entryBodyOuterDiv${object.id}`}
+        onClick={handleClick}
+      >
+        <KeySequence body={object.attributes.body} />
+      </ShortcutBody>
+    );
   }
 
   return (

@@ -1,3 +1,4 @@
+import type {EntryKind} from '@commandsnippets/api-shared/responses';
 import React from 'react';
 import {useMounted} from '../../hooks/useMounted';
 import {useSaveError} from '../../hooks/useSaveError';
@@ -24,10 +25,10 @@ const EntryEdit = ({
   const mounted = useMounted();
   const saveError = useSaveError('update entry');
 
-  const handleSave = (subject: string, body: string) => {
+  const handleSave = (subject: string, body: string, kind: EntryKind) => {
     if (session === null) return;
     void saveError.save(
-      () => updateEntry(session, object.id, subject, body),
+      () => updateEntry(session, object.id, subject, body, kind),
       () => {
         if (mounted.current) handleSaveParent();
       }
@@ -40,6 +41,7 @@ const EntryEdit = ({
       kind="edit"
       subject={object.attributes.subject}
       body={object.attributes.body}
+      entryKind={object.attributes.kind}
       onSave={handleSave}
       onCancel={handleCancelEditParent}
       error={saveError.error}

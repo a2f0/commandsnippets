@@ -37,6 +37,10 @@ describe('GET /api/v1/user/backup', () => {
   it('holds every tag, entry, tagging and reuse, with their ids', async () => {
     const [entry] = await entriesOf(base.user1);
     if (entry === undefined) throw new Error('no example entry');
+    await db()
+      .update(textEntries)
+      .set({kind: 'shortcut'})
+      .where(eq(textEntries.id, entry.id));
     const reuse = await textEntryReusedFactory({
       text_entry: entry,
       user: base.user1,
@@ -75,6 +79,7 @@ describe('GET /api/v1/user/backup', () => {
           id: String(row.id),
           subject: row.subject,
           body: row.body,
+          kind: row.kind,
           is_public: row.is_public,
           date_created: isoformat(row.date_created),
           date_updated: isoformat(row.date_updated),
@@ -92,6 +97,7 @@ describe('GET /api/v1/user/backup', () => {
           date_updated: isoformat(row.date_updated),
         }))
     );
+    expect(backup.entries.map(row => row.kind)).toContain('shortcut');
     expect(backup.tags_entries).toHaveLength(3);
     expect(backup.entry_reuses).toEqual([
       {

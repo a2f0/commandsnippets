@@ -116,7 +116,7 @@ const calls: Call[] = [
   },
   {
     name: 'createEntry',
-    call: () => apiClient.createEntry('s', 'b'),
+    call: () => apiClient.createEntry({subject: 's', body: 'b'}),
     status: 201,
     body: entryDocument,
     malformed: {
@@ -126,7 +126,7 @@ const calls: Call[] = [
   },
   {
     name: 'updateEntry',
-    call: () => apiClient.updateEntry('1', 's', 'b'),
+    call: () => apiClient.updateEntry('1', {subject: 's', body: 'b'}),
     status: 200,
     body: entryDocument,
     malformed: {
@@ -333,19 +333,52 @@ describe('apiClient requests', () => {
     [
       // No user relationship: the entry is the requester's.
       'createEntry',
-      () => apiClient.createEntry('s', 'b'),
+      () => apiClient.createEntry({subject: 's', body: 'b'}),
       `${API}/entries`,
       {data: {type: 'TextEntry', attributes: {subject: 's', body: 'b'}}},
     ],
     [
+      'createEntry (a shortcut)',
+      () =>
+        apiClient.createEntry(
+          {subject: 's', body: 'ctrl + b', kind: 'shortcut'},
+          'local-1'
+        ),
+      `${API}/entries`,
+      {
+        data: {
+          type: 'TextEntry',
+          attributes: {
+            subject: 's',
+            body: 'ctrl + b',
+            kind: 'shortcut',
+            client_id: 'local-1',
+          },
+        },
+      },
+    ],
+    [
       'updateEntry',
-      () => apiClient.updateEntry('4', 's', 'b'),
+      () => apiClient.updateEntry('4', {subject: 's', body: 'b'}),
       `${API}/entries/4`,
       {
         data: {
           id: '4',
           type: 'TextEntry',
           attributes: {subject: 's', body: 'b'},
+        },
+      },
+    ],
+    [
+      'updateEntry (its kind)',
+      () =>
+        apiClient.updateEntry('4', {subject: 's', body: 'b', kind: 'snippet'}),
+      `${API}/entries/4`,
+      {
+        data: {
+          id: '4',
+          type: 'TextEntry',
+          attributes: {subject: 's', body: 'b', kind: 'snippet'},
         },
       },
     ],
@@ -379,7 +412,9 @@ describe('apiClient requests', () => {
   ];
 
   it.each(requests)('%s sends its document', async (name, call, url, body) => {
-    const response = calls.find(candidate => candidate.name === name);
+    // `createEntry (a shortcut)` answers as `createEntry` does.
+    const method = name.split(' ')[0];
+    const response = calls.find(candidate => candidate.name === method);
     invariant(response, `${name} has a response`);
     const fetchSpy = reply(response.status, response.body);
     await call();

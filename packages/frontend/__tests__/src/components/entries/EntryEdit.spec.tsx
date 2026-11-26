@@ -78,7 +78,8 @@ describe('EntryEdit', () => {
       expect.anything(),
       '1',
       'the subject',
-      'the body'
+      'the body',
+      'snippet'
     );
   });
 
@@ -106,7 +107,8 @@ describe('EntryEdit', () => {
       expect.anything(),
       '1',
       'another edit',
-      'the body'
+      'the body',
+      'snippet'
     );
     expect(errors).toHaveBeenCalledOnce();
   });

@@ -271,7 +271,7 @@ it("keeps an editor open on an entry when a tag made offline gets the entry's id
   // Entry 5 and, once sent, tag 5: ids of different types can be alike.
   const {data: entry} = await apiClient
     .forVersion(1)
-    .createEntry('five', 'body');
+    .createEntry({subject: 'five', body: 'body'});
   await renderEntries('/test?entries=untagged');
   const session = syncSession(TEST_USER);
   fireEvent.contextMenu(await screen.findByText('five'));

@@ -104,6 +104,7 @@ export const originalEntriesResponse: Pick<
       attributes: {
         body: 'test entry 1',
         subject: 'test-entry-1-subject',
+        kind: 'snippet',
         date_updated: '2022-05-14T02:33:53.995003',
         date_created: '2022-05-14T02:33:53.994989',
         is_public: false,
@@ -125,6 +126,7 @@ export const originalEntriesResponse: Pick<
       attributes: {
         body: 'test entry 2',
         subject: 'test-entry-2-subject',
+        kind: 'snippet',
         date_updated: '2022-05-14T02:33:53.995003',
         date_created: '2022-05-14T02:33:53.994989',
         is_public: false,
@@ -147,6 +149,7 @@ export const originalEntriesResponse: Pick<
       attributes: {
         body: 'test entry 3',
         subject: 'test-entry-3-subject',
+        kind: 'snippet',
         date_updated: '2022-05-14T02:33:53.995003',
         date_created: '2022-05-14T02:33:53.994989',
         is_public: false,
@@ -256,6 +259,7 @@ export const aliceEntries: EntriesState = {
       id: '71',
       attributes: {
         subject: 'alices-entry',
+        kind: 'snippet',
         body: 'echo alice',
         date_created: ALICE_DATE,
         date_updated: ALICE_DATE,

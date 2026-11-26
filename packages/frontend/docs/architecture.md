@@ -121,7 +121,14 @@ API; everything else the app keeps is a zustand store.
   into a replacement account, even without a reused row ID. An unbound account
   is not a wildcard: a later binding requires a fresh attempt. OAuth binds
   before publishing sign-in; a refused racing attempt preserves its draft.
-- **Reuses**: every copy of an entry (its copy icon, a click on its body,
+- **Keyboard shortcuts**: an entry's `kind` is `snippet` or `shortcut`
+  (the editor's Keyboard shortcut checkbox). A shortcut's body is keys in
+  text (`ctrl + b, c`: `+` together, `,` in turn, a line each), which
+  `lib/keySequence.ts` parses and `KeySequence` draws as `<kbd>` keycaps,
+  in the list, the editor's preview and its page. Words that name no key
+  stay text. Nothing copies a shortcut: it has no copy icon or Copy, and a
+  click or Enter only selects it (`lib/entryKind.ts`'s `isShortcut`).
+- **Reuses**: every copy of a snippet (its copy icon, a click on its body,
   its menu's Copy, Enter in the list: `copyEntry`) is a reuse
   (`reuseEntry`) only after the clipboard accepts it. Failed clipboard
   writes count nothing and show no success. Feedback belongs to the newest
@@ -145,7 +152,8 @@ API; everything else the app keeps is a zustand store.
   reuses.
 - **An entry's page** (`/:user/entries/:id`, `EntryPage.tsx`; Get Info in
   an entry's context menu, for owners and staff, never on public pages): its
-  subject, body (with Copy, a reuse too), tags, visibility, reuse count,
+  subject, body (with Copy, a reuse too; a shortcut's keys, without), tags,
+  visibility, reuse count,
   dates, size and id, and its reuse history, newest first. It reads one page
   from the API (`SyncEngine.entryReuses`): the queue is sent first, then the
   entry is refreshed for its count on page 1, then the requested page of

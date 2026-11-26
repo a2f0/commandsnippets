@@ -1,3 +1,4 @@
+import type {EntryKind} from '@commandsnippets/api-shared/responses';
 import React from 'react';
 import {useMounted} from '../../hooks/useMounted';
 import {useSaveError} from '../../hooks/useSaveError';
@@ -18,10 +19,10 @@ const EntryNew = ({id, tagId}: IEntryNewProps) => {
   const mounted = useMounted();
   const saveError = useSaveError('create entry');
 
-  const handleSave = (subject: string, body: string) => {
+  const handleSave = (subject: string, body: string, kind: EntryKind) => {
     if (session === null) return;
     void saveError.save(
-      () => createEntry(session, subject, body, tagId),
+      () => createEntry(session, subject, body, tagId, kind),
       () => {
         if (mounted.current) appConfig.setEntryNew(null);
       }
@@ -38,6 +39,7 @@ const EntryNew = ({id, tagId}: IEntryNewProps) => {
       kind="new"
       subject=""
       body=""
+      entryKind="snippet"
       onSave={handleSave}
       onCancel={handleCancel}
       error={saveError.error}

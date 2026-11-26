@@ -30,6 +30,7 @@ function mountForm(kind: 'entry' | 'tag', id: string) {
               kind="new"
               subject="subject"
               body="body"
+              entryKind="snippet"
               onSave={vi.fn()}
               onCancel={vi.fn()}
             />

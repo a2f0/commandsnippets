@@ -26,6 +26,15 @@ describe('TestTextEntriesModel', () => {
     base = await setUpBase();
   });
 
+  it('refuses a kind that is not snippet or shortcut (0024)', async () => {
+    await expectCheckFailure(
+      textEntryFactory({user: base.user1, kind: 'macro' as 'snippet'}),
+      'text_entries_textentry_kind'
+    );
+    const entry = await textEntryFactory({user: base.user1, kind: 'shortcut'});
+    expect(entry.kind).toBe('shortcut');
+  });
+
   it('test_invalid_body_length', async () => {
     const maxLength = 1024;
     await expectCheckFailure(

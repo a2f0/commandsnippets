@@ -42,6 +42,8 @@ describe('TagsEntries Behavior', () => {
     await browser.keys('Tab');
     await expect(BasePage.textEntryEdit1Cancel).toBeFocused();
     await browser.keys('Tab');
+    await expect(BasePage.textEntryEdit1Shortcut).toBeFocused();
+    await browser.keys('Tab');
     await expect(BasePage.textEntryEdit1Subject).toBeFocused();
 
     // Test editing the subject field (now we're focused on it)

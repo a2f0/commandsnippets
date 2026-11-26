@@ -1,13 +1,15 @@
+import type {EntryKind} from '@commandsnippets/api-shared/responses';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import {useTheme} from '@mui/material/styles';
+import {type Theme, useTheme} from '@mui/material/styles';
 import {useEffect, useRef, useState} from 'react';
 import {useEditFieldCycle} from '../../hooks/useEditFieldCycle';
 import {useEditorOwnership} from '../../hooks/useEditorOwnership';
 import {useTypedTranslation} from '../../i18n/hooks';
 import {needsScrollingIntoView} from '../../lib/scroll';
 import {appMode} from '../../lib/shared';
+import {EntryKindCheckbox, KeysPreview} from './EntryKindControls';
 import {InputEntryBody} from './InputEntryBody';
 import {InputEntrySubject} from './InputEntrySubject';
 
@@ -22,8 +24,10 @@ export interface IEntryFormProps {
   /** What the fields open with, and go back to on Cancel. */
   subject: string;
   body: string;
+  /** What the entry is (a shortcut: its body is keys, previewed as keys). */
+  entryKind: EntryKind;
   /** Save what the fields hold. */
-  onSave: (subject: string, body: string) => void;
+  onSave: (subject: string, body: string, entryKind: EntryKind) => void;
   onCancel: () => void;
   /** Why the last save failed (none: it did not). */
   error?: string | null;
@@ -31,20 +35,37 @@ export interface IEntryFormProps {
   saving?: boolean;
 }
 
-/** The subject, body, Save and Cancel of the entry editors. */
+/**
+ * The bottom margin of an entry editor's buttons: scrolled into view clear of
+ * the footer, which covers the bottom of the window (Save as the editor
+ * opens, either button when focused).
+ */
+const buttonSxOf = (kind: IEntryFormProps['kind'], theme: Theme) =>
+  kind === 'edit'
+    ? {
+        scrollMarginBottom: `${theme.footer.height + 10}px`,
+        marginBottom: '10px',
+      }
+    : {};
+
+/** The subject, body, kind, Save and Cancel of the entry editors. */
 export const EntryForm = ({
   id,
   kind,
   subject: initialSubject,
   body: initialBody,
+  entryKind: initialEntryKind,
   onSave,
   onCancel,
   error = null,
   saving = false,
 }: IEntryFormProps) => {
   const {t} = useTypedTranslation('common');
+  const {t: tEntries} = useTypedTranslation('entries');
   const [subject, setSubject] = useState<string>(initialSubject);
   const [body, setBody] = useState<string>(initialBody);
+  const [entryKind, setEntryKind] = useState<EntryKind>(initialEntryKind);
+  const shortcut = entryKind === 'shortcut';
   const owner = useEditorOwnership(appMode.entryEditor, true, saving);
   const saveRef = useRef<HTMLButtonElement>(null);
   const theme = useTheme();
@@ -68,19 +89,11 @@ export const EntryForm = ({
   const handleCancel = () => {
     setBody(initialBody);
     setSubject(initialSubject);
+    setEntryKind(initialEntryKind);
     onCancel();
   };
 
-  const buttonSx =
-    kind === 'edit'
-      ? {
-          // Scrolled into view clear of the footer, which covers the bottom
-          // of the window: Save as the editor opens, either button when
-          // focused.
-          scrollMarginBottom: `${theme.footer.height + 10}px`,
-          marginBottom: '10px',
-        }
-      : {};
+  const buttonSx = buttonSxOf(kind, theme);
   const color = kind === 'edit' ? 'primary' : 'secondary';
 
   return (
@@ -104,12 +117,13 @@ export const EntryForm = ({
       <div>
         <InputEntryBody
           id={`${id}Body`}
-          placeholder="body"
+          placeholder={shortcut ? tEntries('shortcutPlaceholder') : 'body'}
           valueParent={body}
           handleChangeParent={setBody}
           readOnly={saving}
         />
       </div>
+      {shortcut && <KeysPreview id={id} body={body} />}
       {error !== null && (
         <Alert id={`${id}Error`} severity="error" sx={{mb: '4px'}}>
           {error}
@@ -128,7 +142,7 @@ export const EntryForm = ({
         size="small"
         variant="outlined"
         onClick={() => {
-          onSave(subject, body);
+          onSave(subject, body, entryKind);
         }}
       >
         {t('save')}
@@ -143,6 +157,13 @@ export const EntryForm = ({
       >
         {t('cancel')}
       </Button>
+      <EntryKindCheckbox
+        id={id}
+        entryKind={entryKind}
+        onChange={setEntryKind}
+        disabled={saving}
+        sx={{ml: '8px', ...buttonSx}}
+      />
     </Box>
   );
 };

@@ -16,6 +16,7 @@ import {
   timestampSchema,
   versionSchema,
 } from '../jsonapi/response';
+import {entryKindSchema} from './textEntry';
 
 /** What every backup's `format` says it is. */
 export const BACKUP_FORMAT = 'commandsnippets-backup';
@@ -36,6 +37,8 @@ export const backupEntrySchema = z.object({
   id: resourceIdSchema,
   subject: z.string(),
   body: z.string(),
+  /** A snippet in backups made before entries had a kind. */
+  kind: z._default(entryKindSchema, 'snippet'),
   is_public: z.boolean(),
   date_created: timestampSchema,
   date_updated: timestampSchema,

@@ -30,6 +30,7 @@ export const entriesResponse: TextEntryListDocument & JsonObject = {
       attributes: {
         body: 'entry-1-body',
         subject: 'entry-1-subject',
+        kind: 'snippet',
         date_updated: '2019-03-17T18:20:00',
         date_created: '2019-03-17T18:20:00',
         is_public: false,
@@ -45,6 +46,7 @@ export const entriesResponse: TextEntryListDocument & JsonObject = {
       attributes: {
         body: 'entry-2-body',
         subject: 'entry-2-subject',
+        kind: 'snippet',
         date_updated: '2021-03-17T18:20:00',
         date_created: '2021-03-17T18:20:00',
         is_public: false,
@@ -60,6 +62,7 @@ export const entriesResponse: TextEntryListDocument & JsonObject = {
       attributes: {
         body: 'entry-3-body',
         subject: 'entry-3-subject',
+        kind: 'snippet',
         date_updated: '2021-03-18T18:20:00',
         date_created: '2021-03-18T18:20:00',
         is_public: false,
@@ -75,6 +78,7 @@ export const entriesResponse: TextEntryListDocument & JsonObject = {
       attributes: {
         body: 'entry-4-body',
         subject: 'entry-4-subject',
+        kind: 'snippet',
         date_updated: '2021-03-19T18:20:00',
         date_created: '2021-03-19T18:20:00',
         is_public: false,
