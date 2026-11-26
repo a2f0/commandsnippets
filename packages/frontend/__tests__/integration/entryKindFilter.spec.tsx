@@ -159,6 +159,50 @@ it("opens the first tag by the counts of the kind chosen, never the last kind's"
   );
 });
 
+/** The View menu's kind items that are checked, by id. */
+async function checkedKinds(): Promise<string[]> {
+  const view = await screen.findByRole('menu', {name: 'View'});
+  await act(async () => {
+    fireEvent.click(view);
+  });
+  const items = await screen.findAllByRole('menuitem');
+  const checked = items
+    .filter(item => item.id.startsWith('view-menu-entry-kind-'))
+    .filter(item => item.querySelector('[data-testid="CheckIcon"]') !== null)
+    .map(item => item.id);
+  fireEvent.keyDown(await screen.findByRole('menuitem', {name: 'Analytics'}), {
+    key: 'Escape',
+  });
+  return checked;
+}
+
+it('checks the kind chosen in the View menu', async () => {
+  renderAppAt('/test/test-tag-1');
+  await screen.findByText('entry-1-subject');
+  expect(await checkedKinds()).toEqual(['view-menu-entry-kind-all']);
+
+  await chooseView('Keyboard Shortcuts');
+
+  expect(await checkedKinds()).toEqual(['view-menu-entry-kind-shortcut']);
+});
+
+it('limits the all and untagged lists to the kind chosen', async () => {
+  await apiClient
+    .forVersion(1)
+    .createEntry({subject: 'loose-snippet', body: 'ls', kind: 'snippet'});
+  act(() => store.setEntryKindFilter('shortcut'));
+  const {history} = renderAppAt('/test?entries=all');
+
+  await screen.findByText('keys-a');
+  expect(screen.getByText('entry-1-subject')).toBeInTheDocument();
+  expect(screen.queryByText('entry-2-subject')).not.toBeInTheDocument();
+  expect(screen.queryByText('loose-snippet')).not.toBeInTheDocument();
+
+  // The untagged list holds only a text entry, which shortcuts hide.
+  act(() => history.push('/test?entries=untagged'));
+  expect(await screen.findByText(NO_SHORTCUTS)).toBeInTheDocument();
+});
+
 it('starts a new entry as a shortcut while only shortcuts show', async () => {
   act(() => store.setEntryKindFilter('shortcut'));
   renderAppAt('/test/test-tag-1');
