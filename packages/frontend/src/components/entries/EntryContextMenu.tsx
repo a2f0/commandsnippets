@@ -131,6 +131,8 @@ function useEntryMenuItems({
 const EntryContextMenu = (props: IEntryContextMenu) => {
   const {id, mouse, onClose} = props;
   const items = useEntryMenuItems(props);
+  // A shortcut on a public page: nothing to offer, so no empty menu.
+  if (items.length === 0) return null;
 
   return (
     <ContextMenu

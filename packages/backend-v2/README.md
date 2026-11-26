@@ -239,9 +239,9 @@ Deliberate changes, by area. The admin API is new; see
   the tag itself was edited.
 - **Entries have a `kind`**: `snippet` or `shortcut` (a keyboard shortcut,
   whose body names its keys). A create without one makes a snippet, an edit
-  without one keeps it, and anything else, `null` included, is a 400
-  `invalid_choice`. Backups carry it; a backup entry without one restores
-  as a snippet. Django had no kinds.
+  without one keeps it, any other value is a 400 `invalid_choice`, and
+  `null` is a 400 `null`, as for any field. Backups carry it; a backup
+  entry without one restores as a snippet. Django had no kinds.
 - **Search folds Unicode in the app.** D1's SQLite has no ICU, so
   `filter[search]` compares against `subject_folded`/`body_folded`, written by
   every entry write path (`src/lib/search.ts`). Anything that

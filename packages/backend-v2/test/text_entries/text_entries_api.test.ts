@@ -870,7 +870,7 @@ describe('TextEntriesApi v2', () => {
     ]);
   });
 
-  it('makes entries snippets unless created or edited as shortcuts', async () => {
+  it('makes entries snippets unless created or edited as shortcuts, and an edit keeps the kind', async () => {
     const {user1Client} = base;
     const create = async (attributes: Json) => {
       const response = await user1Client.post(
@@ -884,6 +884,15 @@ describe('TextEntriesApi v2', () => {
     expect((await create({})).attributes.kind).toBe('snippet');
     const shortcut = await create({kind: 'shortcut'});
     expect(shortcut.attributes.kind).toBe('shortcut');
+    expect((await refreshEntry(Number(shortcut.id)))?.kind).toBe('shortcut');
+
+    // An edit that names no kind keeps it.
+    const edited = await user1Client.patch(
+      `/api/v1/entries/${shortcut.id}`,
+      entryPayload({subject: 'split', body: 'cmd + d'}, shortcut.id)
+    );
+    expect(edited.status).toBe(200);
+    expect((await json(edited)).data.attributes.kind).toBe('shortcut');
     expect((await refreshEntry(Number(shortcut.id)))?.kind).toBe('shortcut');
 
     const response = await user1Client.patch(
