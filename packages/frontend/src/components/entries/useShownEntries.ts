@@ -53,16 +53,22 @@ export function useShownEntries() {
   // which reads every row again) finds unchanged keeps its object, so only
   // the rows the write changed render again.
   const lastShown = useRef<ReadonlyMap<string, TextEntry>>(new Map());
+  const sorted = useMemo(
+    () =>
+      listsAll
+        ? listed && sortEntries(listed.entries, entryOrder, search)
+        : tagged && sortTagEntries(tagged.entries, tagOrder, search),
+    [listsAll, listed, tagged, entryOrder, tagOrder, search]
+  );
   const shown = useMemo(() => {
-    const sorted = listsAll
-      ? listed && sortEntries(listed.entries, entryOrder, search)
-      : tagged && sortTagEntries(tagged.entries, tagOrder, search);
     const ofKind =
       kindFilter === 'all'
         ? sorted
         : sorted?.filter(entry => shownByKind(entry, kindFilter));
     return ofKind && keepUnchanged(ofKind, lastShown.current, keyOfRow);
-  }, [listsAll, listed, tagged, entryOrder, tagOrder, search, kindFilter]);
+  }, [sorted, kindFilter]);
+  // Whether the kind View shows hides every entry the list (searched) holds.
+  const kindHidesAll = shown?.length === 0 && (sorted?.length ?? 0) > 0;
   useLayoutEffect(() => {
     lastShown.current = new Map(
       (shown ?? []).map(entry => [keyOfRow(entry), entry])
@@ -84,5 +90,5 @@ export function useShownEntries() {
     }
   }, [ownRows, shownList]);
 
-  return {shown, currentTag, tagId, tagNames};
+  return {shown, currentTag, tagId, tagNames, kindHidesAll};
 }

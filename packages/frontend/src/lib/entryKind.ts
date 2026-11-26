@@ -21,6 +21,12 @@ export const isShortcut = (entry: Kinded): boolean =>
  */
 export type EntryKindFilter = 'all' | EntryKind;
 
+const FILTERS: readonly EntryKindFilter[] = ['all', 'shortcut', 'snippet'];
+
+/** `value` as a filter: one saved that is none (any longer) shows all. */
+export const entryKindFilterOf = (value: unknown): EntryKindFilter =>
+  FILTERS.find(filter => filter === value) ?? 'all';
+
 /** The entry's kind; a row stored before entries had kinds is a snippet. */
 export const kindOf = (entry: Kinded): EntryKind =>
   isShortcut(entry) ? 'shortcut' : 'snippet';

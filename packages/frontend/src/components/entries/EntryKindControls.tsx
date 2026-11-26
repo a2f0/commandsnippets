@@ -56,13 +56,13 @@ export const KeysPreview = ({id, body}: {id: string; body: string}) =>
   );
 
 /**
- * Under an entry list that shows nothing while View shows one kind: that
- * the kind hides the rest, rather than an empty list.
+ * Under an entry list whose entries the kind View shows hides, every one:
+ * that View shows them, rather than an empty list.
  */
-export const NoneOfKindShown = ({shown}: {shown: number | undefined}) => {
+export const NoneOfKindShown = () => {
   const {t} = useTypedTranslation('entries');
   const kindFilter = useAppState(state => state.entryKindFilter);
-  if (kindFilter === 'all' || shown !== 0) return null;
+  if (kindFilter === 'all') return null;
   return (
     <Typography
       id="entriesNoneOfKind"

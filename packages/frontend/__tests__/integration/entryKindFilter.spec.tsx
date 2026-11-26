@@ -99,17 +99,18 @@ it('lists and counts only the kind chosen, and sorts the tags by its counts', as
   expect(screen.getByText('entry-2-subject')).toBeInTheDocument();
 });
 
-it('says a list holds none of the kind, and saves the choice', async () => {
+const NO_TEXT =
+  'No text entries here. View > All Entry Types shows every entry.';
+const NO_SHORTCUTS =
+  'No keyboard shortcuts here. View > All Entry Types shows every entry.';
+
+it('says when the kind hides every entry a list holds, and saves the choice', async () => {
   renderAppAt('/test/test-tag-2');
   await screen.findByText('keys-a');
 
   await chooseView('Text Entries');
 
-  expect(
-    await screen.findByText(
-      'No text entries here. View > All Entry Types shows every entry.'
-    )
-  ).toBeInTheDocument();
+  expect(await screen.findByText(NO_TEXT)).toBeInTheDocument();
   expect(screen.queryByText('keys-a')).not.toBeInTheDocument();
   const saved: unknown = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
   invariant(
@@ -117,6 +118,45 @@ it('says a list holds none of the kind, and saves the choice', async () => {
     'the app state is saved'
   );
   expect(saved.state).toMatchObject({entryKindFilter: 'snippet'});
+
+  // A tag with no entries hides none: no note.
+  fireEvent.click(await screen.findByText('test-tag-3'));
+  await waitFor(() =>
+    expect(screen.queryByText(NO_TEXT)).not.toBeInTheDocument()
+  );
+
+  // A search that finds only text entries, while shortcuts show (opening
+  // a tag clears the search).
+  fireEvent.click(await screen.findByText('test-tag-1'));
+  await chooseView('Keyboard Shortcuts');
+  await screen.findByText('entry-1-subject');
+  act(() => store.setEntrySearchString('entry-2-subject'));
+  expect(await screen.findByText(NO_SHORTCUTS)).toBeInTheDocument();
+
+  await chooseView('All Entry Types');
+
+  await screen.findByText('entry-2-subject');
+  expect(screen.queryByText(NO_SHORTCUTS)).not.toBeInTheDocument();
+});
+
+it("opens the first tag by the counts of the kind chosen, never the last kind's", async () => {
+  act(() => {
+    store.setTagSortOrder('-entry_count');
+    store.setEntryKindFilter('snippet');
+  });
+  const {history} = renderAppAt('/test/test-tag-2');
+  // Its shortcuts are read, which text entries hide.
+  await screen.findByText(NO_TEXT);
+
+  // By text entries test-tag-1 (3) is first; by shortcuts test-tag-2 (2).
+  act(() => {
+    store.setEntryKindFilter('shortcut');
+    history.push('/test');
+  });
+
+  await waitFor(() =>
+    expect(history.location.pathname).toBe('/test/test-tag-2')
+  );
 });
 
 it('starts a new entry as a shortcut while only shortcuts show', async () => {

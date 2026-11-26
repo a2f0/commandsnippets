@@ -17,7 +17,7 @@ import {
 import {apiClient} from '../api/apiClient';
 import {UserMismatchError} from '../api/errors';
 import {setSignedInUser, setUnauthorizedHandler} from '../auth/authUtils';
-import type {EntryKindFilter} from '../entryKind';
+import {type EntryKindFilter, entryKindFilterOf} from '../entryKind';
 import {environment} from '../environment';
 import {clearMetrics} from '../metrics/timings';
 import {activeSearch, appMode} from '../shared';
@@ -241,6 +241,17 @@ export const useAppState = create<AppState>()(
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => guardedStorage),
+      // The saved state over the defaults, its kind filter one there is.
+      merge: (saved, current) => {
+        const state = typeof saved === 'object' && saved !== null ? saved : {};
+        return {
+          ...current,
+          ...state,
+          entryKindFilter: entryKindFilterOf(
+            'entryKindFilter' in state ? state.entryKindFilter : undefined
+          ),
+        };
+      },
       partialize: (state): SavedState => ({
         loggedInUser: state.loggedInUser,
         isStaff: state.isStaff,

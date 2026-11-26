@@ -1,6 +1,7 @@
 import type {EntryKind} from '@commandsnippets/api-shared/responses';
 import {
   type EntryKindFilter,
+  entryKindFilterOf,
   kindOf,
   shownByKind,
 } from '../../../src/lib/entryKind';
@@ -28,5 +29,16 @@ describe('entry kinds', () => {
     ['snippet', undefined, true],
   ])('%s shows a %s: %s', (filter, kind, shown) => {
     expect(shownByKind(of(kind), filter)).toBe(shown);
+  });
+
+  it.each<[unknown, EntryKindFilter]>([
+    ['all', 'all'],
+    ['shortcut', 'shortcut'],
+    ['snippet', 'snippet'],
+    ['command', 'all'],
+    [undefined, 'all'],
+    [3, 'all'],
+  ])('reads a saved filter of %o as %s', (saved, filter) => {
+    expect(entryKindFilterOf(saved)).toBe(filter);
   });
 });

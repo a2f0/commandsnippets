@@ -90,7 +90,7 @@ describe('sortTags', () => {
     const entryCount =
       counts === undefined
         ? undefined
-        : (counted: {id: string}) => counts.get(counted.id) ?? 0;
+        : (tag: {id: string}) => counts.get(tag.id) ?? 0;
     expect(names(sortTags(counted, order, '', entryCount))).toEqual(expected);
   });
 });

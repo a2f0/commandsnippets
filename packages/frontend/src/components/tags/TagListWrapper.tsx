@@ -1,8 +1,8 @@
 import type {Tag} from '@commandsnippets/api-shared/responses';
-import React, {useEffect, useMemo} from 'react';
-import {useTags} from '../../lib/data/hooks';
+import React, {useEffect, useLayoutEffect, useMemo, useRef} from 'react';
+import {useSession, useTags} from '../../lib/data/hooks';
 import {sortTags} from '../../lib/data/sort';
-import {useTagEntryCounts} from '../../lib/data/tagEntryCounts';
+import {useTagCounts} from '../../lib/data/tagEntryCounts';
 import {useRenderTiming} from '../../lib/metrics/hooks';
 import {
   navigate,
@@ -13,50 +13,87 @@ import {tagPath} from '../../lib/router/route';
 import {useAppState} from '../../lib/state/appState';
 import {TagList} from './TagList';
 
-const NO_COUNTS: ReadonlyMap<string, number> = new Map();
 // The list before the tags are read: the same one each render, so the
 // list (memoized) does not render again until they are.
 const NO_TAGS: Tag[] = [];
 
 /**
+ * The tags as listed, with the counts they show (null: their own), and the
+ * session (whose data) they were read in.
+ */
+interface ListedTags {
+  tags: Tag[];
+  entryCounts: ReadonlyMap<string, number> | null;
+  session: object | null;
+}
+
+/**
  * The user's tags (from IndexedDB, as syncs and writes store them), sorted
  * and searched, with their counts of the kind of entries the lists show
- * (View): the API's `entry_count` for every kind, else counted here. With
- * no tag or entries list in the URL, it opens the first. Each render is
- * timed for the HUD.
+ * (View): the API's `entry_count` for every kind, else counted here
+ * (`useTagCounts`). `listed` is undefined until the tags and those counts
+ * are read; `shown` keeps the session's list last listed while another
+ * kind's counts are read, rather than sorting or counting by unknown
+ * counts.
+ */
+function useListedTags(): {
+  listed: ListedTags | undefined;
+  shown: ListedTags | undefined;
+} {
+  const session = useSession();
+  const allTags = useTags();
+  const tagSortOrder = useAppState(state => state.tagSortOrder);
+  const tagSearchString = useAppState(state => state.tagSearchString);
+  const kindFilter = useAppState(state => state.entryKindFilter);
+  const counts = useTagCounts(kindFilter);
+
+  const listed = useMemo((): ListedTags | undefined => {
+    if (allTags === undefined || counts.status === 'reading') {
+      return undefined;
+    }
+    const entryCounts = counts.status === 'read' ? counts.counts : null;
+    const tags = sortTags(
+      allTags,
+      tagSortOrder,
+      tagSearchString,
+      entryCounts === null
+        ? undefined
+        : (counted: Tag) => entryCounts.get(counted.id) ?? 0
+    );
+    return {tags, entryCounts, session};
+  }, [allTags, tagSortOrder, tagSearchString, counts, session]);
+
+  const lastListed = useRef<ListedTags | undefined>(undefined);
+  useLayoutEffect(() => {
+    if (listed !== undefined) {
+      lastListed.current = listed;
+    }
+  }, [listed]);
+  const kept = lastListed.current;
+  const shown =
+    listed ??
+    (counts.status === 'reading' && kept?.session === session
+      ? kept
+      : undefined);
+  return {listed, shown};
+}
+
+/**
+ * The tag list (`useListedTags`). With no tag or entries list in the URL,
+ * it opens the first, once the tags are listed with their counts. Each
+ * render is timed for the HUD.
  */
 const TagListWrapper = () => {
   const renderStart = performance.now();
   const user = useRouteParam('user');
   const tag = useRouteParam('tag');
   const entriesList = useSearchParam('entries');
-  const allTags = useTags();
-  const tagSortOrder = useAppState(state => state.tagSortOrder);
-  const tagSearchString = useAppState(state => state.tagSearchString);
   const setTagSelectedID = useAppState(state => state.setTagSelectedID);
-  const kindFilter = useAppState(state => state.entryKindFilter);
-  const kindCounts = useTagEntryCounts(
-    kindFilter === 'all' ? null : kindFilter
-  );
-  // Until a kind's counts are read: none, rather than every kind's.
-  const entryCounts = kindFilter === 'all' ? null : (kindCounts ?? NO_COUNTS);
+  const {listed, shown} = useListedTags();
+  const tags = shown?.tags;
 
-  const tags = useMemo(
-    () =>
-      allTags === undefined
-        ? undefined
-        : sortTags(
-            allTags,
-            tagSortOrder,
-            tagSearchString,
-            entryCounts === null
-              ? undefined
-              : (tag: Tag) => entryCounts.get(tag.id) ?? 0
-          ),
-    [allTags, tagSortOrder, tagSearchString, entryCounts]
-  );
-
-  const first = tags?.[0];
+  // Of the tags listed: not a list kept while counts are read.
+  const first = listed?.tags[0];
   const current = tags?.find(candidate => candidate.attributes.name === tag);
   useEffect(() => {
     if (user === undefined) {
@@ -84,7 +121,7 @@ const TagListWrapper = () => {
     <TagList
       tagsFromWrapper={tags ?? NO_TAGS}
       username={user}
-      entryCounts={entryCounts}
+      entryCounts={shown?.entryCounts ?? null}
     />
   );
 };

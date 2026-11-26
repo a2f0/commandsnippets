@@ -4,7 +4,8 @@ import type {
   TextEntry,
 } from '@commandsnippets/api-shared/responses';
 import {useLiveQuery} from 'dexie-react-hooks';
-import {kindOf} from '../entryKind';
+import {useLayoutEffect, useMemo, useRef} from 'react';
+import {type EntryKindFilter, kindOf} from '../entryKind';
 import {timed} from '../metrics/timings';
 import {useSession} from './hooks';
 import type {OwnedData} from './queries';
@@ -37,6 +38,62 @@ export function countTagEntries(
   return counts;
 }
 
+/**
+ * One kind's counts, by tag id, with the kind they count and the session
+ * (whose data: null when signed out) they were read in.
+ */
+interface KindCounts {
+  kind: EntryKind;
+  session: object | null;
+  counts: ReadonlyMap<string, number>;
+}
+
+/**
+ * The counts the tag list shows and sorts by: the tags' own `entry_count`
+ * for every kind (`all`); for one kind, `reading` until the database
+ * answers for that kind, then its counts (`read`).
+ */
+export type TagCounts =
+  | {status: 'all'}
+  | {status: 'reading'; kind: EntryKind}
+  | {status: 'read'; kind: EntryKind; counts: ReadonlyMap<string, number>};
+
+/**
+ * The counts for `filter` in `session`, from the query's last answer: one
+ * of another kind or session (a live query answers with its last result
+ * until it reads the next) leaves the kind asked for still `reading`.
+ */
+export function tagCountsOf(
+  filter: EntryKindFilter,
+  session: object | null,
+  read: KindCounts | null | undefined
+): TagCounts {
+  if (filter === 'all') {
+    return {status: 'all'};
+  }
+  return read?.kind === filter && read.session === session
+    ? {status: 'read', kind: filter, counts: read.counts}
+    : {status: 'reading', kind: filter};
+}
+
+const sameMap = (
+  a: ReadonlyMap<string, number>,
+  b: ReadonlyMap<string, number>
+) => a.size === b.size && [...a].every(([key, value]) => b.get(key) === value);
+
+/** Whether `a` and `b` are the same counts, of the same kind. */
+export function sameTagCounts(a: TagCounts, b: TagCounts): boolean {
+  if (a.status === 'all' || b.status === 'all') {
+    return a.status === b.status;
+  }
+  if (a.status !== b.status || a.kind !== b.kind) {
+    return false;
+  }
+  return (
+    a.status !== 'read' || b.status !== 'read' || sameMap(a.counts, b.counts)
+  );
+}
+
 async function tagEntryCounts(
   {db, owner}: OwnedData,
   kind: EntryKind
@@ -50,26 +107,41 @@ async function tagEntryCounts(
 
 const counted = (counts: ReadonlyMap<string, number>) => `${counts.size} tags`;
 
+const NO_COUNTS: ReadonlyMap<string, number> = new Map();
+
 /**
- * Each tag's count of entries of `kind`, by tag id, from IndexedDB as syncs
- * and writes store them (the first load's, page by page): one query for the
- * whole tag list. Null for every kind, which reads nothing: the tags' own
- * `entry_count` counts them. Undefined until read.
+ * The tag list's counts for `filter` (`TagCounts`): for one kind, each
+ * tag's count of its entries, from IndexedDB as syncs and writes store
+ * them, in one query for the whole list; for every kind, none read. Counts
+ * read again unchanged (any write reads them again) keep their object, so
+ * the list does not sort or render again.
  */
-export function useTagEntryCounts(
-  kind: EntryKind | null
-): ReadonlyMap<string, number> | null | undefined {
+export function useTagCounts(filter: EntryKindFilter): TagCounts {
   const session = useSession();
-  return useLiveQuery(
-    async () =>
-      session === null || kind === null
-        ? null
-        : await timed(
-            'idb',
-            'useTagEntryCounts',
-            () => tagEntryCounts(session, kind),
-            counted
-          ),
-    [session, kind]
-  );
+  const kind = filter === 'all' ? null : filter;
+  const read = useLiveQuery(async (): Promise<KindCounts | null> => {
+    if (kind === null) {
+      return null;
+    }
+    // Signed out: no tags, so none to count.
+    if (session === null) {
+      return {kind, session, counts: NO_COUNTS};
+    }
+    const counts = await timed(
+      'idb',
+      'useTagCounts',
+      () => tagEntryCounts(session, kind),
+      counted
+    );
+    return {kind, session, counts};
+  }, [session, kind]);
+  const last = useRef<TagCounts>({status: 'all'});
+  const counts = useMemo(() => {
+    const next = tagCountsOf(filter, session, read);
+    return sameTagCounts(last.current, next) ? last.current : next;
+  }, [filter, session, read]);
+  useLayoutEffect(() => {
+    last.current = counts;
+  }, [counts]);
+  return counts;
 }
