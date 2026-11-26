@@ -6,6 +6,7 @@
 import {
   type Backup,
   CODES,
+  type EntryKind,
   errorMeta,
   parseDateTime,
   tagCreateAttributesSchema,
@@ -79,6 +80,7 @@ interface TagRow {
 interface EntryRow {
   subject: string;
   body: string;
+  kind: EntryKind;
   subject_folded: string;
   body_folded: string;
   is_public: boolean;
@@ -175,6 +177,7 @@ function planEntries(backup: Backup): {
     return {
       ...fields,
       ...searchColumns(fields),
+      kind: row.kind,
       is_public: row.is_public,
       date_created: stored(row.date_created, [...path, 'date_created']),
     };

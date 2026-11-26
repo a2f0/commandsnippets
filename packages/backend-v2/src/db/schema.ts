@@ -139,6 +139,13 @@ export const textEntries = sqliteTable(
     id: integer('id').primaryKey({autoIncrement: true}),
     body: text('body').notNull(),
     subject: text('subject').notNull(),
+    // What the entry is: api-shared's ENTRY_KINDS (test/db/schema.test.ts
+    // keeps the two lists alike; the Bun scripts load this module without
+    // api-shared). A column CHECK added with it (0024_entry_kind.sql) keeps
+    // it to those: drizzle-kit would rebuild the table to add a table CHECK.
+    kind: text('kind', {enum: ['snippet', 'shortcut']})
+      .notNull()
+      .default('snippet'),
     date_created: text('date_created').notNull(),
     date_updated: text('date_updated').notNull(),
     user_id: integer('user_id')

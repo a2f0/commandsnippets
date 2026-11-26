@@ -180,6 +180,7 @@ function textEntryDef(scope: Scope): ResourceDef<EntryRow> {
     attributes: row => ({
       body: row.body,
       subject: row.subject,
+      kind: row.kind,
       date_updated: isoformat(row.date_updated),
       date_created: isoformat(row.date_created),
       reused_count: publicOnly ? 0 : row.reused_count,

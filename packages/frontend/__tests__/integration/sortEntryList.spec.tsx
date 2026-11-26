@@ -72,8 +72,12 @@ describe('Sorting the entries list from the Entries menu', () => {
 
   it('sorts the untagged list by the chosen sort and checks it', async () => {
     // The mock API's fixtures are all in tag 1: two in no tag.
-    await apiClient.forVersion(1).createEntry('entry-8-subject', 'body');
-    await apiClient.forVersion(1).createEntry('entry-9-subject', 'body');
+    await apiClient
+      .forVersion(1)
+      .createEntry({subject: 'entry-8-subject', body: 'body'});
+    await apiClient
+      .forVersion(1)
+      .createEntry({subject: 'entry-9-subject', body: 'body'});
     renderAppAt('/test?entries=untagged');
 
     await sortBy('Sort by Subject', 'ArrowDownwardIcon');
@@ -104,8 +108,12 @@ describe('Sorting the entries list from the Entries menu', () => {
     // The mock API's fixtures are all in tag 1: one in tag 2 as well, and
     // two in no tag.
     await apiClient.forVersion(1).tagEntry('2', '3');
-    await apiClient.forVersion(1).createEntry('entry-9-subject', 'body');
-    await apiClient.forVersion(1).createEntry('entry-8-subject', 'body');
+    await apiClient
+      .forVersion(1)
+      .createEntry({subject: 'entry-9-subject', body: 'body'});
+    await apiClient
+      .forVersion(1)
+      .createEntry({subject: 'entry-8-subject', body: 'body'});
     renderAppAt('/test?entries=all');
 
     await sortBy('Sort by Tag Count', 'ArrowDownwardIcon');

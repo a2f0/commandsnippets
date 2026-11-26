@@ -3,7 +3,7 @@
  * query.
  */
 import * as z from 'zod/mini';
-import {booleanField, charField} from '../../fields';
+import {booleanField, charField, choiceField} from '../../fields';
 import {
   booleanFilter,
   dateTimeFilter,
@@ -17,6 +17,7 @@ import {
   updateDocumentSchema,
 } from '../../jsonapi/request';
 import {type ListParams, listQuerySchema} from '../../query';
+import {ENTRY_KINDS} from '../textEntry';
 import {type RELATIONSHIPS, TEXT_ENTRY} from '../types';
 
 export const TEXT_ENTRY_SUBJECT_MAX_LENGTH = 255;
@@ -27,6 +28,8 @@ export const TEXT_ENTRY_CLIENT_ID_MAX_LENGTH = 64;
 export const textEntryCreateAttributesSchema = z.object({
   body: charField({maxLength: TEXT_ENTRY_BODY_MAX_LENGTH}),
   subject: charField({maxLength: TEXT_ENTRY_SUBJECT_MAX_LENGTH}),
+  /** What the entry is (`ENTRY_KINDS`); a snippet when left out. */
+  kind: z.optional(choiceField(ENTRY_KINDS)),
   /**
    * The client's id for the entry (a queued create's): a create naming one
    * the user already has answers with that entry instead of another, so a
@@ -42,6 +45,7 @@ export const textEntryUpdateAttributesSchema = z.partial(
   z.object({
     body: charField({maxLength: TEXT_ENTRY_BODY_MAX_LENGTH}),
     subject: charField({maxLength: TEXT_ENTRY_SUBJECT_MAX_LENGTH}),
+    kind: choiceField(ENTRY_KINDS),
     is_deleted: booleanField(),
     is_public: booleanField(),
   })

@@ -53,6 +53,7 @@ import {
 import type * as z from 'zod/mini';
 import {signedInUser} from '../auth/authUtils';
 import {REUSE_PAGE_SIZE} from '../sync/pageSize';
+import type {EntryFields} from '../sync/send';
 import {fetchApi} from './apiVersion';
 import {baseHTTPURL, baseURL} from './baseUrl';
 import {errorOf} from './errorDocument';
@@ -63,6 +64,16 @@ import {urlWithQuery} from './searchParams';
 import {type SyncReads, syncReads} from './syncReads';
 
 type LogoutResponse = z.output<typeof emptyObjectSchema>;
+
+/**
+ * `fields` as a request's attributes. A kind left out is not sent: a create
+ * makes a snippet, and an edit leaves the kind as it is.
+ */
+const entryAttributes = ({subject, body, kind}: EntryFields) => ({
+  subject,
+  body,
+  ...(kind === undefined ? {} : {kind}),
+});
 
 interface RequestOptions {
   method: 'GET' | 'POST' | 'PATCH' | 'DELETE';
@@ -450,8 +461,7 @@ class ApiClient {
    * first one made (`client_id`).
    */
   public async createEntry(
-    subject: string,
-    body: string,
+    fields: EntryFields,
     clientId?: string,
     made?: string
   ): Promise<TextEntryDocument> {
@@ -460,8 +470,7 @@ class ApiClient {
       data: {
         type: 'TextEntry',
         attributes: {
-          subject,
-          body,
+          ...entryAttributes(fields),
           ...(clientId === undefined ? {} : {client_id: clientId}),
         },
       },
@@ -476,18 +485,14 @@ class ApiClient {
 
   public async updateEntry(
     entryId: string,
-    subject: string,
-    body: string,
+    fields: EntryFields,
     made?: string
   ): Promise<TextEntryDocument> {
     const payload: TextEntryUpdateDocument = {
       data: {
         id: entryId,
         type: 'TextEntry',
-        attributes: {
-          subject,
-          body,
-        },
+        attributes: entryAttributes(fields),
       },
     };
     return this.requestDocument(

@@ -22,7 +22,9 @@ beforeEach(async () => {
   // tags 3 and 2 as well, and one more in no tag.
   await apiClient.forVersion(1).tagEntry('3', '1');
   await apiClient.forVersion(1).tagEntry('2', '1');
-  await apiClient.forVersion(1).createEntry('entry-9-subject', 'body');
+  await apiClient
+    .forVersion(1)
+    .createEntry({subject: 'entry-9-subject', body: 'body'});
 });
 
 /** The row of the entry with this subject. */

@@ -31,6 +31,7 @@ const backup = {
       id: '6',
       subject: 'list databases',
       body: '\\l',
+      kind: 'snippet',
       is_public: true,
       date_created: ts,
       date_updated: ts,
@@ -66,6 +67,19 @@ describe('backups', () => {
         entry_reuses: [],
       }).tags
     ).toEqual([]);
+  });
+
+  test('read entries without a kind as snippets', () => {
+    const {kind: _, ...entry} = backup.entries[0] as (typeof backup.entries)[0];
+    expect(
+      parsed(backupSchema, {...backup, entries: [entry]}).entries[0]?.kind
+    ).toBe('snippet');
+    expect(
+      failures(backupSchema, {
+        ...backup,
+        entries: [{...entry, kind: 'macro'}],
+      })
+    ).toHaveLength(1);
   });
 
   test('refuse another format or version', () => {

@@ -194,6 +194,7 @@ export function backupOf(data: MockData = currentData()): Backup {
       id,
       subject: attributes.subject,
       body: attributes.body,
+      kind: attributes.kind,
       is_public: attributes.is_public,
       date_created: attributes.date_created,
       date_updated: attributes.date_updated,
@@ -275,6 +276,7 @@ function restoreEntries(
     const entry = newMockEntry(state, {
       subject: row.subject,
       body: row.body,
+      kind: row.kind,
       date_created: row.date_created,
       is_public: row.is_public,
       reused_count: backup.entry_reuses.filter(

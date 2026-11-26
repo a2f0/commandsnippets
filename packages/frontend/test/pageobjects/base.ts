@@ -252,6 +252,10 @@ class Base {
   get textEntryEdit1Cancel(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#textEntryEdit1Cancel');
   }
+
+  get textEntryEdit1Shortcut(): ReturnType<WebdriverIO.Browser['$']> {
+    return $('#textEntryEdit1Shortcut');
+  }
   get tagsEntries1(): ReturnType<WebdriverIO.Browser['$']> {
     return $('#tagsEntries-1');
   }

@@ -125,6 +125,7 @@ async function createEntry({request}: RouteInfo) {
   const {
     subject,
     body,
+    kind = 'snippet',
     client_id: clientId,
   } = validateFields(textEntryCreateAttributesSchema, attributes);
   const existing =
@@ -141,6 +142,7 @@ async function createEntry({request}: RouteInfo) {
   const entry = newMockEntry(state, {
     subject,
     body,
+    kind,
     is_public: false,
     date_created: now(),
     reused_count: 0,
@@ -167,6 +169,7 @@ async function patchEntry({params, request}: RouteInfo) {
     ...entry.attributes,
     ...(changes.subject === undefined ? {} : {subject: changes.subject}),
     ...(changes.body === undefined ? {} : {body: changes.body}),
+    ...(changes.kind === undefined ? {} : {kind: changes.kind}),
     ...(changes.is_public === undefined ? {} : {is_public: changes.is_public}),
     ...(changes.is_deleted === undefined
       ? {}

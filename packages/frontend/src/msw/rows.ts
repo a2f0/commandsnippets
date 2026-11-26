@@ -206,6 +206,7 @@ export const newMockEntry = (
     TextEntry['attributes'],
     | 'subject'
     | 'body'
+    | 'kind'
     | 'is_public'
     | 'date_created'
     | 'reused_count'

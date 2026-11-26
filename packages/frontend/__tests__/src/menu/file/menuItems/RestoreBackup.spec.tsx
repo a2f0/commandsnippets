@@ -59,6 +59,7 @@ const backup: Backup = {
     {
       id: '600',
       subject: 'restored-subject',
+      kind: 'snippet',
       body: 'restored body',
       is_public: false,
       date_created: AT,
@@ -67,6 +68,7 @@ const backup: Backup = {
     {
       id: '601',
       subject: 'restored-untagged',
+      kind: 'snippet',
       body: 'another body',
       is_public: false,
       date_created: AT,

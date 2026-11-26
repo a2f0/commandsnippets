@@ -1,6 +1,9 @@
 /** How a queued write is sent to the API, and what it brings back. */
 import {CURSOR_START, cursorOf} from '@commandsnippets/api-shared/cursor';
-import type {TagReorderDocument} from '@commandsnippets/api-shared/requests';
+import type {
+  TagReorderDocument,
+  TextEntryCreateAttributes,
+} from '@commandsnippets/api-shared/requests';
 import type {
   IncludedResource,
   TagCursorListDocument,
@@ -15,6 +18,12 @@ import type {
 import {ApiRequestError} from '../api/errors';
 import type {QueuedWrite} from '../db/database';
 import {JUNCTION, TAG, TEXT_ENTRY} from './queuedWrite';
+
+/** An entry's text and kind, as a create or an edit sends them. */
+export type EntryFields = Pick<
+  TextEntryCreateAttributes,
+  'subject' | 'body' | 'kind'
+>;
 
 /** The API calls the queue makes (`apiClient`'s). */
 export interface OutboxApi {
@@ -39,15 +48,13 @@ export interface OutboxApi {
   deleteTag(tagId: string, made?: string): Promise<TagDocument>;
   reorderTag(payload: TagReorderDocument, made?: string): Promise<void>;
   createEntry(
-    subject: string,
-    body: string,
+    fields: EntryFields,
     clientId?: string,
     made?: string
   ): Promise<TextEntryDocument>;
   updateEntry(
     entryId: string,
-    subject: string,
-    body: string,
+    fields: EntryFields,
     made?: string
   ): Promise<TextEntryDocument>;
   deleteEntry(entryId: string, made?: string): Promise<TextEntryDocument>;
@@ -213,8 +220,7 @@ async function sendEntryWrite(
   switch (write.kind) {
     case 'createEntry': {
       const document = await api.createEntry(
-        write.subject,
-        write.body,
+        {subject: write.subject, body: write.body, kind: write.entryKind},
         write.entryId,
         made
       );
@@ -226,7 +232,11 @@ async function sendEntryWrite(
     case 'updateEntry':
       return {
         resources: answer(
-          await api.updateEntry(write.entryId, write.subject, write.body, made)
+          await api.updateEntry(
+            write.entryId,
+            {subject: write.subject, body: write.body, kind: write.entryKind},
+            made
+          )
         ),
       };
     case 'setEntryPublic':

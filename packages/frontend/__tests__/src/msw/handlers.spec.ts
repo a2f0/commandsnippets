@@ -276,6 +276,7 @@ describe('POST /entries', () => {
       attributes: {
         subject: 'new',
         body: 'body',
+        kind: 'snippet',
         date_updated: data.attributes.date_updated,
         date_created: data.attributes.date_created,
         is_public: false,
@@ -295,6 +296,19 @@ describe('POST /entries', () => {
     ).toBe(true);
     expect(identifiers(included)).toEqual(['User:1']);
     expect(entryOf(await getEntries(), '4')).toEqual(data);
+  });
+
+  it('creates a shortcut when the create names that kind', async () => {
+    const {status, json} = await send('POST', '/entries', {
+      data: {
+        type: 'TextEntry',
+        attributes: {subject: 'split', body: 'cmd + d', kind: 'shortcut'},
+      },
+    });
+    expect(status).toBe(201);
+    expect(textEntryDocumentSchema.parse(json).data.attributes.kind).toBe(
+      'shortcut'
+    );
   });
 
   it('keeps a deleted entry, whose id no new entry gets', async () => {
@@ -508,6 +522,20 @@ describe('PATCH /entries/:id', () => {
     for (const id of ['2', '3', '4']) {
       expect(tagOf(after, id)).toEqual(tagOf(before, id));
     }
+  });
+
+  it("changes the entry's kind, and keeps it when none is sent", async () => {
+    const kindOf = async (attributes: Parameters<typeof editEntry>[1]) => {
+      const {json} = await send(
+        'PATCH',
+        '/entries/2',
+        editEntry('2', attributes)
+      );
+      return textEntryDocumentSchema.parse(json).data.attributes.kind;
+    };
+    expect(await kindOf({kind: 'shortcut'})).toBe('shortcut');
+    expect(await kindOf({body: 'ctrl + b'})).toBe('shortcut');
+    expect(await kindOf({kind: 'snippet'})).toBe('snippet');
   });
 
   it('leaves out the attributes not sent', async () => {

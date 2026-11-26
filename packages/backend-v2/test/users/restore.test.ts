@@ -73,12 +73,15 @@ function contentOf(backup: Backup) {
       is_public,
       date_created,
     })),
-    entries: backup.entries.map(({subject, body, is_public, date_created}) => ({
-      subject,
-      body,
-      is_public,
-      date_created,
-    })),
+    entries: backup.entries.map(
+      ({subject, body, kind, is_public, date_created}) => ({
+        subject,
+        body,
+        kind,
+        is_public,
+        date_created,
+      })
+    ),
     tags_entries: backup.tags_entries.map(row => ({
       tag: tagName.get(row.tag_id),
       entry: subject.get(row.text_entry_id),
@@ -197,6 +200,44 @@ describe('POST /api/v1/user/restore', () => {
     expect(contentOf(await backupOf(base.user1Client))).toEqual(
       contentOf(backup)
     );
+  });
+
+  it("keeps each entry's kind, and makes an entry without one a snippet", async () => {
+    const client = await clientFor(await userFactory({}, {examples: false}));
+    const at = now();
+    const entry = (id: string, kind?: string) => ({
+      id,
+      subject: `entry ${id}`,
+      body: 'ctrl + b, c',
+      ...(kind === undefined ? {} : {kind}),
+      is_public: false,
+      date_created: at,
+      date_updated: at,
+    });
+    const backup = {
+      ...(await backupOf(client)),
+      entries: [entry('1', 'shortcut'), entry('2', 'snippet'), entry('3')],
+    };
+
+    expect((await restore(client, backup)).status).toBe(200);
+
+    expect(
+      (await backupOf(client)).entries.map(row => [row.subject, row.kind])
+    ).toEqual([
+      ['entry 1', 'shortcut'],
+      ['entry 2', 'snippet'],
+      ['entry 3', 'snippet'],
+    ]);
+  });
+
+  it('refuses an entry of an unknown kind without making a version', async () => {
+    const before = await backupOf(base.user1Client);
+    const response = await restore(base.user1Client, {
+      ...before,
+      entries: before.entries.map(row => ({...row, kind: 'macro'})),
+    });
+    expect(response.status).toBe(400);
+    expect(await versionsOf(base.user1)).toEqual([1]);
   });
 
   it('rejects a year-zero creation time without making a version', async () => {
@@ -347,6 +388,7 @@ describe('POST /api/v1/user/restore', () => {
         id: String(10 + index),
         subject,
         body: 'body',
+        kind: 'snippet',
         is_public: false,
         date_created: at,
         date_updated: at,

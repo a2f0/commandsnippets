@@ -59,6 +59,7 @@ export function entry(
     attributes: {
       body: `body-${id}`,
       subject: `subject-${id}`,
+      kind: 'snippet',
       date_updated: date,
       date_created: date,
       is_public: false,

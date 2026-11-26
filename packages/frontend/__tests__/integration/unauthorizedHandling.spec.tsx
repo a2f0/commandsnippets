@@ -277,9 +277,9 @@ describe('Signing out when the API says the session is gone', () => {
       )
     );
 
-    await expect(apiClient.updateEntry('7', 'subject', 'body')).rejects.toThrow(
-      'Failed to update entry: Forbidden'
-    );
+    await expect(
+      apiClient.updateEntry('7', {subject: 'subject', body: 'body'})
+    ).rejects.toThrow('Failed to update entry: Forbidden');
     expectStillSignedIn();
   });
 

@@ -10,6 +10,7 @@
  * they read (read-only), sit side by side, and every read names whose it is.
  */
 import type {
+  EntryKind,
   Tag,
   TagTextEntry,
   TextEntry,
@@ -60,8 +61,22 @@ export type QueuedWrite =
   | {kind: 'setTagPublic'; tagId: string; isPublic: boolean}
   | {kind: 'deleteTag'; tagId: string}
   | {kind: 'reorderTags'; top: string; bottom: string}
-  | {kind: 'createEntry'; entryId: string; subject: string; body: string}
-  | {kind: 'updateEntry'; entryId: string; subject: string; body: string}
+  // `entryKind`: the entry's kind (`kind` names the write); an update
+  // without one leaves it as it is.
+  | {
+      kind: 'createEntry';
+      entryId: string;
+      subject: string;
+      body: string;
+      entryKind: EntryKind;
+    }
+  | {
+      kind: 'updateEntry';
+      entryId: string;
+      subject: string;
+      body: string;
+      entryKind?: EntryKind;
+    }
   | {kind: 'setEntryPublic'; entryId: string; isPublic: boolean}
   | {kind: 'deleteEntry'; entryId: string}
   // The entry was copied: a reuse, counted once by its client id (`reuseId`).

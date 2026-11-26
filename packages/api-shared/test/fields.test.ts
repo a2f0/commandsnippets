@@ -3,6 +3,7 @@ import * as z from 'zod/mini';
 import {
   booleanField,
   charField,
+  choiceField,
   parseBoolean,
   pkField,
   relatedField,
@@ -174,6 +175,37 @@ describe('relatedField', () => {
       'Invalid pk "-1" - object does not exist.',
       'does_not_exist',
     ]);
+  });
+
+  test('is required and not null', () => {
+    expect(failure(field, undefined)).toEqual([
+      'This field is required.',
+      'required',
+    ]);
+    expect(failure(field, null)).toEqual([
+      'This field may not be null.',
+      'null',
+    ]);
+  });
+});
+
+describe('choiceField', () => {
+  const field = choiceField(['snippet', 'shortcut']);
+
+  test('accepts each choice, as written', () => {
+    expect(parsed(field, 'snippet')).toBe('snippet');
+    expect(parsed(field, 'shortcut')).toBe('shortcut');
+  });
+
+  test.each([
+    ['Snippet', '"Snippet" is not a valid choice.'],
+    [' snippet', '" snippet" is not a valid choice.'],
+    ['', '"" is not a valid choice.'],
+    [1, '"1" is not a valid choice.'],
+    [true, '"true" is not a valid choice.'],
+    [{toString: 0}, '"object" is not a valid choice.'],
+  ])('refuses %p without throwing', (value, message) => {
+    expect(failure(field, value)).toEqual([message, 'invalid_choice']);
   });
 
   test('is required and not null', () => {

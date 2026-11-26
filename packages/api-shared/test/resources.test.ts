@@ -31,10 +31,12 @@ import {
   tagTextEntryListQuerySchema,
   tagTextEntrySchema,
   tagUpdateAttributesSchema,
+  textEntryCreateAttributesSchema,
   textEntryListQuerySchema,
   textEntryReusedListQuerySchema,
   textEntryReusedSchema,
   textEntrySchema,
+  textEntryUpdateAttributesSchema,
   userDocumentSchema,
   userSchema,
 } from '../src/index';
@@ -261,6 +263,29 @@ describe('request fields', () => {
       ]
     );
     expect(parsed(tagUpdateAttributesSchema, {})).toEqual({});
+  });
+
+  test('entries: a kind of snippet or shortcut, left out on create', () => {
+    expect(
+      parsed(textEntryCreateAttributesSchema, {subject: 's', body: 'b'})
+    ).toEqual({subject: 's', body: 'b'});
+    expect(
+      parsed(textEntryCreateAttributesSchema, {
+        subject: 's',
+        body: 'ctrl + b',
+        kind: 'shortcut',
+      })
+    ).toEqual({subject: 's', body: 'ctrl + b', kind: 'shortcut'});
+    expect(parsed(textEntryUpdateAttributesSchema, {kind: 'snippet'})).toEqual({
+      kind: 'snippet',
+    });
+    expect(failures(textEntryUpdateAttributesSchema, {kind: 'macro'})).toEqual([
+      {
+        message: '"macro" is not a valid choice.',
+        path: ['kind'],
+        code: 'invalid_choice',
+      },
+    ]);
   });
 
   test('admin: only is_active and marked_for_deletion, the first other attribute refused', () => {

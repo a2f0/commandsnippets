@@ -14,6 +14,7 @@ import {
   tagEntry,
   untagEntry,
 } from '../../lib/data/writes';
+import {isShortcut} from '../../lib/entryKind';
 import {useSearchParam} from '../../lib/router/navigation';
 import {appMode} from '../../lib/shared';
 import {useAppConfig, useAppState} from '../../lib/state/appState';
@@ -295,7 +296,8 @@ const EntryCard = ({
     'hoverState' | 'mouseEnter' | 'mouseLeave'
   >;
   onContextMenu: (event: React.MouseEvent) => void;
-  onCopy: () => void;
+  /** Copy the entry: none for a shortcut, which has nothing to copy. */
+  onCopy: (() => void) | null;
   onBodyClick: (event: React.MouseEvent<HTMLDivElement>) => void;
 }) => {
   const {id} = entry;
@@ -326,13 +328,20 @@ const EntryCard = ({
           onMouseLeave={mouseLeave}
         />
         <div>
-          <CopyIndicators
-            onClick={onCopy}
-            onMouseEnter={mouseEnter}
-            onMouseLeave={mouseLeave}
-            hovered={hoverState.showCopyIcon}
-            copiedLast={copiedLast}
-          />
+          {onCopy === null ? (
+            <DragHandleContainer
+              onMouseEnter={mouseEnter}
+              onMouseLeave={mouseLeave}
+            />
+          ) : (
+            <CopyIndicators
+              onClick={onCopy}
+              onMouseEnter={mouseEnter}
+              onMouseLeave={mouseLeave}
+              hovered={hoverState.showCopyIcon}
+              copiedLast={copiedLast}
+            />
+          )}
           <EntryText onMouseEnter={mouseEnter} onMouseLeave={mouseLeave}>
             <MemoizedEntryBody
               handleClick={onBodyClick}
@@ -437,6 +446,7 @@ const Entry = (props: IEntryProps) => {
     textEntryObject,
     hover.hideCopyIcon
   );
+  const copyable = !isShortcut(textEntryObject);
 
   const handleBodyClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -446,7 +456,9 @@ const Entry = (props: IEntryProps) => {
       const selectionString = selection?.toString();
       appConfig.setAppMode(appMode.entriesList);
 
-      if (!selectionString) {
+      if (isShortcut(textEntryObject)) {
+        appConfig.setEntrySelectedID(textEntryObject.id);
+      } else if (!selectionString) {
         copyToClipboard(textEntryObject.attributes.body);
         appConfig.setEntrySelectedID(textEntryObject.id);
       } else {
@@ -466,7 +478,7 @@ const Entry = (props: IEntryProps) => {
           drag={drag}
           hover={hover}
           onContextMenu={menu.onContextMenu}
-          onCopy={handleCopyClick}
+          onCopy={copyable ? handleCopyClick : null}
           onBodyClick={handleBodyClick}
         />
       )}
@@ -481,7 +493,7 @@ const Entry = (props: IEntryProps) => {
           handleRemoveFromListParent={writes.removeFromList}
           handleNewEntryParent={handleNewEntry}
           handleBeginEditParent={handleBeginEdit}
-          handleCopyParent={handleCopyClick}
+          handleCopyParent={copyable ? handleCopyClick : null}
           readOnly={readOnly}
         />
       )}

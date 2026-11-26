@@ -158,7 +158,9 @@ it.each([
   ['..', 'untagged'],
 ])('preserves dot tag %s with the entries=%s filter', async (name, filter) => {
   await apiClient.forVersion(1).updateTag('2', name);
-  await apiClient.forVersion(1).createEntry('untagged control', 'body');
+  await apiClient
+    .forVersion(1)
+    .createEntry({subject: 'untagged control', body: 'body'});
   const path = `/test/tags/~${name}?entries=${filter}`;
   const {push, replace} = await renderBrowserAt(path);
   await screen.findByText('untagged control');

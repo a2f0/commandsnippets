@@ -14,6 +14,7 @@ export const CODES = {
   blank: 'blank',
   invalid: 'invalid',
   maxLength: 'max_length',
+  invalidChoice: 'invalid_choice',
   readOnly: 'read_only',
   incorrectType: 'incorrect_type',
   doesNotExist: 'does_not_exist',
@@ -61,6 +62,7 @@ export const MESSAGES = {
   maxLength: (max: number) =>
     `Ensure this field has no more than ${max} characters.`,
   notABoolean: 'Must be a valid boolean.',
+  invalidChoice: (input: string) => `"${input}" is not a valid choice.`,
   notAnInteger: 'Must be a valid integer.',
   readOnly: 'This field cannot be changed.',
   incorrectPkType: (received: string) =>

@@ -23,6 +23,7 @@ import {
   textEntryUpdateAttributesSchema,
 } from '@commandsnippets/api-shared/requests';
 import type {
+  EntryKind,
   Tag,
   TagTextEntry,
   TextEntry,
@@ -445,16 +446,21 @@ async function newJunction(
   return junction;
 }
 
-/** Create an entry, in tag `tagId` when given. */
+/** Create an entry (a snippet unless `kind` says), in tag `tagId` when given. */
 export async function createEntry(
   session: SyncSession,
   subject: string,
   body: string,
-  tagId?: string
+  tagId?: string,
+  kind: EntryKind = 'snippet'
 ): Promise<TextEntry> {
   const {db, owner} = session;
   refuseReadOnly(session);
-  const fields = checked(textEntryCreateAttributesSchema, {subject, body});
+  const fields = checked(textEntryCreateAttributesSchema, {
+    subject,
+    body,
+    kind,
+  });
   return write(session, async () => {
     const made = madeNow();
     const entry: Stored<TextEntry> = {
@@ -464,6 +470,7 @@ export async function createEntry(
       attributes: {
         subject: fields.subject,
         body: fields.body,
+        kind,
         date_created: made,
         date_updated: made,
         reused_count: 0,
@@ -485,6 +492,7 @@ export async function createEntry(
         entryId: entry.id,
         subject: entry.attributes.subject,
         body: entry.attributes.body,
+        entryKind: kind,
       },
     ];
     if (tagNow !== undefined) {
@@ -501,24 +509,36 @@ export async function createEntry(
   });
 }
 
-/** Edit entry `entryId` (null when there is no such entry). */
+/**
+ * Edit entry `entryId` (null when there is no such entry): its text, and its
+ * kind when given (left as it is otherwise).
+ */
 export async function updateEntry(
   session: SyncSession,
   entryId: string,
   rawSubject: string,
-  rawBody: string
+  rawBody: string,
+  kind?: EntryKind
 ): Promise<TextEntry | null> {
   refuseReadOnly(session);
   const {subject = '', body = ''} = checked(textEntryUpdateAttributesSchema, {
     subject: rawSubject,
     body: rawBody,
+    ...(kind === undefined ? {} : {kind}),
   });
+  const changed = kind === undefined ? {} : {kind};
   return patchRow(
     session,
     session.db.entries,
     entryId,
-    () => ({subject, body, date_updated: madeNow()}),
-    id => ({kind: 'updateEntry', entryId: id, subject, body})
+    () => ({subject, body, ...changed, date_updated: madeNow()}),
+    id => ({
+      kind: 'updateEntry',
+      entryId: id,
+      subject,
+      body,
+      ...(kind === undefined ? {} : {entryKind: kind}),
+    })
   );
 }
 

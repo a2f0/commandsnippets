@@ -4,12 +4,14 @@ import FileCopySharp from '@mui/icons-material/FileCopySharp';
 import {Box, Button, Chip, Typography} from '@mui/material';
 import React, {useEffect, useState} from 'react';
 import {DetailPage} from '../components/DetailPage';
+import {KeySequence} from '../components/entries/KeySequence';
 import {ReuseHistory} from '../components/entries/ReuseHistory';
 import {useCookieLogout} from '../hooks/useCookieLogout';
 import {useTypedTranslation} from '../i18n/hooks';
 import {copyEntry} from '../lib/data/copyEntry';
 import {useEntry, useEntryTags, useOwner, useSession} from '../lib/data/hooks';
 import {useCollectionSync} from '../lib/data/useSync';
+import {isShortcut} from '../lib/entryKind';
 import {formatTimestamp} from '../lib/formatTimestamp';
 import {useRouteParam} from '../lib/router/navigation';
 import {Link} from '../lib/router/Router';
@@ -141,7 +143,10 @@ const InfoList = ({rows}: {rows: readonly InfoRow[]}) => (
   </Box>
 );
 
-/** The entry's body, with Copy (a reuse), which shows it copied a moment. */
+/**
+ * The entry's body, with Copy (a reuse), which shows it copied a moment; a
+ * shortcut's keys, drawn as keys, with nothing to copy.
+ */
 const BodyPanel = ({
   entry,
   session,
@@ -152,6 +157,7 @@ const BodyPanel = ({
   const {t} = useTypedTranslation('entries');
   const [copied, setCopied] = useState(false);
   const {body} = entry.attributes;
+  const shortcut = isShortcut(entry);
 
   useEffect(() => {
     if (!copied) {
@@ -175,25 +181,29 @@ const BodyPanel = ({
           bgcolor: 'action.hover',
         }}
       >
-        <Typography variant="subtitle2">{t('infoBody')}</Typography>
-        <Button
-          id="entryCopy"
-          variant="outlined"
-          size="small"
-          startIcon={copied ? <Check /> : <FileCopySharp />}
-          onClick={() => {
-            void copyEntry(session, entry.id, body).then(success => {
-              if (success) setCopied(true);
-            });
-          }}
-        >
-          {copied ? t('infoCopied') : t('infoCopy')}
-        </Button>
+        <Typography variant="subtitle2">
+          {shortcut ? t('infoKeys') : t('infoBody')}
+        </Typography>
+        {!shortcut && (
+          <Button
+            id="entryCopy"
+            variant="outlined"
+            size="small"
+            startIcon={copied ? <Check /> : <FileCopySharp />}
+            onClick={() => {
+              void copyEntry(session, entry.id, body).then(success => {
+                if (success) setCopied(true);
+              });
+            }}
+          >
+            {copied ? t('infoCopied') : t('infoCopy')}
+          </Button>
+        )}
       </Box>
       <Box
         component="pre"
         id="entryBody"
-        aria-label={t('infoBody')}
+        aria-label={shortcut ? t('infoKeys') : t('infoBody')}
         sx={{
           m: 0,
           p: 2.5,
@@ -205,7 +215,7 @@ const BodyPanel = ({
           overflowWrap: 'anywhere',
         }}
       >
-        {body}
+        {shortcut ? <KeySequence body={body} /> : body}
       </Box>
     </Box>
   );

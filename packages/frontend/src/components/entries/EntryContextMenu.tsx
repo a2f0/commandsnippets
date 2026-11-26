@@ -28,7 +28,8 @@ interface IEntryContextMenu {
   handleRemoveFromListParent: () => void;
   handleNewEntryParent: () => void;
   handleBeginEditParent: () => void;
-  handleCopyParent: () => void;
+  /** Copy the entry: none for a shortcut, which has nothing to copy. */
+  handleCopyParent: (() => void) | null;
   /**
    * Another user's entry: Copy is all it offers, and Get Info to staff (not
    * on public pages: the reuse count is private).
@@ -85,7 +86,7 @@ function useEntryMenuItems({
   };
 
   return [
-    {
+    handleCopyParent !== null && {
       id: `tags-entries-context-menu-${id}-copy`,
       label: t('copyEntry'),
       action: handleCopyParent,

@@ -35,6 +35,7 @@ export const generateManyEntries = (
       attributes: {
         body: body(i),
         subject: `Holy Grail Test Entry ${i}`,
+        kind: 'snippet',
         date_updated: revisionOf(i, '995003'),
         date_created: revisionOf(i, '994989'),
         is_public: false,

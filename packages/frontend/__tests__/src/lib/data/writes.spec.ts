@@ -234,11 +234,51 @@ describe('a write', () => {
     await session().sync.flush();
 
     expect(create).toHaveBeenCalledWith(
-      'once',
-      'body',
+      {subject: 'once', body: 'body', kind: 'snippet'},
       entry.id,
       expect.any(String)
     );
+  });
+
+  it("stores and sends an entry's kind, and an edit keeps it unless it names one", async () => {
+    await session().sync.syncAll();
+    const create = vi.spyOn(apiClientMethods, 'createEntry');
+    const update = vi.spyOn(apiClientMethods, 'updateEntry');
+
+    const entry = await createEntry(
+      session(),
+      'split',
+      'cmd + d',
+      undefined,
+      'shortcut'
+    );
+    expect((await entryRow(entry.id))?.attributes.kind).toBe('shortcut');
+    await session().sync.flush();
+    const [sent] = create.mock.calls[0] ?? [];
+    expect(sent).toEqual({subject: 'split', body: 'cmd + d', kind: 'shortcut'});
+
+    // Edits from an editor that still holds the local id.
+    const kept = await updateEntry(
+      session(),
+      entry.id,
+      'split right',
+      'cmd + d'
+    );
+    expect(kept?.attributes.kind).toBe('shortcut');
+    const changed = await updateEntry(
+      session(),
+      entry.id,
+      'split right',
+      'cmd + d',
+      'snippet'
+    );
+    expect(changed?.attributes.kind).toBe('snippet');
+    await session().sync.flush();
+
+    expect(update.mock.calls.map(([, fields]) => fields)).toEqual([
+      {subject: 'split right', body: 'cmd + d'},
+      {subject: 'split right', body: 'cmd + d', kind: 'snippet'},
+    ]);
   });
 
   it('to a row there is none of changes and queues nothing', async () => {
