@@ -61,6 +61,7 @@ export const EntryForm = ({
   saving = false,
 }: IEntryFormProps) => {
   const {t} = useTypedTranslation('common');
+  const {t: tEntries} = useTypedTranslation('entries');
   const [subject, setSubject] = useState<string>(initialSubject);
   const [body, setBody] = useState<string>(initialBody);
   const [entryKind, setEntryKind] = useState<EntryKind>(initialEntryKind);
@@ -116,7 +117,7 @@ export const EntryForm = ({
       <div>
         <InputEntryBody
           id={`${id}Body`}
-          placeholder={shortcut ? 'keys: ctrl + b, c' : 'body'}
+          placeholder={shortcut ? tEntries('shortcutPlaceholder') : 'body'}
           valueParent={body}
           handleChangeParent={setBody}
           readOnly={saving}

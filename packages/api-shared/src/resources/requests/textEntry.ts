@@ -64,6 +64,11 @@ export const textEntryUpdateDocumentSchema = updateDocumentSchema(TEXT_ENTRY, {
 export type TextEntryCreateAttributes = z.output<
   typeof textEntryCreateAttributesSchema
 >;
+/** An entry's text and kind, as a create or an edit sends them. */
+export type TextEntryFields = Pick<
+  TextEntryCreateAttributes,
+  'subject' | 'body' | 'kind'
+>;
 export type TextEntryUpdateAttributes = z.output<
   typeof textEntryUpdateAttributesSchema
 >;

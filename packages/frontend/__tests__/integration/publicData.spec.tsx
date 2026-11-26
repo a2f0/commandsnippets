@@ -115,7 +115,7 @@ describe('public user pages', () => {
     expect(writes).toEqual([]);
   });
 
-  it("opens no empty menu on a guest's shortcut, which has nothing to copy", async () => {
+  it("leaves a guest's shortcut, which has nothing to copy, the browser's menu", async () => {
     await publish();
     await apiClient.forVersion(1).updateEntry('1', {
       subject: 'entry-1-subject',
@@ -126,7 +126,8 @@ describe('public user pages', () => {
     const subject = await screen.findByText('entry-1-subject');
     expect(await screen.findByText('Ctrl')).toBeInTheDocument();
 
-    fireEvent.contextMenu(subject);
+    // The browser's menu: the page's does not take the right-click.
+    expect(fireEvent.contextMenu(subject)).toBe(true);
 
     expect(document.getElementById('tagsEntriesContextMenu-1')).toBeNull();
     expect(screen.queryAllByRole('menuitem')).toEqual([]);

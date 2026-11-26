@@ -255,6 +255,7 @@ export const es: I18NextTranslations = {
     deleteEntry: 'Eliminar Entrada',
     copyEntry: 'Copiar',
     shortcutKind: 'Atajo de teclado',
+    shortcutPlaceholder: 'teclas: ctrl + b, c',
     getInfo: 'Obtener información',
     editEntry: 'Editar',
     untagEntry: 'Quitar etiqueta',

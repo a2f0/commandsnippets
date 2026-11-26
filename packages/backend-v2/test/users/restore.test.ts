@@ -237,6 +237,13 @@ describe('POST /api/v1/user/restore', () => {
       entries: before.entries.map(row => ({...row, kind: 'macro'})),
     });
     expect(response.status).toBe(400);
+    // A backup's shape (api-shared's backupSchema), as for its other fields.
+    expect((await json(response)).errors[0]).toMatchObject({
+      code: 'invalid',
+      source: {pointer: '/entries/0/kind'},
+      detail:
+        'Invalid backup at /entries/0/kind: Invalid option: expected one of "snippet"|"shortcut"',
+    });
     expect(await versionsOf(base.user1)).toEqual([1]);
   });
 

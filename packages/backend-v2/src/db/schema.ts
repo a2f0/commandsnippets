@@ -143,6 +143,8 @@ export const textEntries = sqliteTable(
     // keeps the two lists alike; the Bun scripts load this module without
     // api-shared). A column CHECK added with it (0024_entry_kind.sql) keeps
     // it to those: drizzle-kit would rebuild the table to add a table CHECK.
+    // SQLite cannot alter a CHECK, so another kind takes a migration that
+    // rebuilds the table, with the column's new CHECK.
     kind: text('kind', {enum: ['snippet', 'shortcut']})
       .notNull()
       .default('snippet'),

@@ -2,7 +2,7 @@
 import {CURSOR_START, cursorOf} from '@commandsnippets/api-shared/cursor';
 import type {
   TagReorderDocument,
-  TextEntryCreateAttributes,
+  TextEntryFields,
 } from '@commandsnippets/api-shared/requests';
 import type {
   IncludedResource,
@@ -18,12 +18,6 @@ import type {
 import {ApiRequestError} from '../api/errors';
 import type {QueuedWrite} from '../db/database';
 import {JUNCTION, TAG, TEXT_ENTRY} from './queuedWrite';
-
-/** An entry's text and kind, as a create or an edit sends them. */
-export type EntryFields = Pick<
-  TextEntryCreateAttributes,
-  'subject' | 'body' | 'kind'
->;
 
 /** The API calls the queue makes (`apiClient`'s). */
 export interface OutboxApi {
@@ -48,13 +42,13 @@ export interface OutboxApi {
   deleteTag(tagId: string, made?: string): Promise<TagDocument>;
   reorderTag(payload: TagReorderDocument, made?: string): Promise<void>;
   createEntry(
-    fields: EntryFields,
+    fields: TextEntryFields,
     clientId?: string,
     made?: string
   ): Promise<TextEntryDocument>;
   updateEntry(
     entryId: string,
-    fields: EntryFields,
+    fields: TextEntryFields,
     made?: string
   ): Promise<TextEntryDocument>;
   deleteEntry(entryId: string, made?: string): Promise<TextEntryDocument>;

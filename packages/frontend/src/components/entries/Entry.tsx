@@ -7,7 +7,7 @@ import {useDrop} from 'react-dnd';
 import {useContextMenu} from '../../hooks/useContextMenu';
 import {useMounted} from '../../hooks/useMounted';
 import {copyEntry} from '../../lib/data/copyEntry';
-import {useReadOnly, useSession} from '../../lib/data/hooks';
+import {useOwner, useSession} from '../../lib/data/hooks';
 import {
   deleteEntry,
   reorderEntries,
@@ -295,7 +295,8 @@ const EntryCard = ({
     ReturnType<typeof useEntryHover>,
     'hoverState' | 'mouseEnter' | 'mouseLeave'
   >;
-  onContextMenu: (event: React.MouseEvent) => void;
+  /** Open its menu: none when it offers nothing. */
+  onContextMenu: ((event: React.MouseEvent) => void) | undefined;
   /** Copy the entry: none for a shortcut, which has nothing to copy. */
   onCopy: (() => void) | null;
   onBodyClick: (event: React.MouseEvent<HTMLDivElement>) => void;
@@ -430,7 +431,8 @@ const Entry = (props: IEntryProps) => {
   const session = useSession();
   // Another user's entry (staff reading it): copied, never reordered,
   // tagged, edited or removed.
-  const readOnly = useReadOnly();
+  const owner = useOwner();
+  const readOnly = owner?.readOnly ?? false;
   const menu = useContextMenu();
   const writes = useEntryWrites(session, id, tagId);
   const drag = useEntryDrag(props, readOnly, writes);
@@ -447,6 +449,10 @@ const Entry = (props: IEntryProps) => {
     hover.hideCopyIcon
   );
   const copyable = !isShortcut(textEntryObject);
+  // Its menu offers Copy (a snippet), Get Info (not on a public page) and
+  // the writes (not read-only): a public page's shortcut has none of them,
+  // so it opens no menu, and a right-click gets the browser's.
+  const hasMenu = copyable || !(owner?.publicOnly ?? true) || !readOnly;
 
   const handleBodyClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -477,14 +483,14 @@ const Entry = (props: IEntryProps) => {
           tagNames={tagNames}
           drag={drag}
           hover={hover}
-          onContextMenu={menu.onContextMenu}
+          onContextMenu={hasMenu ? menu.onContextMenu : undefined}
           onCopy={copyable ? handleCopyClick : null}
           onBodyClick={handleBodyClick}
         />
       )}
       {newEntryAt === 'bottom' && newEntryForm(id, 'bottom', tagId)}
 
-      {(appConfig.loggedInUser !== null || readOnly) && (
+      {hasMenu && (appConfig.loggedInUser !== null || readOnly) && (
         <EntryContextMenu
           mouse={menu.mouse}
           onClose={menu.close}

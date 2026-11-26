@@ -244,6 +244,7 @@ export const en = {
     deleteEntry: 'Delete Entry',
     copyEntry: 'Copy',
     shortcutKind: 'Keyboard shortcut',
+    shortcutPlaceholder: 'keys: ctrl + b, c',
     getInfo: 'Get Info',
     editEntry: 'Edit',
     untagEntry: 'Untag',

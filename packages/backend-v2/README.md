@@ -407,11 +407,12 @@ data can move between accounts) and makes it the requester's data, as a new
 data version made active, answering with its number and how many tags,
 entries, taggings and reuses it made (api-shared's `restoreResultSchema`).
 Nothing is deleted: the version before stays as it was. It is checked
-first, as a create of each row would be (a tag's name, an entry's subject,
-body and kind), with every id a row refers to in the backup: anything else is a
-400 whose pointer and detail say where (`Invalid backup at /tags/3/name:
-...`), and no version is made. It names the version it is made over
-(`X-Data-Version`, a 400 when it names none): another than the active one
+first, as a create of each row would be (a tag's name, an entry's subject
+and body; its kind is one of the kinds), with every id a row refers to in
+the backup: anything else is a 400 whose pointer and detail say where
+(`Invalid backup at /tags/3/name: ...`), and no version is made. It names
+the version it is made over (`X-Data-Version`, a 400 when it names none):
+another than the active one
 is a 409, checked when it arrives and again as
 its batch's first statement (the active version's row is made again, which
 its primary key refuses unless it is the one named), so a restore or switch
