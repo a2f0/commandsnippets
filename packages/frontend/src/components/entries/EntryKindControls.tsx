@@ -3,7 +3,9 @@ import Box from '@mui/material/Box';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import type {SxProps, Theme} from '@mui/material/styles';
+import Typography from '@mui/material/Typography';
 import {useTypedTranslation} from '../../i18n/hooks';
+import {useAppState} from '../../lib/state/appState';
 import {KeySequence} from './KeySequence';
 
 interface IEntryKindCheckboxProps {
@@ -52,3 +54,23 @@ export const KeysPreview = ({id, body}: {id: string; body: string}) =>
       <KeySequence body={body} />
     </Box>
   );
+
+/**
+ * Under an entry list that shows nothing while View shows one kind: that
+ * the kind hides the rest, rather than an empty list.
+ */
+export const NoneOfKindShown = ({shown}: {shown: number | undefined}) => {
+  const {t} = useTypedTranslation('entries');
+  const kindFilter = useAppState(state => state.entryKindFilter);
+  if (kindFilter === 'all' || shown !== 0) return null;
+  return (
+    <Typography
+      id="entriesNoneOfKind"
+      variant="body2"
+      color="text.secondary"
+      sx={{ml: theme => `${theme.main.dragIndicatorWidth}px`, py: '8px'}}
+    >
+      {kindFilter === 'shortcut' ? t('noShortcutsShown') : t('noSnippetsShown')}
+    </Typography>
+  );
+};

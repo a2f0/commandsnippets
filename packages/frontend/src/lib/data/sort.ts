@@ -44,7 +44,6 @@ const TAG_KEYS: Record<string, (tag: Tag) => Key> = {
   date_created: tag => time(tag.attributes.date_created),
   date_updated: tag => time(tag.attributes.date_updated),
   date_last_used: tag => time(tag.attributes.date_last_used),
-  entry_count: tag => tag.attributes.entry_count,
   order: tag => tag.attributes.order,
 };
 
@@ -66,13 +65,20 @@ const field = (order: string) => order.replace(/^-/, '');
  */
 const fold = (text: string) => text.toUpperCase();
 
-/** The tags not deleted whose names hold `search`, in `order`. */
+/**
+ * The tags not deleted whose names hold `search`, in `order`; by entry
+ * count, `entryCount`'s (the count of the entries the lists show).
+ */
 export function sortTags(
   tags: readonly Tag[],
   order: string,
-  search: string
+  search: string,
+  entryCount: (tag: Tag) => number = tag => tag.attributes.entry_count
 ): Tag[] {
-  const key = TAG_KEYS[field(order)] ?? ((tag: Tag) => tag.attributes.order);
+  const key =
+    field(order) === 'entry_count'
+      ? entryCount
+      : (TAG_KEYS[field(order)] ?? ((tag: Tag) => tag.attributes.order));
   const term = fold(search);
   return sortBy(
     tags.filter(

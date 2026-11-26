@@ -63,8 +63,10 @@ function useHighlightedTag(
 interface IProps {
   tagsFromWrapper: ITagJsonApi[];
   username: string;
+  /** Each tag's count of the kind shown, by id; null: its `entry_count`. */
+  entryCounts: ReadonlyMap<string, number> | null;
 }
-const TagList = ({tagsFromWrapper, username}: IProps) => {
+const TagList = ({tagsFromWrapper, username, entryCounts}: IProps) => {
   const appConfig = useAppConfig();
   // Another user's tags (staff reading them): no New Tag.
   const readOnly = useReadOnly();
@@ -135,6 +137,11 @@ const TagList = ({tagsFromWrapper, username}: IProps) => {
                 // The same component when the API's id replaces a local one.
                 key={keyOfRow(object)}
                 id={object.id}
+                entryCount={
+                  entryCounts === null
+                    ? object.attributes.entry_count
+                    : (entryCounts.get(object.id) ?? 0)
+                }
                 moveEntry={moveEntry}
                 findEntry={findEntry}
                 index={i}

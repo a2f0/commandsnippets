@@ -15,6 +15,7 @@ import {appMode} from '../../lib/shared';
 import {useAppConfig} from '../../lib/state/appState';
 import {ItemTypes} from '../dnd/itemTypes';
 import {useDraggedRows} from '../dnd/useDraggedRows';
+import {NoneOfKindShown} from './EntryKindControls';
 import {EntryListContextMenu} from './EntryListContextMenu';
 import {EntryNew} from './EntryNew';
 import {EntryRow, type EntryRowPlace, type EntryRowShared} from './EntryRow';
@@ -182,6 +183,7 @@ const EntryList = () => {
         <EntryNew id="textEntryNewTop" tagId={currentTag?.id} />
       )}
       <EntryRows virtual={virtual} entries={entries} row={row} />
+      <NoneOfKindShown shown={shown?.length} />
       {appConfig.entryNew === 'textEntry-bottom' && !readOnly && (
         <EntryNew id="textEntryNewBottom" tagId={currentTag?.id} />
       )}

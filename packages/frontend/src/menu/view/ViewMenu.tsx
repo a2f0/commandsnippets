@@ -6,6 +6,7 @@ import {navigate} from '../../lib/router/navigation';
 import {analyticsPath, reusesPath} from '../../lib/router/route';
 import {StyledMenu} from '../StyledMenu';
 import {StyledMenuItem} from '../StyledMenuItem';
+import {EntryKindFilterMenuItem} from './menuItems/EntryKindFilterMenuItem';
 import {ShowTagCounts} from './menuItems/ShowTagCounts';
 import {ThemeMenuItem} from './menuItems/ThemeMenuItem';
 
@@ -49,6 +50,10 @@ const ViewMenu = ({onClose, anchorEl}: IProps) => {
       )}
       <ThemeMenuItem themeName="lightTheme" onClose={onClose} />
       <ThemeMenuItem themeName="darkTheme" onClose={onClose} />
+      <Divider />
+      <EntryKindFilterMenuItem filter="all" onClose={onClose} />
+      <EntryKindFilterMenuItem filter="shortcut" onClose={onClose} />
+      <EntryKindFilterMenuItem filter="snippet" onClose={onClose} />
       <Divider />
       <ShowTagCounts onClose={onClose} />
     </StyledMenu>

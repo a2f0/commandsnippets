@@ -9,6 +9,7 @@ import {
 import {keyOfRow} from '../../lib/data/rowKey';
 import {sortEntries, sortTagEntries} from '../../lib/data/sort';
 import {useTagSync} from '../../lib/data/useSync';
+import {shownByKind} from '../../lib/entryKind';
 import {listKey, listShown} from '../../lib/metrics/timings';
 import {useRouteParam, useSearchParam} from '../../lib/router/navigation';
 import {useAppState} from '../../lib/state/appState';
@@ -17,7 +18,8 @@ import {keepUnchanged} from './unchangedRows';
 /**
  * The entries the list shows: a tag's (`/:user/:tag`), or all or the
  * untagged ones (`?entries=all`, `?entries=untagged`), from IndexedDB as
- * syncs and writes store them, sorted and searched (undefined until read).
+ * syncs and writes store them, sorted, searched and of the kind View shows
+ * (undefined until read).
  * The tag shown syncs whenever it is not synced through its revision, and
  * the first render of the list asked for with its own rows ends the
  * interaction that asked for it (`listShown`).
@@ -46,6 +48,7 @@ export function useShownEntries() {
   );
   const entryOrder = useAppState(state => state.entrySortOrder);
   const search = useAppState(state => state.entrySearchString);
+  const kindFilter = useAppState(state => state.entryKindFilter);
   // The rows last shown, by key: an entry that the next read (a write's,
   // which reads every row again) finds unchanged keeps its object, so only
   // the rows the write changed render again.
@@ -54,8 +57,12 @@ export function useShownEntries() {
     const sorted = listsAll
       ? listed && sortEntries(listed.entries, entryOrder, search)
       : tagged && sortTagEntries(tagged.entries, tagOrder, search);
-    return sorted && keepUnchanged(sorted, lastShown.current, keyOfRow);
-  }, [listsAll, listed, tagged, entryOrder, tagOrder, search]);
+    const ofKind =
+      kindFilter === 'all'
+        ? sorted
+        : sorted?.filter(entry => shownByKind(entry, kindFilter));
+    return ofKind && keepUnchanged(ofKind, lastShown.current, keyOfRow);
+  }, [listsAll, listed, tagged, entryOrder, tagOrder, search, kindFilter]);
   useLayoutEffect(() => {
     lastShown.current = new Map(
       (shown ?? []).map(entry => [keyOfRow(entry), entry])
