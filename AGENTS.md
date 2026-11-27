@@ -28,8 +28,7 @@ Monorepo for the Command Snippets app.
   commit, cross-agent review and repair, open the PR, squash-merge, reset.
 - Shared commands and policy are configured in `agent-tool.json`. Do not edit
   managed skills or the harness permission rules agent-tool generates
-  (`.codex/rules/agent-tool.rules`, `.gemini/policies/agent-tool.toml`, and
-  its entries in `.claude/settings.json`):
+  (`.codex/rules/agent-tool.rules` and its entries in `.claude/settings.json`):
   after changing the exact tool pin or `permissions.executables`, run
   `bun run agents:sync` and commit the lockfile, skills, rules,
   `.agent-tool-skills.json`, and `.agent-tool-permissions.json` together.

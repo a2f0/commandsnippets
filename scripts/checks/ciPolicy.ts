@@ -15,7 +15,7 @@
  */
 export const CI_SCOPES = {
   tooling:
-    /^(scripts\/|packages\/frontend\/scripts\/|terraform\/scripts\/[^/]+\.ts$|\.agents\/|\.claude\/|\.codex\/|\.gemini\/|agent-tool\.json$|\.agent-tool-(skills|permissions)\.json$|commitlint\.config\.mts$|tsconfig[^/]*\.json$|.*\.md$|\.markdownlint-cli2\.jsonc$)/,
+    /^(scripts\/|packages\/frontend\/scripts\/|terraform\/scripts\/[^/]+\.ts$|\.agents\/|\.claude\/|\.codex\/|agent-tool\.json$|\.agent-tool-(skills|permissions)\.json$|commitlint\.config\.mts$|tsconfig[^/]*\.json$|.*\.md$|\.markdownlint-cli2\.jsonc$)/,
   frontend:
     /^(packages\/(frontend|api-shared)\/|scripts\/testing\/(runUnitTests|runWebdriverTests|runBrowserAcquisition)\.sh$|assets\/brand\/|agent-tool\.json$|\.ls-lint\.yml$)/,
   backendV2: /^packages\/(backend-v2|api-shared)\//,
