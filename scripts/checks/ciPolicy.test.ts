@@ -179,6 +179,7 @@ describe('ciScopes', () => {
       '.claude/skills/ship-pr/SKILL.md',
       '.claude/settings.json',
       '.codex/rules/agent-tool.rules',
+      '.gemini/policies/agent-tool.toml',
       'scripts/git/hooks/pre-push',
       'commitlint.config.mts',
       'tsconfig.base.json',
